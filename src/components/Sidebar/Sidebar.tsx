@@ -8,6 +8,8 @@ import { TiMessages } from "react-icons/ti";
 import { MdOutlineSupervisorAccount } from "react-icons/md";
 import { TbEdit } from "react-icons/tb";
 import { BiSupport } from "react-icons/bi";
+import * as Texts from './text'; // Import texts
+
 // Define an interface for menu items for better structure
 interface MenuItem {
   id: string;
@@ -17,15 +19,15 @@ interface MenuItem {
 
 // Placeholder menu items
 const menuItems: MenuItem[] = [
-  { id: 'Trang Chu', label: 'Trang Chu', icon: <IoHomeOutline/> },
-  { id: 'Thong Bao', label: 'Thong Bao', icon: <IoNotificationsOutline/> },
-  { id: 'Tin tuyen dung', label: 'Tin tuyen dung', icon: <LuUserSearch/> },
-  { id: 'Ho so ung vien', label: 'Ho so ung vien', icon: <MdOutlineSupervisorAccount/> },
-  { id: 'Tin nhan', label: 'Tin nhan', icon: <TiMessages/> },
-  { id: 'Cài đặt tài tài khoản', label: 'Cài đặt tài tài khoản', icon: <IoSettingsOutline/> },
-  { id: 'Hỗ trợ', label: 'Hỗ trợ', icon: <BiSupport /> },
-  { id: 'Điều khoản/chính sách', label: 'Điều khoản/chính sách', icon: <IoDocumentTextOutline /> },
-  { id: 'Đăng xuất', label: 'Đăng xuất', icon: <IoLogOutOutline /> },
+  { id: 'Trang Chu', label: Texts.HOME, icon: <IoHomeOutline/> },
+  { id: 'Thong Bao', label: Texts.NOTIFICATIONS, icon: <IoNotificationsOutline/> },
+  { id: 'Tin tuyen dung', label: Texts.JOB_POSTINGS, icon: <LuUserSearch/> },
+  { id: 'Ho so ung vien', label: Texts.CANDIDATE_PROFILES, icon: <MdOutlineSupervisorAccount/> },
+  { id: 'Tin nhan', label: Texts.MESSAGES, icon: <TiMessages/> },
+  { id: 'Cài đặt tài tài khoản', label: Texts.ACCOUNT_SETTINGS, icon: <IoSettingsOutline/> },
+  { id: 'Hỗ trợ', label: Texts.SUPPORT, icon: <BiSupport /> },
+  { id: 'Điều khoản/chính sách', label: Texts.TERMS_POLICY, icon: <IoDocumentTextOutline /> },
+  { id: 'Đăng xuất', label: Texts.LOGOUT, icon: <IoLogOutOutline /> },
 ];
 
 const Sidebar = () => {
@@ -82,9 +84,9 @@ const Sidebar = () => {
                         variants={textVariants}
                         transition={profileTextTransition}
                     >
-                        <p className='text-sm whitespace-nowrap'>Xin chao,</p>
-                        <p className='text-sm font-bold whitespace-nowrap'>Dai Duong Res</p>
-                        <p className='text-xs text-gray-600 whitespace-nowrap hover:underline cursor-pointer'>Xem ho so</p>
+                        <p className='text-sm whitespace-nowrap'>{Texts.GREETING}</p>
+                        <p className='text-sm font-bold whitespace-nowrap'>{Texts.USER_NAME}</p>
+                        <p className='text-xs text-gray-600 whitespace-nowrap hover:underline cursor-pointer'>{Texts.VIEW_PROFILE}</p>
                     </motion.div>
                 </motion.div>
 
@@ -104,7 +106,7 @@ const Sidebar = () => {
                             variants={textVariants}
                             transition={profileTextTransition}
                         >
-                            <p className='text-sm text-white whitespace-nowrap'>Viet bai tuyen dung</p>
+                            <p className='text-sm text-white whitespace-nowrap'>{Texts.WRITE_POST}</p>
                         </motion.div>
                     </motion.div>
                     
@@ -159,8 +161,8 @@ const Sidebar = () => {
         
         {/* Main Content Area */}
         <div className=' bg-[#F3F7FF] lg:pl-[6vw] md:pl-[10vw] sm:pl-[12vw]  pl-[15vw] z-10 grow  p-4'> 
-            <h1 className="text-2xl font-semibold">Main Content Area</h1>
-            <p>Notifications or other content will go here.</p>
+            <h1 className="text-2xl font-semibold">{Texts.MAIN_CONTENT_TITLE}</h1>
+            <p>{Texts.MAIN_CONTENT_SUBTITLE}</p>
             {/* Replace "Noti" with your actual page content */}
         </div>
     </div>

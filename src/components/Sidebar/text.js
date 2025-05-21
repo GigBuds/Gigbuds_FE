@@ -1,0 +1,15 @@
+export const GREETING = "Xin chào, ";
+export const USER_NAME = "Dai Duong Res";
+export const VIEW_PROFILE = "Xem hồ sơ";
+export const WRITE_POST = "Viết bài tuyển dụng";
+export const HOME = "Trang chủ";
+export const NOTIFICATIONS = "Thông báo";
+export const JOB_POSTINGS = "Tin tuyển dụng";
+export const CANDIDATE_PROFILES = "Hồ sơ ứng viên";
+export const MESSAGES = "Tin nhắn";
+export const ACCOUNT_SETTINGS = "Cài đặt tài tài khoản";
+export const SUPPORT = "Hỗ trợ";
+export const TERMS_POLICY = "Điều khoản/chính sách";
+export const LOGOUT = "Đăng xuất";
+export const MAIN_CONTENT_TITLE = "Main Content Area";
+export const MAIN_CONTENT_SUBTITLE = "Notifications or other content will go here.";

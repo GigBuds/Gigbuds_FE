@@ -31,6 +31,7 @@ const menuItems: MenuItem[] = [
 ];
 
 const Sidebar = () => {
+    ;
     const [isOpen, setIsOpen] = useState(false);
     const [selectedItem, setSelectedItem] = useState<string | null>(null); // New state for selected item
 

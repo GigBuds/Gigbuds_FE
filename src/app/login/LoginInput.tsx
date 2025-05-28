@@ -3,17 +3,14 @@ import { motion } from "framer-motion";
 import { Form, Input, Button, Checkbox } from "antd";
 import { FaRegEye, FaRegEyeSlash } from "react-icons/fa";
 import toast from "react-hot-toast";
-import GoogleLoginButton from "./GoogleLoginButton"; // Import the new component
+import GoogleLoginButton from "./GoogleLoginButton";
+import { loginApi } from "@/service/loginService/loginService";
+
 
 const LoginInput = () => {
-  // Hardcoded credentials
-  const hardcodedEmail = "user@example.com";
-  const hardcodedPassword = "password123";
-  const googleClientId = "241960034452-v8jacgqpanfnkjv6ds11d7su18nkvspi.apps.googleusercontent.com";
-
-  // State for input fields
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";
+  // Only need loading state since Ant Design Form handles form values
+  const [loading, setLoading] = useState(false);
 
   interface FormValues {
     email: string;
@@ -21,28 +18,36 @@ const LoginInput = () => {
     remember?: boolean;
   }
 
-  const onFinish = (values: FormValues) => {
-    if (
-      values.email === hardcodedEmail &&
-      values.password === hardcodedPassword
-    ) {
-      toast.success("Login success!");
-      toast.success(
-        values.email + " " + values.password + " " + values.remember
-      );
-      console.log("Login successful:", values);
-    } else {
-      toast.error("Invalid email or password.");
-      console.log("Login failed:", values);
+  const onFinish = async (values: FormValues) => {
+    setLoading(true);
+    try {
+      console.log('Calling API with:', values.email, values.password);
+      const response = await loginApi.login(values.email, values.password);
+      
+      // Handle successful login
+      toast.success("Login successful!");
+      console.log("Login response:", response);
+      
+      
+      if(response.access_token)
+      {
+        document.cookie = `accessToken=${response.access_token}; path=/; max-age=604800`; 
+        }
+        if (response.id_token) {
+          document.cookie = `authToken=${response.id_token}; path=/; max-age=604800`;
+        }
+        if (response.refresh_token) {
+          document.cookie = `refreshToken=${response.refresh_token}; path=/; max-age=604800`;
+        }
+
+      
+      
+    } catch (error) {
+      console.error("Login error:", error);
+      toast.error("Login failed. Please check your credentials.");
+    } finally {
+      setLoading(false);
     }
-  };
-
-  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEmail(e.target.value);
-  };
-
-  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setPassword(e.target.value);
   };
 
   return (
@@ -71,8 +76,6 @@ const LoginInput = () => {
           <Input
             placeholder="Username"
             className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-            value={email}
-            onChange={handleEmailChange}
           />
         </Form.Item>
         <Form.Item
@@ -88,8 +91,6 @@ const LoginInput = () => {
               visible ? <FaRegEye /> : <FaRegEyeSlash />
             }
             className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-            value={password}
-            onChange={handlePasswordChange}
           />
         </Form.Item>
         <motion.div className="flex flex-row justify-between items-center">
@@ -115,19 +116,19 @@ const LoginInput = () => {
           <Form.Item style={{ marginTop: "5%" }}>
             <motion.button
               type="submit"
-              className="w-full text-[100%] bg-black text-white py-3 rounded-lg "
+              disabled={loading}
+              className="w-full text-[100%] bg-black text-white py-3 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
               initial={{ scale: 1, background: "black", color: "white" }}
               whileTap={{ scale: 0.95 }}
               whileHover={{
-                scale: 1.05,
+                scale: loading ? 1 : 1.05,
                 color: "black",
-                background:
+                background: loading ? "black" :
                   "linear-gradient(90deg, #FF7345 33.76%, #FFDC95 99.87%)",
               }}
             >
-              Sign In
+              {loading ? "Signing In..." : "Sign In"}
             </motion.button>
-            {/* Replace the old GoogleLogin with the new component */}
             <div className="w-full flex items-center justify-center mt-[5%]">
               <GoogleLoginButton clientId={googleClientId} />
             </div>

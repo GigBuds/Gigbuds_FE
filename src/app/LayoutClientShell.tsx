@@ -1,5 +1,6 @@
 "use client";
 
+import "@ant-design/v5-patch-for-react-19";
 import React from 'react';
 import { usePathname } from "next/navigation";
 import Sidebar from "@/components/Sidebar/Sidebar";
@@ -22,7 +23,7 @@ export default function LayoutClientShell({
       />
       </div>
       {!isLoginPage && (
-        <div className="lg:w-[20%] md:w-[40%] sm:w-[40%] w-[40%]">
+        <div className="lg:w-[20%] md:w-[40%] sm:w-[40%] w-[40%] h-full">
           <Sidebar />
         </div>
       )}

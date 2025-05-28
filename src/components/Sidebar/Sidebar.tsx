@@ -1,4 +1,3 @@
-"use client"
 import React, { useState } from 'react'
 import { motion } from 'framer-motion'
 import Image from 'next/image';
@@ -71,7 +70,7 @@ const Sidebar = () => {
                     className='flex flex-row items-center mb-3 ' 
                 >
                     <Image 
-                        src='/logo.png' 
+                        src='/Gigbuds Logo.png' 
                         alt='logo'
                         width={48}
                         height={48} 

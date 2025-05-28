@@ -4,7 +4,7 @@ import { Form, Input, Button, Checkbox } from "antd";
 import { FaRegEye, FaRegEyeSlash } from "react-icons/fa";
 import toast from "react-hot-toast";
 import GoogleLoginButton from "./GoogleLoginButton";
-import { loginApi } from "@/service/loginService/LoginService";
+import { loginApi } from "@/service/loginService/loginService";
 
 
 const LoginInput = () => {
@@ -28,20 +28,19 @@ const LoginInput = () => {
       toast.success("Login successful!");
       console.log("Login response:", response);
       
-      // Store tokens if received - update to match API response structure
-      if (response.access_token) {
-        localStorage.setItem('access_token', response.access_token);
-      }
-      if (response.id_token) {
-        localStorage.setItem('id_token', response.id_token);
-      }
-      if (response.refresh_token) {
-        localStorage.setItem('refresh_token', response.refresh_token);
-      }
       
-      // You can add additional logic here like:
-      // - Redirect to dashboard
-      // - Update user context
+      if(response.access_token)
+      {
+        document.cookie = `accessToken=${response.access_token}; path=/; max-age=604800`; 
+        }
+        if (response.id_token) {
+          document.cookie = `authToken=${response.id_token}; path=/; max-age=604800`;
+        }
+        if (response.refresh_token) {
+          document.cookie = `refreshToken=${response.refresh_token}; path=/; max-age=604800`;
+        }
+
+      
       
     } catch (error) {
       console.error("Login error:", error);

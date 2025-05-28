@@ -9,6 +9,7 @@ interface LoginRequest {
 }
 
 interface LoginResponse {
+  refresh_token: unknown;
   success: boolean;
   access_token?: string;
   id_token?: string;
@@ -34,7 +35,7 @@ class LoginApi {
     try {
       const data: LoginRequest = { identifier, password };
       const response = await fetchApi.post('/login', data);
-
+      console.log('Login API response:', response);
       if (response.success && response.access_token) {
         this.setCookie('refreshToken', response.access_token, 1);
         
@@ -44,7 +45,7 @@ class LoginApi {
           
           if (decodedToken) {
             this.setCookie('authToken', response.id_token, 7);
-            this.setCookie('userId', decodedToken.sub, 7);
+            localStorage.setItem('userId', decodedToken.sub);
             this.setCookie('userEmail', decodedToken.email, 7);
             this.setCookie('roles', JSON.stringify(decodedToken.roles || []), 7);
             if (decodedToken.name) {
@@ -96,14 +97,15 @@ class LoginApi {
   }
 
   // Method to logout and clear cookies
+  // Method to logout and clear cookies
   logout() {
     this.deleteCookie('authToken');
     this.deleteCookie('userId');
     this.deleteCookie('userEmail');
     this.deleteCookie('userName');
+    window.location.href = '/login'; // Redirect to login page
     console.log('Authentication cookies cleared');
   }
-
   // Helper method to delete cookies
   private deleteCookie(name: string) {
     document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;`;

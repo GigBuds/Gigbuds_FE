@@ -1,5 +1,5 @@
 "use client"
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import Image from 'next/image';
 import { IoHomeOutline, IoLogOutOutline, IoDocumentTextOutline, IoSettingsOutline, IoNotificationsOutline  } from "react-icons/io5";
@@ -9,6 +9,8 @@ import { MdOutlineSupervisorAccount } from "react-icons/md";
 import { TbEdit } from "react-icons/tb";
 import { BiSupport } from "react-icons/bi";
 import * as Texts from './text'; // Import texts
+import { jwtDecode } from 'jwt-decode';
+import { loginApi } from '@/service/loginService/loginService';
 
 // Define an interface for menu items for better structure
 interface MenuItem {
@@ -30,10 +32,84 @@ const menuItems: MenuItem[] = [
   { id: 'Đăng xuất', label: Texts.LOGOUT, icon: <IoLogOutOutline /> },
 ];
 
+const useLocalStorage = (key: string, defaultValue: string) => {
+  const [value, setValue] = useState(defaultValue);
+
+  useEffect(() => {
+    const storedValue = localStorage.getItem(key);
+    if (storedValue) {
+      setValue(storedValue);
+    }
+  }, [key]);
+
+  const setStoredValue = (newValue: string) => {
+    setValue(newValue);
+    localStorage.setItem(key, newValue);
+    
+    // Dispatch custom event for same-tab communication
+    window.dispatchEvent(new CustomEvent('localStorageChange', {
+      detail: { key, value: newValue }
+    }));
+  };
+
+  return [value, setStoredValue] as const;
+};
+
 const Sidebar = () => {
     ;
     const [isOpen, setIsOpen] = useState(false);
-    const [selectedItem, setSelectedItem] = useState<string | null>(null); // New state for selected item
+   const [selectedItem, setSelectedItem] = useLocalStorage('selectedTab', 'Trang Chu');  // New state for selected item
+    const [user, setUser] = useState<{ sub: string; email: string; name?: string; roles?: string[] } | null>(null);
+    const id_token = typeof document !== 'undefined'
+        ? document.cookie.split('; ').find(row => row.startsWith('authToken='))
+        : null;
+   
+    useEffect(() => {
+        if (selectedItem === 'Đăng xuất') {
+            (async () => {
+                try {
+                    await loginApi.logout();
+                    setSelectedItem('Trang Chu'); // Clear selected tab on logout
+                    setUser(null);
+                } catch (error: unknown) {
+                    console.error('Logout error:', error);
+                }
+            })();
+        }
+            }, [selectedItem, setSelectedItem]);
+
+    // Decode JWT token and set user state
+    useEffect(() => {
+        if (id_token) {
+             
+            const token = id_token.split('=')[1];
+
+            const decodedUser = decodeJWT(token);
+            console.log('Decoded user:', decodedUser);
+            if (decodedUser) {
+                setUser(decodedUser);
+            } else {
+                console.error('Failed to decode JWT token');
+            }
+        }
+        console.log('Decoded user:', user);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [id_token]);
+
+    const decodeJWT = (token: string): { sub: string; email: string; name?: string; roles?: string[] } | null => {
+        try {
+            const decoded = jwtDecode(token) as { sub: string; email: string; name?: string; roles?: string[] };
+            return {
+                sub: decoded.sub,
+                email: decoded.email,
+                name: decoded.name,
+                roles: decoded.roles || [],
+            };
+        } catch (error) {
+            console.error('JWT decode error:', error);
+            return null;
+        }
+    }
 
     const sidebarVariants = {
         open: { width: '250px' },
@@ -86,7 +162,7 @@ const Sidebar = () => {
                         transition={profileTextTransition}
                     >
                         <p className='text-sm whitespace-nowrap'>{Texts.GREETING}</p>
-                        <p className='text-sm font-bold whitespace-nowrap'>{Texts.USER_NAME}</p>
+                        <p className='text-sm font-bold whitespace-nowrap'>{user?.name}</p>
                         <p className='text-xs text-gray-600 whitespace-nowrap hover:underline cursor-pointer'>{Texts.VIEW_PROFILE}</p>
                     </motion.div>
                 </motion.div>
@@ -106,6 +182,7 @@ const Sidebar = () => {
                             animate={isOpen ? "open" : "closed"}
                             variants={textVariants}
                             transition={profileTextTransition}
+                            onClick={() => {setSelectedItem('Write Post')}}
                         >
                             <p className='text-sm text-white whitespace-nowrap'>{Texts.WRITE_POST}</p>
                         </motion.div>
@@ -126,7 +203,7 @@ const Sidebar = () => {
                                     transition={{ type: "spring", stiffness: 300, damping: 20 }}
                                     onClick={() => {
                                         setSelectedItem(item.id); // Set selected item
-                                        console.log(item.label); 
+
                                     }} 
                                 >
                                     <span className={`text-2xl w-12 h-7 flex items-center justify-center flex-shrink-0 ${selectedItem === item.id ? 'text-orange-500' : ''}`}> {/* Icon container */}

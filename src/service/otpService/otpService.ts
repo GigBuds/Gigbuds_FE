@@ -1,3 +1,4 @@
+import toast from 'react-hot-toast';
 import fetchApi from '../../api/api';
 
 export interface OtpVerificationRequest {
@@ -50,6 +51,9 @@ class OtpService {
   async resendOtp(phoneData: ResendOtpRequest): Promise<ResendOtpResponse> {
     try {
       const response = await fetchApi.post('/send-verification-code', phoneData);
+      if (response && response.success) {
+        toast.success('OTP has been resent successfully');
+      }
       return response;
     } catch (error) {
       if (error instanceof Error) {

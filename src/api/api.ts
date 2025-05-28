@@ -1,5 +1,5 @@
-// const baseUrl = 'https://localhost:53460/api/identity-api';\
-const baseUrl = process.env.NEXT_PUBLIC_BASE_URL
+const baseUrl = 'https://localhost:53460/api/v1/identities';
+// const baseUrl = process.env.NEXT_PUBLIC_BASE_URL
 
 const fetchApi = {
   async post(endpoint: string, body: unknown) {

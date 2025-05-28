@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   InputOTP,
   InputOTPGroup,
@@ -25,7 +25,25 @@ const Otp_verification = ({
   const [loading, setLoading] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
-const router = useRouter();
+  const [countdown, setCountdown] = useState(60); // Start with 60 seconds countdown
+  const router = useRouter();
+
+  // Initialize countdown on component mount
+  useEffect(() => {
+    setCountdown(60); // Start countdown when component loads
+  }, []);
+
+  // Countdown effect
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (countdown > 0) {
+      timer = setTimeout(() => {
+        setCountdown(countdown - 1);
+      }, 1000);
+    }
+    return () => clearTimeout(timer);
+  }, [countdown]);
+
   const handleOtpSubmit = async () => {
     if (!otpValue || otpValue.length !== 6) {
       toast.error("Vui lòng nhập đầy đủ mã OTP 6 số");
@@ -105,6 +123,8 @@ const router = useRouter();
     }
 
     setResendLoading(true);
+    setCountdown(60); // Reset countdown to 60 seconds
+    
     
     try {
       const response = await otpService.resendOtp({
@@ -114,6 +134,7 @@ const router = useRouter();
       if (response.success) {
         toast.success(response.message || 'Mã OTP đã được gửi lại!');
         setOtpValue(""); // Clear current OTP
+        setCountdown(60); // Start 60-second countdown
       } else {
         toast.error(response.message || 'Không thể gửi lại mã OTP!');
       }
@@ -233,15 +254,20 @@ const router = useRouter();
         </div>
 
         {/* Resend OTP button */}
-        <div className="mb-4 text-center">
+        <div className="mb-4 text-center flex flex-col items-center">
           <span className="text-sm text-gray-600">Chưa nhận được mã? </span>
           <button
             type="button"
             onClick={handleResendOtp}
-            disabled={resendLoading}
-            className="text-sm text-blue-600 hover:text-blue-800 disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={resendLoading || countdown > 0}
+            className={`text-sm ${countdown > 0 ? 'text-gray-400' : 'text-blue-600'} hover:text-blue-800 disabled:opacity-50 disabled:cursor-not-allowed`}
           >
-            {resendLoading ? 'Đang gửi...' : 'Gửi lại'}
+            {resendLoading 
+              ? 'Đang gửi...' 
+              : countdown > 0 
+                ? `Gửi lại (${countdown}s)` 
+                : 'Gửi lại'
+            }
           </button>
         </div>
 

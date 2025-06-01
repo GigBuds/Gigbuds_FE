@@ -45,7 +45,6 @@ const useLocalStorage = (key: string, defaultValue: string) => {
   const setStoredValue = (newValue: string) => {
     setValue(newValue);
     localStorage.setItem(key, newValue);
-    
     // Dispatch custom event for same-tab communication
     window.dispatchEvent(new CustomEvent('localStorageChange', {
       detail: { key, value: newValue }
@@ -148,7 +147,7 @@ const Sidebar = () => {
                     className='flex flex-row items-center mb-3 ' 
                 >
                     <Image 
-                        src='/logo.png' 
+                        src='/Gigbuds Logo.png' 
                         alt='logo'
                         width={48}
                         height={48} 

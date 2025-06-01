@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import HomePage from "./homepage/homepage";
+import HomePage from "./homepage/HomePage";
 import ManageJobPost from "./manage-job-post/ManageJobPost";
 
 export default function Home() {

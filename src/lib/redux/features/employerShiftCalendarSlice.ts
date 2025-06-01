@@ -45,5 +45,5 @@ const employerShiftCalendarSlice = createSlice({
 )
 
 export const { addJobShift, removeJobShift, setMinimumShift, updateJobShift } = employerShiftCalendarSlice.actions;
-export const selectEmployerShiftCalendar = (store: RootState) => store.employerShiftCalendar;
+export const selectEmployerShiftCalendar = (store: RootState) => store.tempReducer.employerShiftCalendar;
 export default employerShiftCalendarSlice.reducer;

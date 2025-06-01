@@ -1,9 +1,7 @@
+"use server";
 import { JobPostCreate } from "@/types/jobPost/jobPost";
+import jobPostApi from "@/service/jobPostService/jobPostService";
 
 export async function createJobPost(jobPost: JobPostCreate) {
-    const response = await fetch("/api/job-posts", {
-        method: "POST",
-        body: JSON.stringify(jobPost),
-    });
-    return response.json();
+    await jobPostApi.createJobPost(jobPost);
 }

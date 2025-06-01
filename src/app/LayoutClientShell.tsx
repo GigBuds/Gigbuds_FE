@@ -30,8 +30,8 @@ export default function LayoutClientShell({
       <main
         className={
           isLoginPage
-            ? "w-screen h-screen bg-black overflow-hidden" // Full width for login page
-            : "lg:w-[75%] md:w-[55%] sm:w-[60%] w-[60%] overflow-hidden" // Adjusted md:w[60%]
+            ? "w-screen h-screen bg-black overflow-x-scroll" // Full width for login page
+            : "lg:w-[75%] md:w-[55%] sm:w-[60%] w-[60%] overflow-x-scroll" // Adjusted md:w[60%]
         }
       >
         {children}

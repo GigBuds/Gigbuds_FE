@@ -45,7 +45,6 @@ const useLocalStorage = (key: string, defaultValue: string) => {
   const setStoredValue = (newValue: string) => {
     setValue(newValue);
     localStorage.setItem(key, newValue);
-    
     // Dispatch custom event for same-tab communication
     window.dispatchEvent(new CustomEvent('localStorageChange', {
       detail: { key, value: newValue }

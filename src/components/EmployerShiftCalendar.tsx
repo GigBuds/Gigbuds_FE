@@ -14,7 +14,6 @@ export default function EmployerShiftCalendar({
     height = 600,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     value,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     onChange,
 }: Readonly<{
     height?: number,
@@ -27,6 +26,11 @@ export default function EmployerShiftCalendar({
     const handleEventClick = (clickInfo: EventClickArg) => {
         if (confirm(`Are you sure you want to delete the event '${clickInfo.event.title}'`)) {
             dispatch(removeJobShift(clickInfo.event.id));
+            onChange({
+                shiftCount: selector.shiftCount,
+                minimumShift: selector.minimumShift,
+                jobShifts: selector.jobShifts
+            });
             clickInfo.event.remove()
         }
     }

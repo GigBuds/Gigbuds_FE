@@ -1,8 +1,8 @@
 import { configureStore } from "@reduxjs/toolkit"
 import { persistReducer } from "redux-persist"
-import rootReducer from "./rootReducer"
+import localReducer from "./localReducer"
 import createWebStorage from "redux-persist/es/storage/createWebStorage"
-import employerShiftCalendarReducer from "./features/employerShiftCalendarSlice";
+import tempReducer from "./tempReducer";
 
 const createNoopStorage = () => {
     return {
@@ -22,6 +22,8 @@ const createNoopStorage = () => {
 
 const rootStorage = typeof window !== "undefined" ? createWebStorage("local") : createNoopStorage();
 
+// luu torng local storage
+// luu cho kahc -
 const persistConfig = {
     key: "root",
     storage: rootStorage, // use local storage as the storage engine
@@ -29,14 +31,14 @@ const persistConfig = {
   };
   
   // Wrap the root reducer with the persist reducer
-  const persistedReducer = persistReducer(persistConfig, rootReducer);
+  const persistedReducer = persistReducer(persistConfig, localReducer);
   
   
 export const makeStore = () => {
     return configureStore({
         reducer: {
-            persistedReducer,
-            employerShiftCalendar: employerShiftCalendarReducer,
+            persistedReducer, // Luu trong local storage
+            tempReducer, // Luu tam thoi
         },
         middleware: (getDefaultMiddleware) =>
             getDefaultMiddleware({ serializableCheck: false }),

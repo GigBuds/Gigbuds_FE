@@ -48,7 +48,7 @@ export const PlaceAutocomplete = ({
 
       placeAutocomplete.addEventListener("gmp-select", async (event: Event) => {
          const typedEvent = event as PlacePredictionSelectEvent;
-         const place = typedEvent.placePrediction.toPlace();
+         const place: google.maps.places.Place = typedEvent.placePrediction.toPlace();
          await place.fetchFields({
             fields: ["viewport", "location", "displayName", "formattedAddress"],
          });

@@ -8,23 +8,42 @@ import {
  import { PlaceAutocomplete } from "./PlaceAutoComplete";
  import { useEffect, useState } from "react";
  import { MapHandler } from "./MapHandler";
+import { googleMapResponse } from "@/types/folder/GoogleMapResponse";
+ 
  
 
- 
+   /**
+   * GoogleMap component that integrates Google Maps with Place Autocomplete functionality.
+   *
+   * @param {string} API_KEY - The Google Maps API key.
+   * @param {string} MAP_ID - The ID of the Google Map to be displayed.
+   * @param {string | null | undefined} value - The current selected location value.
+   * @param {(location: googleMapResponse | null | undefined) => void} onChange - Callback function to handle location changes.
+   */
  export default function GoogleMap({
       API_KEY, 
       MAP_ID,
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       value,
       onChange
-   }: Readonly<{API_KEY: string, MAP_ID: string, value: string | null | undefined, onChange: (location: string | null | undefined) => void }>) {
+   }: Readonly<{API_KEY: string, MAP_ID: string, value: string | null | undefined, onChange: (location: googleMapResponse | null | undefined) => void }>) {
    const [selectedPlace, setSelectedPlace] =
       useState<google.maps.places.Place | null>(null);
    const [markerRef, marker] = useAdvancedMarkerRef();
 
    useEffect(() => {
       if (selectedPlace) {
-         onChange(selectedPlace.formattedAddress);
+         onChange(
+            {
+               location: selectedPlace.formattedAddress, 
+               provinceCode: selectedPlace.addressComponents?.find(
+                  (component) => component.types.includes("administrative_area_level_1")
+               )?.longText, 
+               districtCode: selectedPlace.addressComponents?.find(
+                  (component) => component.types.includes("administrative_area_level_2")
+               )?.longText
+            }
+         );
       }
    }, [selectedPlace, onChange]);
 

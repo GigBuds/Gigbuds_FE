@@ -8,6 +8,7 @@ import { JobSchedule } from "@/types/jobPost/jobSchedule";
 import EmployerShiftCalendar from "@/components/EmployerShiftCalendar";
 import { useFormStatus } from "react-dom";
 import { createJobPost } from "./action";
+import { googleMapResponse } from "@/types/folder/GoogleMapResponse";
 
 function SubmitButton() {
   const {pending} = useFormStatus();
@@ -21,7 +22,7 @@ function SubmitButton() {
 export default function CreateForm({API_KEY, MAP_ID}: Readonly<{API_KEY: string, MAP_ID: string}>) {
 
   const [form] = Form.useForm();
-  const [location, setLocation] = useState<string | null | undefined>(null);
+  const [googleMapResponse, setGoogleMapResponse] = useState<googleMapResponse | null | undefined>(null);
   const [schedule, setSchedule] = useState<JobSchedule>({
     shiftCount: 0,
     minimumShift: 0,
@@ -122,7 +123,7 @@ export default function CreateForm({API_KEY, MAP_ID}: Readonly<{API_KEY: string,
                 rules={[{ required: true }]}
                 style={{ marginBottom: 0 }}
               >
-                <GoogleMap value={location} onChange={setLocation} API_KEY={API_KEY} MAP_ID={MAP_ID}></GoogleMap>
+                <GoogleMap value={googleMapResponse?.location} onChange={setGoogleMapResponse} API_KEY={API_KEY} MAP_ID={MAP_ID}></GoogleMap>
               </Form.Item>
             </div>
 

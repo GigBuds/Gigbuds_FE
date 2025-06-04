@@ -50,7 +50,13 @@ export const PlaceAutocomplete = ({
          const typedEvent = event as PlacePredictionSelectEvent;
          const place: google.maps.places.Place = typedEvent.placePrediction.toPlace();
          await place.fetchFields({
-            fields: ["viewport", "location", "displayName", "formattedAddress"],
+            fields: [
+               "viewport",
+               "location",
+               "displayName",
+               "formattedAddress",
+               "addressComponents",
+            ],
          });
          onPlaceSelect(place);
       });

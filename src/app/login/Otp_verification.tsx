@@ -5,16 +5,13 @@ import {
   InputOTPGroup,
   InputOTPSeparator,
   InputOTPSlot,
-} from "@/components/ui/input-otp";
+} from "../../../ui/input-otp";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
 import otpService, { OtpVerificationRequest } from "@/service/otpService/otpService";
 import { useRouter } from "next/navigation";
-interface OtpVerificationProps {
-  phoneNumber?: string;
-  onVerificationSuccess?: () => void;
-  onBack?: () => void;
-}
+import { OtpVerificationProps } from "@/types/login.types";
+
 
 const Otp_verification = ({ 
   phoneNumber = "", 

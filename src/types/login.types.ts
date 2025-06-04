@@ -1,7 +1,7 @@
 import dayjs from "dayjs";
 
   export interface FormValues {
-    email: string;
+    identifier: string;
     password: string;
     remember?: boolean;
   }

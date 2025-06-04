@@ -5,49 +5,62 @@ import { FaRegEye, FaRegEyeSlash } from "react-icons/fa";
 import toast from "react-hot-toast";
 import GoogleLoginButton from "./GoogleLoginButton";
 import { loginApi } from "@/service/loginService/loginService";
+import { FormValues } from "@/types/login.types";
+import { useRouter } from "next/navigation";
 
 
 const LoginInput = () => {
-  const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";
-  // Only need loading state since Ant Design Form handles form values
+  const router = useRouter();
+  const googleClientId = process.env.GOOGLE_CLIENT_ID || "";
   const [loading, setLoading] = useState(false);
-
-  interface FormValues {
-    email: string;
-    password: string;
-    remember?: boolean;
-  }
 
   const onFinish = async (values: FormValues) => {
     setLoading(true);
     try {
-      console.log('Calling API with:', values.email, values.password);
-      const response = await loginApi.login(values.email, values.password);
+      console.log('Calling API with:', values.identifier, values.password);
+      const response = await loginApi.login(values.identifier, values.password);
       
       // Handle successful login
       toast.success("Login successful!");
       console.log("Login response:", response);
       
-      
-      if(response.access_token)
-      {
+      if(response.access_token) {
         document.cookie = `accessToken=${response.access_token}; path=/; max-age=604800`; 
-        }
-        if (response.id_token) {
-          document.cookie = `authToken=${response.id_token}; path=/; max-age=604800`;
-        }
-        if (response.refresh_token) {
-          document.cookie = `refreshToken=${response.refresh_token}; path=/; max-age=604800`;
-        }
+      }
+      if (response.id_token) {
+        document.cookie = `authToken=${response.id_token}; path=/; max-age=604800`;
+      }
+      if (response.refresh_token) {
+        document.cookie = `refreshToken=${response.refresh_token}; path=/; max-age=604800`;
+      }
 
-      
+
       
     } catch (error) {
       console.error("Login error:", error);
       toast.error("Login failed. Please check your credentials.");
     } finally {
       setLoading(false);
+      router.push("/"); // Redirect to home page after login
     }
+  };
+
+  // Custom validation function for identifier
+  const validateIdentifier = (_: unknown, value: string) => {
+    if (!value) {
+      return Promise.reject(new Error('Please input your email or phone number!'));
+    }
+    
+    // Check if it's a valid email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    // Check if it's a valid phone number format (basic validation)
+    const phoneRegex = /^[\+]?[0-9\s\-\(\)]{10,}$/;
+    
+    if (emailRegex.test(value) || phoneRegex.test(value)) {
+      return Promise.resolve();
+    }
+    
+    return Promise.reject(new Error('Please enter a valid email or phone number!'));
   };
 
   return (
@@ -65,19 +78,19 @@ const LoginInput = () => {
         }}
       >
         <Form.Item
-          label="Email"
-          name="email"
+          label="Email or Phone Number"
+          name="identifier"
           style={{ marginBottom: "2%" }}
           rules={[
-            { required: true, message: "Please input your email!" },
-            { type: "email", message: "Please enter a valid email!" },
+            { validator: validateIdentifier }
           ]}
         >
           <Input
-            placeholder="Username"
+            placeholder="Enter email or phone number"
             className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
           />
         </Form.Item>
+        
         <Form.Item
           label="Password"
           name="password"
@@ -93,6 +106,7 @@ const LoginInput = () => {
             className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
           />
         </Form.Item>
+        
         <motion.div className="flex flex-row justify-between items-center">
           <Form.Item name="remember" valuePropName="checked" noStyle>
             <Checkbox>Ghi nhớ mật khẩu</Checkbox>

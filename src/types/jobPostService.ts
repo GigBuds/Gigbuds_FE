@@ -15,6 +15,7 @@ export interface JobPost {
   id: number;
   jobTitle: string;
   jobDescription: string;
+  ageRequirement?: string;
   jobLocation?: string;
   salary?: number;
   salaryUnit?: string;
@@ -28,6 +29,10 @@ export interface JobPost {
   userId?: string;
   status?: 'active' | 'inactive' | 'expired';
   applicationsCount?: number;
+  districtCode?: string;
+  provinceCode?: string;
+  jobPositionId?: string;
+
 }
 
 export interface JobPostsResponse {

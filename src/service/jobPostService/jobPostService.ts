@@ -2,7 +2,10 @@ import fetchApi from "@/api/api";
 import { CreateJobPostRequest, GetJobPostsParams, JobPost, JobPostsResponse, UpdateJobPostRequest } from "@/types/jobPostService";
 
 class JobPostApi {
+  
   async getJobPosts(params: GetJobPostsParams = {}): Promise<JobPostsResponse> {
+
+
     try {
       const { pageSize = 10, pageIndex = 1 } = params;
       
@@ -98,6 +101,7 @@ class JobPostApi {
       throw error;
     }
   }
+  
 }
 
 export const jobPostApi = new JobPostApi();

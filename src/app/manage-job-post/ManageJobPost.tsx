@@ -1,75 +1,40 @@
 "use client";
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import ManageApplication from "../manage-application/ManageApplication";
-
-// Define the Job type
-interface Job {
-  id: number;
-  title: string;
-  status: string;
-  numberOfApplicants: number;
-  numberOfViews: number;
-  numberOfFeedbacks: number;
-  expireTime: string;
-}
+import { jobPostApi } from "@/service/jobPostService/jobPostService";
+import { JobPost } from "@/types/jobPostService";
+import { useRouter } from 'next/navigation';
+import JobPostDialog from "@/components/JobPostDialog/JobPostDialog";
 
 const ManageJobPost = () => {
-  const [viewNumberOfApplicants, setViewNumberOfApplicants] = useState(false);
-  const [selectedJob, setSelectedJob] = useState<Job | null>(null); // Fixed: added proper typing
+  const [jobPostings, setJobPostings] = useState<JobPost[]>([]);
+  const router = useRouter();
+  
+  const fetchJobPosts = async () => {
+    try {
+      const response = await jobPostApi.getJobPosts({
+        pageSize: 6,
+        pageIndex: 1
+      });
+      if (response) {
+        console.log('Raw API response:', JSON.stringify(response.items, null, 2));
+        setJobPostings(response.items || []);
+        console.log('Job posts fetched successfully:', response.items);
+      } else {
+        console.error('No job posts found in the response');
+      }
+    } catch (error) {
+      console.error('Failed to fetch job posts:', error);
+    }
+  };
 
-  const jobPostings: Job[] = [
-    {
-      id: 1,
-      title: "Software Engineersadsaddddddddddddddddddddddddddddddddddddddddd",
-      status: "Đang tuyển",
-      numberOfApplicants: 5,
-      numberOfViews: 100,
-      numberOfFeedbacks: 2,
-      expireTime: "2025-12-29T23:59:59Z",
-    },
-    {
-      id: 2,
-      title: "Product Manager",
-      status: "Đã đóng",
-      numberOfApplicants: 3,
-      numberOfViews: 80,
-      numberOfFeedbacks: 1,
-      expireTime: "2024-11-15T23:59:59Z",
-    },
-    {
-      id: 3,
-      title: "UX Designer",
-      status: "Đang tuyển",
-      numberOfApplicants: 10,
-      numberOfViews: 150,
-      numberOfFeedbacks: 5,
-      expireTime: "2025-10-01T23:59:59Z",
-    },
-    {
-      id: 4,
-      title: "Data Scientist",
-      status: "Đã đóng",
-      numberOfApplicants: 2,
-      numberOfViews: 60,
-      numberOfFeedbacks: 0,
-      expireTime: "2025-09-30T23:59:59Z",
-    },
-    // Add more job postings as needed
-  ];
-
-  if (viewNumberOfApplicants) {
-    return (
-      <ManageApplication
-        setViewNumberOfApplicants={setViewNumberOfApplicants}
-        selectedJob={selectedJob}
-      />
-    );
-  }
+  React.useEffect(() => {
+    fetchJobPosts();
+  }, []);
 
   return (
-    <div className="h-full w-full flex flex-col ">
-      <div className=" w-full flex flex-wrap gap-6 ">
+    <div className="h-full w-full flex flex-col">
+      <div className="w-full flex flex-wrap gap-6">
         {jobPostings.map((job) => (
           <div
             key={job.id}
@@ -77,11 +42,11 @@ const ManageJobPost = () => {
           >
             <div className="flex flex-row border-b-1 justify-between w-full items-center py-[3%]">
               <h2 className="text-md font-semibold truncate w-[70%]">
-                {job.title}
+                {job.jobTitle || 'Không có tiêu đề'}
               </h2>
               <div className="flex flex-col items-center w-[25%]">
                 <p className="text-gray-600 text-xs justify-center items-center flex py-[4%] px-[8%] rounded-2xl bg-amber-500">
-                  {job.status}
+                  {job.status === 'active' ? 'Đang tuyển' : 'Đã đóng'}
                 </p>
               </div>
             </div>
@@ -89,26 +54,30 @@ const ManageJobPost = () => {
               <div className="flex flex-row justify-start gap-[3%] items-center">
                 <div className="text-gray-600 flex flex-row gap-1 text-center items-center">
                   <p className="text-sm font-bold text-blue-700">
-                    {job.numberOfApplicants} 
+                    {job.applicationsCount || 0}
                   </p>
-                  <p className="text-xs"> ứng viên</p>
+                  <p className="text-xs">ứng viên</p>
                 </div>
-                <div className="text-gray-600 flex flex-row gap-1  text-center items-center ">
-                  <p className="text-sm font-bold text-blue-700">
-                    {job.numberOfViews}{" "}
-                  </p>
+                <div className="text-gray-600 flex flex-row gap-1 text-center items-center">
+                  <p className="text-sm font-bold text-blue-700">0</p>
                   <p className="text-xs">lượt xem</p>
                 </div>
-                <div className="text-gray-600 flex flex-row gap-1  text-center items-center">
-                  <p className="text-xs font-bold text-blue-700">
-                    {job.numberOfFeedbacks}{" "}
-                  </p>
+                <div className="text-gray-600 flex flex-row gap-1 text-center items-center">
+                  <p className="text-xs font-bold text-blue-700">0</p>
                   <p className="text-xs">đánh giá</p>
                 </div>
               </div>
+              
+              {/* Debug section - remove this after fixing */}
+              <div className="text-xs text-gray-400 py-2">
+                Location: {job.jobLocation}
+                <br />
+                Salary: {(job.salary)?.toLocaleString() } / {job.salaryUnit}
+              </div>
+              
               <div className="flex flex-row justify-between pt-[3%] items-end w-full">
                 <motion.div
-                  className="w-[45%] text-sm rounded-md bg-orange-500 text-white text-center py-1 cursor-pointer "
+                  className="w-[45%] text-sm rounded-md bg-orange-500 text-white text-center py-1 cursor-pointer"
                   initial={{ scale: 1 }}
                   whileHover={{
                     scale: 1.05,
@@ -117,14 +86,15 @@ const ManageJobPost = () => {
                   whileTap={{ scale: 0.95 }}
                   transition={{ type: "spring", stiffness: 300, damping: 20 }}
                   onClick={() => {
-                    setViewNumberOfApplicants(true);
-                    setSelectedJob(job);
+                    router.push(`/manage-job-post/${job.id}`);
                   }}
                 >
                   Xem hồ sơ ứng viên
                 </motion.div>
+                
+                <JobPostDialog job={job}>
                   <motion.div
-                    className="w-[45%] text-sm rounded-md bg-blue-600 text-white text-center py-1 cursor-pointer "
+                    className="w-[45%] text-sm rounded-md bg-blue-600 text-white text-center py-1 cursor-pointer"
                     initial={{ scale: 1 }}
                     whileHover={{
                       scale: 1.05,
@@ -135,6 +105,7 @@ const ManageJobPost = () => {
                   >
                     Xem tin tuyển dụng
                   </motion.div>
+                </JobPostDialog>
               </div>
             </div>
 
@@ -143,7 +114,6 @@ const ManageJobPost = () => {
                 <CountdownTimer expireTime={job.expireTime} />
               </div>
               <div className="w-[33%] justify-end flex">
-                {" "}
                 <p className="text-gray-600 text-xs">
                   {job.expireTime
                     ? new Date(job.expireTime).toLocaleDateString()
@@ -182,14 +152,14 @@ const CountdownTimer: React.FC<CountdownTimerProps> = ({ expireTime }) => {
       const minutes = Math.floor((diff / (1000 * 60)) % 60);
       const seconds = Math.floor((diff / 1000) % 60);
 
-      setTimeLeft(`${days} ngày ${hours}:${minutes}:${seconds} `);
+      setTimeLeft(`${days} ngày ${hours}:${minutes}:${seconds}`);
     }, 1000);
 
     return () => clearInterval(interval);
   }, [expireTime]);
 
   return (
-    <div className="text-xs items-center justify-center flex text-gray-500 ">
+    <div className="text-xs items-center justify-center flex text-gray-500">
       {timeLeft}
     </div>
   );

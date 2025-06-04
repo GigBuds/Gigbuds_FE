@@ -2,18 +2,9 @@ import React from "react";
 import { GoogleLogin, GoogleOAuthProvider, CredentialResponse } from "@react-oauth/google";
 import { jwtDecode } from "jwt-decode";
 import toast from "react-hot-toast";
+import { DecodedToken, GoogleLoginButtonProps } from "@/types/login.types";
 
-interface DecodedToken {
-  email?: string;
-  name?: string;
-  given_name?: string;
-  family_name?: string;
-  [key: string]: unknown;
-}
 
-interface GoogleLoginButtonProps {
-  clientId: string;
-}
 
 const GoogleLoginButton: React.FC<GoogleLoginButtonProps> = ({ clientId }) => {
   const handleGoogleLoginSuccess = (credentialResponse: CredentialResponse) => {

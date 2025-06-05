@@ -4,7 +4,7 @@ import { motion } from 'framer-motion'
 import background from '../../../public/login-bg.png'
 import logo from '../../../public/Logo-white text.png'
 import gigbudslogo from '../../../public/Gigbuds Logo.png'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../ui/tabs'
 import LoginInput from './LoginInput'
 import RegisterInput from './RegisterInput'
 const page = () => {

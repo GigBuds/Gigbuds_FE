@@ -1,40 +1,15 @@
 // filepath: n:\SEM8\Gigbuds_FE\src\service\Login-Register\LoginService.ts
 
 import fetchApi from "@/api/api";
+import { JWTPayload, LoginRequest, LoginResponse } from "@/types/loginService";
 import { jwtDecode } from 'jwt-decode';
 
-interface LoginRequest {
-  identifier: string;
-  password: string;
-}
-
-interface LoginResponse {
-  refresh_token: unknown;
-  success: boolean;
-  access_token?: string;
-  id_token?: string;
-  user?: {
-    id: string;
-    email: string;
-    name?: string;
-  };
-  message?: string;
-}
-
-interface JWTPayload {
-  sub: string;
-  email: string;
-  name?: string;
-  roles?: string[];
-  exp: number;
-  [key: string]: unknown;
-}
 
 class LoginApi {
   async login(identifier: string, password: string): Promise<LoginResponse> {
     try {
       const data: LoginRequest = { identifier, password };
-      const response = await fetchApi.post('/login', data);
+      const response = await fetchApi.post('identities/login', data);
       console.log('Login API response:', response);
       if (response.success && response.access_token) {
         this.setCookie('refreshToken', response.access_token, 1);
@@ -103,7 +78,6 @@ class LoginApi {
     this.deleteCookie('userId');
     this.deleteCookie('userEmail');
     this.deleteCookie('userName');
-    window.location.href = '/login'; // Redirect to login page
     console.log('Authentication cookies cleared');
   }
   // Helper method to delete cookies

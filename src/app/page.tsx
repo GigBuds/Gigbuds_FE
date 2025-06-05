@@ -1,3 +1,14 @@
+import ChartAreaInteractive from "@/components/Chart/Chart";
+import Image from "next/image";
+import React from "react";
+import banner from "../../public/BannerAd.png";
+import { Value } from "@radix-ui/react-select";
+const page = () => {
+  const cardData = [
+    {
+      title:"tin tuyển dụng ",
+      Value:"10",
+      
 "use client";
 import { useEffect, useState } from "react";
 import HomePage from "./homepage/HomePage";
@@ -49,15 +60,33 @@ export default function Home() {
       default:
         return <HomePage/>;
     }
-  };
-
   return (
-    <div className=" h-full w-full p-[2%]"> 
-      <h1 className="text-2xl font-bold mb-4">
-        {selectedTab}     
-      </h1>
-     
-      {getComponent()}
+    <div className=" py-4 px-8 justify-center items-center w-full h-full flex flex-col gap-4">
+      <div className="flex flex-row items-center justify-center w-full gap-[2%]">
+        <Image
+          src={banner}
+          alt="Banner Ad"
+          className="w-[40%] h-[80%] object-contain"
+          style={{ objectFit: "cover" }}
+        
+        />
+        <Image
+          src={banner}
+          alt="Banner Ad"
+          className="w-[40%] h-[80%] object-contain"
+          style={{ objectFit: "cover" }}
+
+        />
+      </div>
+      <div>
+
+      </div>
+    <div className="w-full items-center justify-center m-auto">
+      <ChartAreaInteractive />
+    </div>
+      
     </div>
   );
-}
+};
+
+export default page;

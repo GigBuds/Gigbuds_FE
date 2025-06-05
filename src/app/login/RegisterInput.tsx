@@ -6,21 +6,8 @@ import toast from "react-hot-toast";
 import dayjs from "dayjs";
 import registerService, { RegisterRequest } from "@/service/registerService/registerService";
 import Otp_verification from "./Otp_verification";
+import { RegisterFormValues } from "@/types/login.types";
 
-
-// Define an interface for the form values
-interface RegisterFormValues {
-  firstName?: string;
-  lastName?: string;
-  dob?: dayjs.Dayjs;
-  phone?: string;
-  socialSecurityNumber?: string;
-  gender?: boolean;
-  email?: string;
-  businessEmail?: string;
-  password?: string;
-  confirm?: string;
-}
 
 const RegisterInput = () => {
   const [form] = Form.useForm<RegisterFormValues>();

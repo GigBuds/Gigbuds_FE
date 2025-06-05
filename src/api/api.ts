@@ -1,7 +1,6 @@
 // const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
 const baseUrl = "https://localhost:7290/api/v1";
 
-
 const fetchApi = {
   async post(endpoint: string, body: unknown) {
     const url = `${baseUrl}${endpoint}`;

@@ -8,29 +8,28 @@ import { TiMessages } from "react-icons/ti";
 import { MdOutlineSupervisorAccount } from "react-icons/md";
 import { TbEdit } from "react-icons/tb";
 import { BiSupport } from "react-icons/bi";
-import * as Texts from './text'; // Import texts
+import * as Texts from './text';
 import { jwtDecode } from 'jwt-decode';
 import { loginApi } from '@/service/loginService/loginService';
+import { MenuItem, User } from '@/types/sidebar.types';
+import { useRouter } from 'next/navigation';
 
-// Define an interface for menu items for better structure
-interface MenuItem {
-  id: string;
-  label: string;
-  icon: React.ReactNode; // You can use actual icon components here
-}
+
 
 // Placeholder menu items
 const menuItems: MenuItem[] = [
-  { id: 'Trang Chu', label: Texts.HOME, icon: <IoHomeOutline/> },
-  { id: 'Thong Bao', label: Texts.NOTIFICATIONS, icon: <IoNotificationsOutline/> },
-  { id: 'Tin tuyen dung', label: Texts.JOB_POSTINGS, icon: <LuUserSearch/> },
-  { id: 'Ho so ung vien', label: Texts.CANDIDATE_PROFILES, icon: <MdOutlineSupervisorAccount/> },
-  { id: 'Tin nhan', label: Texts.MESSAGES, icon: <TiMessages/> },
-  { id: 'Cài đặt tài tài khoản', label: Texts.ACCOUNT_SETTINGS, icon: <IoSettingsOutline/> },
-  { id: 'Hỗ trợ', label: Texts.SUPPORT, icon: <BiSupport /> },
-  { id: 'Điều khoản/chính sách', label: Texts.TERMS_POLICY, icon: <IoDocumentTextOutline /> },
-  { id: 'Đăng xuất', label: Texts.LOGOUT, icon: <IoLogOutOutline /> },
+  { id: 'homepage', label: Texts.HOME, icon: <IoHomeOutline/>, link: '/' },
+  { id: 'Thong Bao', label: Texts.NOTIFICATIONS, icon: <IoNotificationsOutline/>, link: '/notifications' },
+  { id: 'manage-job-post', label: Texts.JOB_POSTINGS, icon: <LuUserSearch/>, link: '/manage-job-post' },
+  { id: 'Ho so ung vien', label: Texts.CANDIDATE_PROFILES, icon: <MdOutlineSupervisorAccount/>, link: '/candidate-profiles' },
+  { id: 'Tin nhan', label: Texts.MESSAGES, icon: <TiMessages/>, link: '/messages' },
+  { id: 'Cài đặt tài tài khoản', label: Texts.ACCOUNT_SETTINGS, icon: <IoSettingsOutline/>, link: '/account-settings' },
+  { id: 'Hỗ trợ', label: Texts.SUPPORT, icon: <BiSupport />,    link: '/support' },
+  { id: 'Điều khoản/chính sách', label: Texts.TERMS_POLICY, icon: <IoDocumentTextOutline />, link: '/terms-policy' },
+  { id: 'Đăng xuất', label: Texts.LOGOUT, icon: <IoLogOutOutline />, link: '/login' },
 ];
+
+
 
 const useLocalStorage = (key: string, defaultValue: string) => {
   const [value, setValue] = useState(defaultValue);
@@ -55,10 +54,10 @@ const useLocalStorage = (key: string, defaultValue: string) => {
 };
 
 const Sidebar = () => {
-    ;
+    const router = useRouter();
     const [isOpen, setIsOpen] = useState(false);
-   const [selectedItem, setSelectedItem] = useLocalStorage('selectedTab', 'Trang Chu');  // New state for selected item
-    const [user, setUser] = useState<{ sub: string; email: string; name?: string; roles?: string[] } | null>(null);
+    const [selectedItem, setSelectedItem] = useLocalStorage('selectedTab', 'Trang Chu');
+    const [user, setUser] = useState<User | null>(null);
     const id_token = typeof document !== 'undefined'
         ? document.cookie.split('; ').find(row => row.startsWith('authToken='))
         : null;
@@ -68,21 +67,18 @@ const Sidebar = () => {
             (async () => {
                 try {
                     await loginApi.logout();
-                    setSelectedItem('Trang Chu'); // Clear selected tab on logout
+                    setSelectedItem('Trang Chu');
                     setUser(null);
                 } catch (error: unknown) {
                     console.error('Logout error:', error);
                 }
             })();
         }
-            }, [selectedItem, setSelectedItem]);
+    }, [selectedItem, setSelectedItem]);
 
-    // Decode JWT token and set user state
     useEffect(() => {
         if (id_token) {
-             
             const token = id_token.split('=')[1];
-
             const decodedUser = decodeJWT(token);
             console.log('Decoded user:', decodedUser);
             if (decodedUser) {
@@ -95,9 +91,9 @@ const Sidebar = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [id_token]);
 
-    const decodeJWT = (token: string): { sub: string; email: string; name?: string; roles?: string[] } | null => {
+    const decodeJWT = (token: string): User | null => {
         try {
-            const decoded = jwtDecode(token) as { sub: string; email: string; name?: string; roles?: string[] };
+            const decoded = jwtDecode(token) as User;
             return {
                 sub: decoded.sub,
                 email: decoded.email,
@@ -202,6 +198,7 @@ const Sidebar = () => {
                                     transition={{ type: "spring", stiffness: 300, damping: 20 }}
                                     onClick={() => {
                                         setSelectedItem(item.id); // Set selected item
+                                        router.push(item.link); // Navigate to the corresponding page
 
                                     }} 
                                 >

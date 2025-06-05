@@ -1,11 +1,10 @@
+import "@ant-design/v5-patch-for-react-19";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-// import Sidebar from "@/components/Sidebar/Sidebar"; // No longer needed here
 import Logo from "../../public/Gigbuds Logo.png";
 import LayoutClientShell from "./LayoutClientShell";
-// import { usePathname } from "next/navigation"; // No longer needed here
-
+import StoreProvider from "@/components/providers/StoreProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,14 +30,13 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // const pathname = usePathname(); // Logic moved to LayoutClientShell
-  // const isLoginPage = pathname === "/Login"; // Logic moved to LayoutClientShell
 
   return (
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
-        
-        <LayoutClientShell>{children}</LayoutClientShell>
+        <StoreProvider>
+          <LayoutClientShell>{children}</LayoutClientShell>
+        </StoreProvider>
       </body>
     </html>
   );

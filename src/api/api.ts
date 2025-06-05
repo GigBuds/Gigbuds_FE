@@ -1,8 +1,12 @@
-const baseUrl = 'https://localhost:53460/api/v1/';
-// const baseUrl = process.env.NEXT_PUBLIC_BASE_URL
+// const baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+const baseUrl = "https://localhost:7290/api/v1";
+
 const fetchApi = {
   async post(endpoint: string, body: unknown) {
-    const response = await fetch(`${baseUrl}${endpoint}`, {
+    const url = `${baseUrl}${endpoint}`;
+    console.log(url);
+    console.log(body);
+    const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

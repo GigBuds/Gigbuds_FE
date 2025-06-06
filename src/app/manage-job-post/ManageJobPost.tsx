@@ -13,7 +13,7 @@ const ManageJobPost = () => {
   const fetchJobPosts = async () => {
     try {
       const response = await jobPostApi.getJobPosts({
-        pageSize: 6,
+        pageSize: 10,
         pageIndex: 1
       });
       if (response) {

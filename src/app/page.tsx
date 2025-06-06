@@ -3,13 +3,19 @@ import ChartAreaInteractive from "@/components/Chart/Chart";
 import Image from "next/image";
 import React from "react";
 import banner from "../../public/BannerAd.png";
-const page = () => {
-  const cardData = [
-    {
-      title:"tin tuyển dụng ",
-      value:"10",
-    }
-  ]
+import { useRouter } from "next/navigation";
+const Page = () => {
+  const router = useRouter();
+
+  const accessToken = document.cookie
+    .split("; ")
+    .find((row) => row.startsWith("accessToken="))
+    ?.split("=")[1];
+  if (!accessToken) {
+    router.push("/login");
+    return null; // Prevent rendering the rest of the component
+  }
+
   
   return (
     <div className=" py-4 px-8 justify-center items-center w-full h-full flex flex-col gap-4">
@@ -40,4 +46,4 @@ const page = () => {
   );
 };
 
-export default page;
+export default Page;

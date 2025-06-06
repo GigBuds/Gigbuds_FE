@@ -66,7 +66,7 @@ const Sidebar = () => {
         if (selectedItem === 'Đăng xuất') {
             (async () => {
                 try {
-                    await loginApi.logout();
+                    loginApi.logout();
                     setSelectedItem('Trang Chu');
                     setUser(null);
                 } catch (error: unknown) {

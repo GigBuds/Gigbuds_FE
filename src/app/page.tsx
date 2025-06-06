@@ -10,6 +10,7 @@ const page = () => {
       value:"10",
     }
   ]
+  
   return (
     <div className=" py-4 px-8 justify-center items-center w-full h-full flex flex-col gap-4">
       <div className="flex flex-row items-center justify-center w-full gap-[2%]">

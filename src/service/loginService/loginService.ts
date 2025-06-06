@@ -11,8 +11,8 @@ class LoginApi {
       const data: LoginRequest = { identifier, password };
       const response = await fetchApi.post('identities/login', data);
       console.log('Login API response:', response);
-      if (response.success && response.access_token) {
-        this.setCookie('refreshToken', response.access_token, 1);
+      if (response.access_token) {
+        this.setCookie('accessToken', response.access_token, 1);
         
         if (response.id_token) {
           // Decode JWT id_token
@@ -20,7 +20,7 @@ class LoginApi {
           
           if (decodedToken) {
             this.setCookie('authToken', response.id_token, 7);
-            localStorage.setItem('userId', decodedToken.sub);
+            this.setCookie('accountId', decodedToken.sub);
             this.setCookie('userEmail', decodedToken.email, 7);
             this.setCookie('roles', JSON.stringify(decodedToken.roles || []), 7);
             if (decodedToken.name) {
@@ -75,7 +75,7 @@ class LoginApi {
   // Method to logout and clear cookies
   logout() {
     this.deleteCookie('authToken');
-    this.deleteCookie('userId');
+    this.deleteCookie('accountId');
     this.deleteCookie('userEmail');
     this.deleteCookie('userName');
     this.deleteCookie('refreshToken');

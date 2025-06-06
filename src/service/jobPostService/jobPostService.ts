@@ -7,11 +7,12 @@ class JobPostApi {
 
 
     try {
-      const { pageSize = 10, pageIndex = 1 } = params;
-      
+      const { pageSize = 10, pageIndex = 1, employerId } = params;      
       const queryParams = new URLSearchParams({
         pageSize: pageSize.toString(),
         pageIndex: pageIndex.toString(),
+        employerId: employerId || '',
+        
       });
 
       const response = await fetchApi.get(`job-posts?${queryParams.toString()}`);

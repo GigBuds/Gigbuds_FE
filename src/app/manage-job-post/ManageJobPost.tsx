@@ -6,19 +6,30 @@ import { JobPost } from "@/types/jobPostService";
 import { useRouter } from 'next/navigation';
 import JobPostDialog from "@/components/JobPostDialog/JobPostDialog";
 import { useLoading } from '@/contexts/LoadingContext';
+import { Pagination } from "antd";
 
 const ManageJobPost = () => {
   const [jobPostings, setJobPostings] = useState<JobPost[]>([]);
   const { setIsLoading } = useLoading();
   const router = useRouter();
-  
-  const fetchJobPosts = useCallback(async () => {
+  interface FetchJobPostsParams {
+    pageSize: number;
+    pageIndex: number;
+    employerId: string;
+  }
+
+  interface JobPostApiResponse {
+    items?: JobPost[];
+  }
+
+  const fetchJobPosts = useCallback(async (employerId: string): Promise<void> => {
     try {
       setIsLoading(true); // Start loading
-      const response = await jobPostApi.getJobPosts({
-        pageSize: 10,
-        pageIndex: 1
-      });
+      const response: JobPostApiResponse = await jobPostApi.getJobPosts({
+        pageSize: 6,
+        pageIndex: 1,
+        // employerId: employerId, // Pass the account
+      } as FetchJobPostsParams);
       if (response) {
         console.log('Raw API response:', JSON.stringify(response.items, null, 2));
         setJobPostings(response.items || []);
@@ -26,10 +37,10 @@ const ManageJobPost = () => {
       } else {
         console.error('No job posts found in the response');
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to fetch job posts:', error);
     } finally {
-      setTimeout(() => {
+      setTimeout((): void => {
         setIsLoading(false); // Stop loading after a delay
       }, 1500); // Adjust the delay as needed
 
@@ -37,7 +48,16 @@ const ManageJobPost = () => {
   }, [setIsLoading]);
 
   React.useEffect(() => {
-    fetchJobPosts();
+    const accountId = document.cookie
+      .split("; ")
+      .find((row) => row.startsWith("accountId="))
+      ?.split("=")[1];
+    if (!accountId) {
+      router.push("/login");
+      return; // Prevent rendering the rest of the component
+    }
+
+    fetchJobPosts(accountId);
   }, [fetchJobPosts]);
 
   return (
@@ -132,6 +152,17 @@ const ManageJobPost = () => {
           </div>
         ))}
       </div>
+      <Pagination
+        className="mt-4"
+        total={jobPostings.length}
+        pageSize={6}
+        showSizeChanger={false}
+        onChange={(page, pageSize) => {
+          // Handle pagination logic here if needed
+          console.log(`Page: ${page}, Page Size: ${pageSize}`);
+        }}
+        showTotal={(total) => `Tổng số tin: ${total}`}
+      />
     </div>
   );
 };

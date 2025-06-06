@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { motion } from "framer-motion";
 import { Form, Input, Button, Checkbox } from "antd";
 import { FaRegEye, FaRegEyeSlash } from "react-icons/fa";
@@ -23,18 +23,6 @@ const LoginInput = () => {
       // Handle successful login
       toast.success("Login successful!");
       console.log("Login response:", response);
-      
-      if(response.access_token) {
-        document.cookie = `accessToken=${response.access_token}; path=/; max-age=604800`; 
-      }
-      if (response.id_token) {
-        document.cookie = `authToken=${response.id_token}; path=/; max-age=604800`;
-      }
-      if (response.refresh_token) {
-        document.cookie = `refreshToken=${response.refresh_token}; path=/; max-age=604800`;
-      }
-
-
       
     } catch (error) {
       console.error("Login error:", error);

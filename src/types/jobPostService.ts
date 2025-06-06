@@ -38,7 +38,7 @@ export interface JobPost {
   isOutstandingPost: boolean;
   vacancyCount: number;
   jobSchedule?: JobSchedule;
-  userId?: string;
+  employerId?: string;
   status?: 'active' | 'inactive' | 'expired';
   applicationsCount?: number;
   districtCode?: string;
@@ -61,7 +61,7 @@ export interface JobPostsResponse {
 export interface GetJobPostsParams {
   pageSize?: number;
   pageIndex?: number;
-  userId?: string;
+  employerId?: string;
   search?: string;
   location?: string;
   employmentType?: string;

@@ -61,7 +61,6 @@ const fetchApi = {
 
   async get(endpoint: string) {
     const url = `${baseUrl}${endpoint}`;
-    console.log('Making GET request to:', url);
     
     const response = await fetch(url, {
       method: 'GET',
@@ -69,8 +68,6 @@ const fetchApi = {
         'Content-Type': 'application/json',
       },
     });
-
-    console.log('GET Response status:', response.status);
 
     if (!response.ok) {
       throw new Error(`Error: ${response.status} ${response.statusText}`);

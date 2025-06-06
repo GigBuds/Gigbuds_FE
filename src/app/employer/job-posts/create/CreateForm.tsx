@@ -4,48 +4,34 @@ import { Button, DatePicker, Input, InputNumber, Switch , Form, Select, Card, Ty
 import GoogleMap from "@/components/map/GoogleMap";
 import { CreateJobPostRequest, JobPosition, JobSchedule } from "@/types/jobPostService";
 import EmployerShiftCalendar from "@/components/EmployerShiftCalendar";
-import { useFormStatus } from "react-dom";
 import { GoogleMapResponse } from "@/types/folder/googleMapResponse";
 import toast from "react-hot-toast";
+import { useState } from "react";
+import fetchApi from "@/api/api";
 
 const { Title } = Typography;
 
-function SubmitButton() {
-  const {pending} = useFormStatus();
-  return (
-    <div className="flex justify-center mt-8">
-      <Button 
-        type="primary" 
-        htmlType="submit" 
-        loading={pending} 
-        size="large"
-        className="px-12 py-2 h-12"
-      >
-        Tạo Bài Đăng
-      </Button>
-    </div>
-  )
-}
-
-export default function CreateForm({API_KEY, MAP_ID, jobPositions}: Readonly<{API_KEY: string, MAP_ID: string, jobPositions: JobPosition[]}>) {
-
+export default function CreateForm({API_KEY, MAP_ID, jobPositions}: Readonly<{API_KEY: string, MAP_ID: string, jobPositions: Record<string, JobPosition[]>}>) {
   const [form] = Form.useForm();
-
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const onFinish = async (values: CreateJobPostRequest) => {
+    setIsLoading(true);
     console.log('values', values);
     values.accountId = '3'; // TODO: get accountId from user
-    const response = await fetch('/api/job-posts', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(values),
-    });
-
-    if (response.ok) {
-      toast.success('Bài đăng đã được tạo thành công');
-      form.resetFields();
-    } else {
+    try {
+      const response = await fetchApi.post('job-posts', values);
+      if (response.success || response.ok) {
+        toast.success('Bài đăng đã được tạo thành công');
+        form.resetFields();
+      } else {
+        toast.error('Lỗi khi tạo bài đăng');
+      }
+    } catch (error) {
+      console.error('error', error);
       toast.error('Lỗi khi tạo bài đăng');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -67,6 +53,7 @@ export default function CreateForm({API_KEY, MAP_ID, jobPositions}: Readonly<{AP
         })),
       },
     });
+    console.log('schedule', schedule);
   };
 
   const handleMapChange = (response: GoogleMapResponse | null | undefined) => {
@@ -81,7 +68,9 @@ export default function CreateForm({API_KEY, MAP_ID, jobPositions}: Readonly<{AP
     <div className="max-w-6xl mx-auto p-6">
       <div className="text-center mb-8">
         <Title level={2} className="mb-2">Tạo Bài Đăng Tuyển Dụng Mới</Title>
-        <p className="text-gray-600">Điền thông tin chi tiết bên dưới để tạo bài đăng tuyển dụng mới</p>
+        <p className="text-gray-600">
+          Điền thông tin chi tiết bên dưới để tạo bài đăng tuyển dụng mới
+        </p>
       </div>
 
       <Form 
@@ -96,7 +85,7 @@ export default function CreateForm({API_KEY, MAP_ID, jobPositions}: Readonly<{AP
         }}
       >
         {/* Job Title - Most Important Field */}
-        <Card className="mb-6 shadow-sm">
+        <Card className="mb-6 shadow-sm border-l-4 border-l-blue-500">
           <div className="text-center">
             <Form.Item 
               name="JobTitle" 
@@ -108,7 +97,6 @@ export default function CreateForm({API_KEY, MAP_ID, jobPositions}: Readonly<{AP
                 variant="outlined" 
                 size="large" 
                 placeholder="VD: Kỹ Sư Phần Mềm Senior"
-                className="text-center"
               /> 
             </Form.Item>
           </div>
@@ -146,17 +134,21 @@ export default function CreateForm({API_KEY, MAP_ID, jobPositions}: Readonly<{AP
             <Form.Item 
               name="JobPositionId" 
               label="Danh Mục Công Việc" 
+              tooltip="Tùy chọn - Giúp phân loại công việc tốt hơn"
             > 
               <Select 
                 size="large"
+                showSearch
+                optionFilterProp="label"
                 placeholder="Chọn danh mục công việc"
                 options={
-                  jobPositions.map((jobPosition) => { 
-                    return {
-                      value: jobPosition.id,
-                      label: jobPosition.jobPositionName, 
-                    }
-                  })
+                  Object.entries(jobPositions).map(([key, positions]) => ({
+                    label: key,
+                    options: positions.map(position => ({
+                      value: position.id,
+                      label: position.jobPositionName
+                    }))
+                  }))
                 } 
               /> 
             </Form.Item>
@@ -164,13 +156,14 @@ export default function CreateForm({API_KEY, MAP_ID, jobPositions}: Readonly<{AP
             <Form.Item 
               name="VacancyCount" 
               label="Số Lượng Vị Trí" 
+              tooltip="Số lượng vị trí cần tuyển dụng"
               rules={[{ required: true, message: 'Vui lòng nhập số lượng vị trí tuyển dụng' }]}
             >
               <InputNumber 
                 variant="outlined" 
                 size="large"
                 min={1}
-                placeholder="Số vị trí cần tuyển?"
+                placeholder="VD: 10"
                 className="w-full"
               />
             </Form.Item>
@@ -255,7 +248,7 @@ export default function CreateForm({API_KEY, MAP_ID, jobPositions}: Readonly<{AP
             <Form.Item 
               name="IsMale" 
               label="Ưu Tiên Giới Tính" 
-              tooltip="Bật nếu vị trí này yêu cầu ứng viên nam"
+              tooltip="Tùy chọn - Bật nếu vị trí này yêu cầu ứng viên nam"
               valuePropName="checked"
               initialValue={true}
             >
@@ -268,7 +261,7 @@ export default function CreateForm({API_KEY, MAP_ID, jobPositions}: Readonly<{AP
         <Card title="Địa Điểm Làm Việc" className="mb-6 shadow-sm">
           <Form.Item 
             name="JobLocation" 
-            label="JobLocation" 
+            label="Địa Điểm Làm Việc" 
             rules={[{ required: true, message: 'Vui lòng chọn địa điểm làm việc' }]}
             className="mb-0"
           >
@@ -294,7 +287,11 @@ export default function CreateForm({API_KEY, MAP_ID, jobPositions}: Readonly<{AP
             label="Thiết Lập Lịch Làm Việc & Ca Làm"
             rules={[{ required: true, message: 'Vui lòng thiết lập lịch làm việc' }]}
             className="mb-0"
-            tooltip="Bao gồm số ca tối thiểu mà ứng viên phải đăng ký và lịch làm việc"
+            tooltip={    
+            <div>
+              - Số ca tối thiểu: Số ca làm việc tối thiểu mà ứng viên phải đăng ký<br />
+              - Lịch làm việc: Thời gian và ca làm việc cụ thể cho vị trí này
+            </div>}
           >
             <EmployerShiftCalendar onChange={handleScheduleChange} />
           </Form.Item>
@@ -323,7 +320,7 @@ export default function CreateForm({API_KEY, MAP_ID, jobPositions}: Readonly<{AP
               label="Bài Đăng Nổi Bật" 
               valuePropName="checked"
               initialValue={false}
-              tooltip="Bài đăng nổi bật có độ hiển thị cao hơn"
+              tooltip="Tùy chọn - Bài đăng nổi bật có độ hiển thị cao hơn"
             >
               <Switch/>
             </Form.Item>
@@ -337,7 +334,17 @@ export default function CreateForm({API_KEY, MAP_ID, jobPositions}: Readonly<{AP
           </div>
         </Card>
 
-        <SubmitButton />
+        <div className="flex justify-center mt-8">
+          <Button 
+            type="primary" 
+            htmlType="submit" 
+            size="large"
+            className="px-12 py-2 h-12"
+            loading={isLoading}
+          >
+            {isLoading ? 'Đang tạo bài đăng...' : 'Tạo Bài Đăng'}
+          </Button>
+        </div>
       </Form>
     </div>
   )

@@ -6,12 +6,15 @@ import { JobPost } from "@/types/jobPostService";
 import { useRouter } from 'next/navigation';
 import JobPostDialog from "@/components/JobPostDialog/JobPostDialog";
 import { useLoading } from '@/contexts/LoadingContext';
-import { Pagination } from "antd";
+import Pagination from "@/components/Pagination/Pagination";
 
 const ManageJobPost = () => {
   const [jobPostings, setJobPostings] = useState<JobPost[]>([]);
+  const [pageIndex, setPageIndex] = useState<number>(1);
   const { setIsLoading } = useLoading();
   const router = useRouter();
+  const pageSize = 6;
+
   interface FetchJobPostsParams {
     pageSize: number;
     pageIndex: number;
@@ -22,13 +25,13 @@ const ManageJobPost = () => {
     items?: JobPost[];
   }
 
-  const fetchJobPosts = useCallback(async (employerId: string): Promise<void> => {
+  const fetchJobPosts = useCallback(async (employerId: string, page: number = 1): Promise<void> => {
     try {
-      setIsLoading(true); // Start loading
+      setIsLoading(true);
       const response: JobPostApiResponse = await jobPostApi.getJobPosts({
-        pageSize: 6,
-        pageIndex: 1,
-        // employerId: employerId, // Pass the account
+        pageSize: pageSize,
+        pageIndex: page,
+        // employerId: employerId,
       } as FetchJobPostsParams);
       if (response) {
         console.log('Raw API response:', JSON.stringify(response.items, null, 2));
@@ -41,11 +44,23 @@ const ManageJobPost = () => {
       console.error('Failed to fetch job posts:', error);
     } finally {
       setTimeout((): void => {
-        setIsLoading(false); // Stop loading after a delay
-      }, 1500); // Adjust the delay as needed
-
+        setIsLoading(false);
+      }, 1500);
     }
-  }, [setIsLoading]);
+  }, [setIsLoading, pageSize]);
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1) {
+      setPageIndex(newPage);
+      const accountId = document.cookie
+        .split("; ")
+        .find((row) => row.startsWith("accountId="))
+        ?.split("=")[1];
+      if (accountId) {
+        fetchJobPosts(accountId, newPage);
+      }
+    }
+  };
 
   React.useEffect(() => {
     const accountId = document.cookie
@@ -54,14 +69,23 @@ const ManageJobPost = () => {
       ?.split("=")[1];
     if (!accountId) {
       router.push("/login");
-      return; // Prevent rendering the rest of the component
+      return;
     }
 
-    fetchJobPosts(accountId);
-  }, [fetchJobPosts]);
+    fetchJobPosts(accountId, pageIndex);
+  }, [fetchJobPosts, router, pageIndex]);
 
   return (
     <div className="h-full w-full flex flex-col">
+      {/* Header */}
+      <div className="mb-4">
+        <h1 className="text-2xl font-bold text-gray-800">Quản lý tin tuyển dụng</h1>
+        <div className="text-sm text-gray-600 mt-1">
+          Trang {pageIndex} - Hiển thị {jobPostings.length} tin tuyển dụng
+        </div>
+      </div>
+
+      {/* Job posts grid */}
       <div className="w-full flex flex-wrap gap-6">
         {jobPostings.map((job) => (
           <div
@@ -152,17 +176,27 @@ const ManageJobPost = () => {
           </div>
         ))}
       </div>
-      <Pagination
-        className="mt-4"
-        total={jobPostings.length}
-        pageSize={6}
-        showSizeChanger={false}
-        onChange={(page, pageSize) => {
-          // Handle pagination logic here if needed
-          console.log(`Page: ${page}, Page Size: ${pageSize}`);
-        }}
-        showTotal={(total) => `Tổng số tin: ${total}`}
+
+      {/* Empty state */}
+      {jobPostings.length === 0 && (
+        <div className="flex flex-col items-center justify-center py-12">
+          <div className="text-gray-400 text-lg mb-2">Không có tin tuyển dụng nào</div>
+          <div className="text-gray-500 text-sm">Hãy tạo tin tuyển dụng đầu tiên của bạn</div>
+        </div>
+      )}
+
+      {/* Pagination */}
+      <div className="bottom-0 right-20 fixed items-center justify-center bg-white py-4 ">
+<Pagination
+        currentPage={pageIndex}
+        hasItems={jobPostings.length > 0}
+        itemsCount={jobPostings.length}
+        pageSize={pageSize}
+        onPageChange={handlePageChange}
       />
+      </div>
+
+      
     </div>
   );
 };

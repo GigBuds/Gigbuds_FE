@@ -1,28 +1,29 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { RootState } from "../store";
+import { User } from "@/types/sidebar.types";
 
 export interface UserState {
-    id: string | null;
+    id: number | null;
+    sub: string | null;
     email: string | null;
-    phone: string | null;
-    name: string | null;
-    profilePicture: string | null;
+    roles: string[] | null;
 }
 
 const initialState: UserState = {
     id: null,
+    sub: null,
     email: null,
-    phone: null,
-    name: null,
-    profilePicture: null,
+    roles: null,
 }
 
 const userSlice = createSlice({
     name: "user",
     initialState,
     reducers: {
-        setUser: (state, action: PayloadAction<string>) => {
-            state.id = action.payload;
+        setUser: (state, action: PayloadAction<User>) => {
+            state.sub = action.payload.sub;
+            state.email = action.payload.email;
+            state.roles = action.payload.roles || [];
         },
         clearUserId(state) {
             state.id = null;

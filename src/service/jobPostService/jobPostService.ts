@@ -38,8 +38,8 @@ class JobPostApi {
 
   async createJobPost(data: CreateJobPostRequest): Promise<JobPost> {
     try {
+      console.log('Create job post API request:', data);
       const response = await fetchApi.post('job-posts', data);
-      console.log('Create job post API response:', response);
       
       return response;
     } catch (error) {

@@ -78,6 +78,8 @@ class LoginApi {
     this.deleteCookie('userId');
     this.deleteCookie('userEmail');
     this.deleteCookie('userName');
+    this.deleteCookie('refreshToken');
+    this.deleteCookie('accessToken');
     console.log('Authentication cookies cleared');
   }
   // Helper method to delete cookies

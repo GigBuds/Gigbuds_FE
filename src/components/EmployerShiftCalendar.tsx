@@ -2,34 +2,33 @@
 import FullCalendar from '@fullcalendar/react'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import interactionPlugin from '@fullcalendar/interaction'
-import { EventClickArg, DateSelectArg, EventRemoveArg, EventAddArg, EventChangeArg } from '@fullcalendar/core/index.js'
+import { EventClickArg, DateSelectArg, EventAddArg, EventChangeArg } from '@fullcalendar/core/index.js'
 import toast from 'react-hot-toast'
 import ConvertEventApiToShift from '@/utils/ConvertEventApiToShift'
-import { JobSchedule } from '@/types/jobPost/jobSchedule'
+import { JobSchedule, JobShift } from '@/types/jobPostService'
 import { InputNumber } from 'antd'
 import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks'
 import { addJobShift, removeJobShift, selectEmployerShiftCalendar, setMinimumShift, updateJobShift } from '@/lib/redux/features/employerShiftCalendarSlice'
 
 export default function EmployerShiftCalendar({
     height = 600,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    value,
     onChange,
 }: Readonly<{
     height?: number,
-    value: JobSchedule,
     onChange: (schedule: JobSchedule) => void
 }>) {
     const dispatch = useAppDispatch();
     const selector = useAppSelector(selectEmployerShiftCalendar);
 
     const handleEventClick = (clickInfo: EventClickArg) => {
-        if (confirm(`Are you sure you want to delete the event '${clickInfo.event.title}'`)) {
+        if (confirm(`Bạn có chắc chắn muốn xóa ca làm này?`)) {
             dispatch(removeJobShift(clickInfo.event.id));
             onChange({
-                shiftCount: selector.shiftCount,
+                shiftCount: selector.shiftCount - 1,
                 minimumShift: selector.minimumShift,
-                jobShifts: selector.jobShifts
+                jobShifts: selector.jobShifts.filter(
+                    (jobShift: JobShift) => jobShift.jobShiftId !== clickInfo.event.id
+                )
             });
             clickInfo.event.remove()
         }
@@ -41,26 +40,11 @@ export default function EmployerShiftCalendar({
         if (addedShift) {
             dispatch(addJobShift(addedShift));
             onChange({
-                shiftCount: selector.shiftCount,
+                shiftCount: selector.shiftCount + 1,
                 minimumShift: selector.minimumShift,
-                jobShifts: selector.jobShifts
+                jobShifts: [...selector.jobShifts, addedShift]
             });
         }
-        console.log('add', selector.jobShifts, selector.shiftCount, selector.minimumShift);
-    }
-
-    const handleEventRemove = (event: EventRemoveArg) => {
-        const removedShift = ConvertEventApiToShift(event.event);
-
-        if (removedShift) {
-            dispatch(removeJobShift(removedShift.jobShiftId));
-            onChange({
-                shiftCount: selector.shiftCount,
-                minimumShift: selector.minimumShift,
-                jobShifts: selector.jobShifts
-            });
-        }
-        console.log('remove', selector.jobShifts, selector.shiftCount, selector.minimumShift);
     }
 
     const handleEventUpdate = (event: EventChangeArg) => {
@@ -71,10 +55,16 @@ export default function EmployerShiftCalendar({
             onChange({
                 shiftCount: selector.shiftCount,
                 minimumShift: selector.minimumShift,
-                jobShifts: selector.jobShifts
+                jobShifts: selector.jobShifts.map(
+                    (jobShift: JobShift) => {
+                        if (jobShift.jobShiftId === updatedShift.jobShiftId) {
+                            return updatedShift;
+                        }
+                        return jobShift;
+                    }
+                )
             });
         }
-        console.log('update', selector.jobShifts, selector.shiftCount, selector.minimumShift);
     }
 
     const handleDateSelect = (selectInfo: DateSelectArg) => {
@@ -86,17 +76,17 @@ export default function EmployerShiftCalendar({
         calendarApi.unselect() // clear date selection
 
         calendarApi.addEvent({
-        id: crypto.randomUUID(),
-        title: "",
-        start: selectInfo.startStr,
-        end: selectInfo.endStr,
-        allDay: selectInfo.allDay
+            id: crypto.randomUUID(),
+            title: "",
+            start: selectInfo.startStr,
+            end: selectInfo.endStr,
+            allDay: selectInfo.allDay
         })
     }
     return (
         <div className='flex flex-col gap-2'>
             <div className='flex items-center gap-2'>
-                <label htmlFor='MinimumShift' className='text-sm font-medium'>Minimum Shift</label>
+                <label htmlFor='MinimumShift' className='text-sm font-medium' title="Số ca tối thiểu mà ứng viên phải đăng ký">Số ca tối thiểu</label>
                 <InputNumber 
                     id='MinimumShift'
                     defaultValue={0}
@@ -132,7 +122,6 @@ export default function EmployerShiftCalendar({
                 allDaySlot = {false}
                 eventClick={handleEventClick} // Handle when user click on the event
                 eventAdd={handleEventAdd}
-                eventRemove={handleEventRemove}
                 eventChange={handleEventUpdate}
                 select={handleDateSelect} // Handle when user click on the time-range
                 eventConstraint={

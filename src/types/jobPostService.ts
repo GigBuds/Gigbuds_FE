@@ -1,14 +1,26 @@
 export interface JobShift {
-  id?: string;
+  jobShiftId: string
+  dayOfWeek: number;
   startTime: string;
   endTime: string;
-  date: string;
+}
+
+export interface JobShiftRequest {
+  dayOfWeek: number;
+  startTime: string;
+  endTime: string;
 }
 
 export interface JobSchedule {
   shiftCount: number;
   minimumShift: number;
   jobShifts: JobShift[];
+}
+
+export interface JobScheduleRequest {
+  shiftCount: number;
+  minimumShift: number;
+  jobShifts: JobShiftRequest[];
 }
 
 export interface JobPost {
@@ -58,20 +70,33 @@ export interface GetJobPostsParams {
 }
 
 export interface CreateJobPostRequest {
-  jobTitle: string;
-  jobDescription: string;
-  jobLocation?: string;
-  salary?: number;
-  salaryUnit?: string;
-  jobRequirement?: string;
-  experienceRequirement?: string;
-  benefit?: string;
-  expireTime?: string;
-  vacancyCount: number;
-  jobSchedule?: JobSchedule;
+    accountId: string;
+    jobTitle: string;
+    ageRequirement: string;
+    jobDescription: string;
+    jobRequirement: string;
+    experienceRequirement: string;
+    salary: number;
+    salaryUnit: string;
+    jobLocation: string | null | undefined;
+    expireTime: string;
+    benefit: string;
+    vacancyCount: number;
+    districtCode: string;
+    provinceCode: string;
+    isOutstandingPost: boolean;
+    jobPositionId: string;
+    isMale: boolean;
+    jobSchedule: JobScheduleRequest;
 }
 
 export interface UpdateJobPostRequest extends Partial<CreateJobPostRequest> {
   status?: 'active' | 'inactive' | 'expired';
   isOutstandingPost?: boolean;
+}
+
+export interface JobPosition {
+  id: number;
+  jobPositionName: string;
+  jobTypeName: string;
 }

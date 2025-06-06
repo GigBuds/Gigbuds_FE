@@ -129,7 +129,7 @@ const ManageApplication = ({
               className="bg-white border-l-2 border-blue-500 col-span-1 w-[40%] p-[2%] rounded-lg h-fit shadow-xl"
             >
               <div className="flex flex-row items-center gap-[5%]">
-                <div className="w-[15%] bg-gray-300 py-[4%] rounded-full h-[60px] flex items-center justify-center">
+                <div className="w-[70px] bg-gray-300 py-[4%] rounded-full h-[60px] flex items-center justify-center">
                   <span className="text-white font-bold">
                     {(applicant.firstName && applicant.firstName.charAt(0).toUpperCase()) ||
                      (applicant.lastName && applicant.lastName.charAt(0).toUpperCase()) ||
@@ -167,7 +167,7 @@ const ManageApplication = ({
               </div>
 
               <div className="flex flex-row items-center gap-2 py-[2%]">
-                <p className="text-sm text-white bg-orange-500 px-2 py-1 rounded-full inline-block">
+                <p className="text-sm items-center text-white bg-orange-500 px-2 py-1 rounded-full inline-block">
                   Ứng viên mới
                 </p>
                 <div className="gap-2 flex">
@@ -176,7 +176,7 @@ const ManageApplication = ({
                       {applicant.skillTags.slice(0, 2).map((tag, index) => (
                         <div
                           key={index}
-                          className="text-sm text-gray-500 border-gray-500 border-1 bg-white px-2 py-1 rounded-full inline-block"
+                          className="text-[70%] font-semibold items-center text-gray-500 border-gray-500 border-1 bg-white px-2 py-1 rounded-full inline-block"
                         >
                           {renderSkillTag(tag)}
                         </div>

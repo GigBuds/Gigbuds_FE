@@ -12,7 +12,7 @@ import * as Texts from './text';
 import { jwtDecode } from 'jwt-decode';
 import { loginApi } from '@/service/loginService/loginService';
 import { MenuItem, User } from '@/types/sidebar.types';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 
 
 
@@ -30,43 +30,29 @@ const menuItems: MenuItem[] = [
 ];
 
 
-
-const useLocalStorage = (key: string, defaultValue: string) => {
-  const [value, setValue] = useState(defaultValue);
-
-  useEffect(() => {
-    const storedValue = localStorage.getItem(key);
-    if (storedValue) {
-      setValue(storedValue);
-    }
-  }, [key]);
-
-  const setStoredValue = (newValue: string) => {
-    setValue(newValue);
-    localStorage.setItem(key, newValue);
-    // Dispatch custom event for same-tab communication
-    window.dispatchEvent(new CustomEvent('localStorageChange', {
-      detail: { key, value: newValue }
-    }));
-  };
-
-  return [value, setStoredValue] as const;
-};
-
 const Sidebar = () => {
     const router = useRouter();
+    const pathname = usePathname();
     const [isOpen, setIsOpen] = useState(false);
-    const [selectedItem, setSelectedItem] = useLocalStorage('selectedTab', 'Trang Chu');
+    const [selectedItem, setSelectedItem] = useState('homepage');
     const [user, setUser] = useState<User | null>(null);
     const id_token = typeof document !== 'undefined'
         ? document.cookie.split('; ').find(row => row.startsWith('authToken='))
         : null;
    
+         useEffect(() => {
+        const currentMenuItem = menuItems.find(item => item.link === pathname);
+        if (currentMenuItem) {
+            setSelectedItem(currentMenuItem.id);
+        }
+    }, [pathname]);
+    
     useEffect(() => {
+        
         if (selectedItem === 'Đăng xuất') {
             (async () => {
                 try {
-                    await loginApi.logout();
+                    loginApi.logout();
                     setSelectedItem('Trang Chu');
                     setUser(null);
                 } catch (error: unknown) {

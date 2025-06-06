@@ -1,0 +1,151 @@
+/* Container styles */
+.container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+}
+
+.loadingText {
+  margin-top: 20px;
+  font-size: 16px;
+  color: #666;
+  font-weight: 500;
+}
+
+/* Rotating animation */
+.rotating {
+  animation: rotate infinite linear;
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Pulsing animation */
+.pulsing {
+  animation: pulse infinite ease-in-out;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.7;
+  }
+}
+
+/* Outline animation - Sequential path drawing */
+.outline .path1 {
+  stroke-dasharray: 200;
+  stroke-dashoffset: 200;
+  animation: drawPath1 infinite;
+}
+
+.outline .path2 {
+  stroke-dasharray: 150;
+  stroke-dashoffset: 150;
+  animation: drawPath2 infinite;
+}
+
+.outline .path3 {
+  stroke-dasharray: 180;
+  stroke-dashoffset: 180;
+  animation: drawPath3 infinite;
+}
+
+.outline .path4 {
+  stroke-dasharray: 220;
+  stroke-dashoffset: 220;
+  animation: drawPath4 infinite;
+}
+
+.outline .path5 {
+  stroke-dasharray: 160;
+  stroke-dashoffset: 160;
+  animation: drawPath5 infinite;
+}
+
+@keyframes drawPath1 {
+  0% {
+    stroke-dashoffset: 200;
+  }
+  20% {
+    stroke-dashoffset: 0;
+  }
+  90% {
+    stroke-dashoffset: 0;
+  }
+  100% {
+    stroke-dashoffset: 200;
+  }
+}
+
+@keyframes drawPath2 {
+  0%, 20% {
+    stroke-dashoffset: 150;
+  }
+  40% {
+    stroke-dashoffset: 0;
+  }
+  90% {
+    stroke-dashoffset: 0;
+  }
+  100% {
+    stroke-dashoffset: 150;
+  }
+}
+
+@keyframes drawPath3 {
+  0%, 40% {
+    stroke-dashoffset: 180;
+  }
+  60% {
+    stroke-dashoffset: 0;
+  }
+  90% {
+    stroke-dashoffset: 0;
+  }
+  100% {
+    stroke-dashoffset: 180;
+  }
+}
+
+@keyframes drawPath4 {
+  0%, 60% {
+    stroke-dashoffset: 220;
+  }
+  80% {
+    stroke-dashoffset: 0;
+  }
+  90% {
+    stroke-dashoffset: 0;
+  }
+  100% {
+    stroke-dashoffset: 220;
+  }
+}
+
+@keyframes drawPath5 {
+  0%, 80% {
+    stroke-dashoffset: 160;
+  }
+  90% {
+    stroke-dashoffset: 0;
+  }
+  95% {
+    stroke-dashoffset: 0;
+  }
+  100% {
+    stroke-dashoffset: 160;
+  }
+}

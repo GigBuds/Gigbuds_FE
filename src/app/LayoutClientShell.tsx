@@ -4,6 +4,8 @@ import React from 'react';
 import { usePathname } from "next/navigation";
 import Sidebar from "@/components/Sidebar/Sidebar";
 import { Toaster } from "react-hot-toast";
+import LoadingComponent from '@/components/LoadingComponent/LoadingComponent';
+import { useLoading } from '@/contexts/LoadingContext';
 
 export default function LayoutClientShell({
   children,
@@ -12,14 +14,27 @@ export default function LayoutClientShell({
 }>) {
   const pathname = usePathname();
   const isLoginPage = pathname === "/login";
+  const { isLoading } = useLoading();
 
   return (
     <div className="flex w-screen h-screen overflow-hidden">
+     
+        {isLoading && (
+           <div className='absolute top-0 left-0 w-full h-full bg-black/45 z-[100] flex items-center justify-center'>
+          <LoadingComponent
+            animationType="outline"
+            size={180}
+            speed={2000}
+          />
+          </div>
+        )}
+      
+
       <div>
-      <Toaster
-        position="top-right"
-        reverseOrder={true}
-      />
+        <Toaster
+          position="top-right"
+          reverseOrder={true}
+        />
       </div>
       {!isLoginPage && (
         <div className="lg:w-[25%] md:w-[45%] sm:w-[45%] w-[45%] overflow-hidden">

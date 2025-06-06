@@ -1,17 +1,20 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import { jobPostApi } from "@/service/jobPostService/jobPostService";
 import { JobPost } from "@/types/jobPostService";
 import { useRouter } from 'next/navigation';
 import JobPostDialog from "@/components/JobPostDialog/JobPostDialog";
+import { useLoading } from '@/contexts/LoadingContext';
 
 const ManageJobPost = () => {
   const [jobPostings, setJobPostings] = useState<JobPost[]>([]);
+  const { setIsLoading } = useLoading();
   const router = useRouter();
   
-  const fetchJobPosts = async () => {
+  const fetchJobPosts = useCallback(async () => {
     try {
+      setIsLoading(true); // Start loading
       const response = await jobPostApi.getJobPosts({
         pageSize: 10,
         pageIndex: 1
@@ -25,12 +28,17 @@ const ManageJobPost = () => {
       }
     } catch (error) {
       console.error('Failed to fetch job posts:', error);
+    } finally {
+      setTimeout(() => {
+        setIsLoading(false); // Stop loading after a delay
+      }, 1500); // Adjust the delay as needed
+
     }
-  };
+  }, [setIsLoading]);
 
   React.useEffect(() => {
     fetchJobPosts();
-  }, []);
+  }, [fetchJobPosts]);
 
   return (
     <div className="h-full w-full flex flex-col">

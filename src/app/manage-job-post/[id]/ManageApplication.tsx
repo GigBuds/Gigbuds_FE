@@ -1,8 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
+import { useLoading } from "@/contexts/LoadingContext";
 import { applicationApi } from "@/service/applicationService/applicationService";
 import { Application } from "@/types/applicationService";
 import { Job } from "@/types/jobPost.types";
+import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 
 interface ManageApplicationProps {
@@ -13,8 +15,9 @@ const ManageApplication = ({
   selectedJob,
 }: ManageApplicationProps) => {
   const [applications, setApplications] = useState<Application[]>([]);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { setIsLoading } = useLoading();
+  const router = useRouter();
 
   // Helper function to safely render skill tags
   const renderSkillTag = (tag: unknown): string => {
@@ -28,12 +31,12 @@ const ManageApplication = ({
   useEffect(() => {
     const fetchApplications = async () => {
       if (!selectedJob?.id) {
-        setLoading(false);
+        setIsLoading(false);
         return;
       }
 
       try {
-        setLoading(true);
+        setIsLoading(true);
         setError(null);
 
         const response = await applicationApi.getApplicationsByJobPostId(
@@ -55,7 +58,10 @@ const ManageApplication = ({
         console.error("Error fetching applications:", err);
         setError(err instanceof Error ? err.message : "An error occurred");
       } finally {
-        setLoading(false);
+        setTimeout(() => {
+          setIsLoading(false); // Stop loading after a delay
+        }
+          , 2000); // Adjust the delay as needed
       }
     };
 
@@ -89,13 +95,6 @@ const ManageApplication = ({
     }
   };
 
-  if (loading) {
-    return (
-      <div className="h-full flex justify-center items-center">
-        <div className="text-lg">Đang tải hồ sơ ứng viên...</div>
-      </div>
-    );
-  }
 
   return (
     <div className="w-full flex flex-col">
@@ -103,9 +102,9 @@ const ManageApplication = ({
         <div className="text-lg text-black px-4 w-fit py-2 rounded">
           Tin tuyển dụng / Xem hồ sơ ứng viên / Job ID: {selectedJob?.id}
         </div>
-        <div 
+        <div
           onClick={() => window.history.back()}
-        className="bg-orange-500 text-lg justify-center flex text-center items-center text-white px-8 w-fit  rounded">
+          className="bg-orange-500 text-lg justify-center flex text-center items-center text-white px-8 w-fit  rounded">
           Back
 
         </div>
@@ -132,8 +131,8 @@ const ManageApplication = ({
                 <div className="w-[70px] bg-gray-300 py-[4%] rounded-full h-[60px] flex items-center justify-center">
                   <span className="text-white font-bold">
                     {(applicant.firstName && applicant.firstName.charAt(0).toUpperCase()) ||
-                     (applicant.lastName && applicant.lastName.charAt(0).toUpperCase()) ||
-                     'U'}
+                      (applicant.lastName && applicant.lastName.charAt(0).toUpperCase()) ||
+                      'U'}
                   </span>
                 </div>
                 <div className="flex flex-col w-[60%]">
@@ -161,7 +160,9 @@ const ManageApplication = ({
                     </p>
                   </div>
                 </div>
-                <div className="justify-end w-[25%] text-xs text-orange-400 flex flex-row items-center cursor-pointer hover:text-orange-600">
+                <div onClick={() => {
+                  router.push(`/manage-job-post/${selectedJob?.id}/user-profile/${applicant.accountId}`);
+                }} className="justify-end w-[25%] text-xs text-orange-400 flex flex-row items-center cursor-pointer hover:text-orange-600">
                   Xem hồ sơ {">"}
                 </div>
               </div>
@@ -205,11 +206,10 @@ const ManageApplication = ({
                     window.open(applicant.cvUrl, "_blank");
                   }
                 }}
-                className={`flex flex-row items-center cursor-pointer transition-colors duration-200 ${
-                  applicant.cvUrl 
-                    ? "bg-blue-600 hover:bg-blue-700" 
+                className={`flex flex-row items-center cursor-pointer transition-colors duration-200 ${applicant.cvUrl
+                    ? "bg-blue-600 hover:bg-blue-700"
                     : "bg-gray-400 cursor-not-allowed"
-                } w-full justify-center py-[2%] rounded-lg`}
+                  } w-full justify-center py-[2%] rounded-lg`}
               >
                 <p className="text-lg text-white">
                   {applicant.cvUrl ? "Xem CV đính kèm" : "Không có CV đính kèm"}

@@ -1,5 +1,15 @@
 const baseUrl = process.env.BASE_URL ?? "https://localhost:50876/api/v1/";
 
+const getAuthHeaders = (): HeadersInit => {
+  const accessToken = typeof window !== 'undefined' 
+    ? document.cookie.split('; ').find(row => row.startsWith('accessToken='))?.split('=')[1]
+    : null;
+
+  return {
+    'Content-Type': 'application/json',
+    ...(accessToken && { 'Authorization': `Bearer ${accessToken}` }),
+  };
+};
 
 const fetchApi = {
   async post(endpoint: string, body: unknown) {
@@ -10,9 +20,7 @@ const fetchApi = {
     try {
       const response = await fetch(url, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify(body),
       });
 
@@ -64,9 +72,7 @@ const fetchApi = {
     
     const response = await fetch(url, {
       method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: getAuthHeaders(),
     });
 
     if (!response.ok) {
@@ -83,9 +89,7 @@ const fetchApi = {
     
     const response = await fetch(url, {
       method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: getAuthHeaders(),
       body: JSON.stringify(body),
     });
 
@@ -96,6 +100,58 @@ const fetchApi = {
     }
 
     return response.json();
+  },
+
+  async delete(endpoint: string) {
+    const url = `${baseUrl}${endpoint}`;
+    console.log('Making DELETE request to:', url);
+    
+    try {
+      const response = await fetch(url, {
+        method: 'DELETE',
+        headers: getAuthHeaders(),
+      });
+
+      console.log('DELETE Response status:', response.status);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.log('DELETE Error response body:', errorText);
+        let errorMessage = `Error: ${response.status} ${response.statusText}`;
+        
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.message || errorMessage;
+        } catch {
+          errorMessage = errorText || errorMessage;
+        }
+        
+        throw new Error(errorMessage);
+      }
+
+      // Check if response has content
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        return { success: true, message: 'Deleted successfully' };
+      }
+
+      const responseText = await response.text();
+      if (!responseText) {
+        return { success: true, message: 'Deleted successfully' };
+      }
+
+      try {
+        const data = JSON.parse(responseText);
+        console.log('DELETE Success response:', data);
+        return data;
+      } catch (jsonError) {
+        console.error('JSON parse error:', jsonError);
+        return { success: true, message: 'Deleted successfully' };
+      }
+    } catch (fetchError) {
+      console.error('DELETE Fetch error:', fetchError);
+      throw fetchError;
+    }
   },
 };
 

@@ -1,33 +1,12 @@
 "use client";
 import logo from "../../../public/Gigbuds Logo.png";
 import Image from "next/image";
+import { noti } from "./data";
 // Time utility function
 
 
 const NotificationSection = () => {
-    const noti = [
-        {
-            id: 1,
-            title: 'Bạn có 1 người theo dõi mới!',
-            userName: 'Nguyễn Minh Anh',
-            content: 'vừa theo dõi bạn. Hãy cập nhật hồ sơ để tăng số lượng ứng tuyển!',
-            timestamp: '2023-10-01T12:00:00Z',
-        },
-        {
-            id: 2,
-            title: 'Ứng viên mới cho vị trí Kỹ sư phần mềm',
-            userName: 'Nguyễn Minh Anh',
-            content: 'đã nộp đơn ứng tuyển cho vị trí Kỹ sư phần mềm. Hãy xem xét hồ sơ của họ!',
-            timestamp: '2023-10-02T14:30:00Z',
-        },
-        {
-            id: 3,
-            title: 'Bạn có một tin nhắn mới',
-            userName: 'Nguyễn Thị B',
-            content: 'đã gửi cho bạn một tin nhắn. Hãy kiểm tra hộp thư của bạn để xem chi tiết.',
-            timestamp: '2023-10-03T09:15:00Z',
-        },
-    ];
+
 
     const getTimeAgo = (timestamp: string): string => {
         const now = new Date();
@@ -55,12 +34,16 @@ const NotificationSection = () => {
     };
 
     return (
-        <div>
-            <div className="flex flex-col w-full overflow-y-auto h-[95vh]">
+        <div className="pl-2 flex items-center justify-center flex-col w-full h-full pt-[5%]">
+            <div className="text-xl font-bold">
+                    Thông báo của bạn
+                </div>
+            <div className="flex flex-col w-full overflow-y-auto h-[90vh]">
+                
                 {noti.map((notification) => (
                     <div
                         key={notification.id}
-                        className="shadow-md px-4 py-2 flex flex-row items-center gap-4"
+                        className="shadow-md px-1 py-3 flex flex-row items-center gap-4"
                     >
                         <Image
                             src={logo}

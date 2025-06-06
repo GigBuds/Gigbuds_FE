@@ -77,7 +77,7 @@ const ManageJobPost = () => {
               
               <div className="flex flex-row justify-between pt-[3%] items-end w-full">
                 <motion.div
-                  className="w-[45%] text-sm rounded-md bg-orange-500 text-white text-center py-1 cursor-pointer"
+                  className="w-[45%] text-sm rounded-md bg-orange-500 text-white text-center py-1  cursor-pointer"
                   initial={{ scale: 1 }}
                   whileHover={{
                     scale: 1.05,

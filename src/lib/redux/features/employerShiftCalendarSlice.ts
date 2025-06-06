@@ -1,4 +1,4 @@
-import { JobShift } from "@/types/jobPost/jobShift";
+import { JobShift } from "@/types/jobPostService";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { RootState } from "../store";
 
@@ -20,20 +20,18 @@ const employerShiftCalendarSlice = createSlice({
     reducers: {
         addJobShift: (state, action: PayloadAction<JobShift>) => {
             state.jobShifts = [...state.jobShifts, action.payload];
-            state.minimumShift = state.jobShifts.length;
             state.shiftCount = state.jobShifts.length;
         },
         removeJobShift: (state, action: PayloadAction<string>) => {
             const newJobShifts = state.jobShifts.filter(
-                (jobShift) => jobShift.jobShiftId !== action.payload
+                (jobShift: JobShift) => jobShift.jobShiftId !== action.payload
             );
             state.jobShifts = [...newJobShifts];
-            state.minimumShift = newJobShifts.length;
             state.shiftCount = newJobShifts.length;
         },
         updateJobShift: (state, action: PayloadAction<JobShift>) => {
             const newJobShifts = state.jobShifts.map(
-                (jobShift) => jobShift.jobShiftId === action.payload.jobShiftId ? action.payload : jobShift
+                (jobShift: JobShift) => jobShift.jobShiftId === action.payload.jobShiftId ? action.payload : jobShift
             );
             state.jobShifts = [...newJobShifts];
         },

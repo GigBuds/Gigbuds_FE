@@ -6,9 +6,9 @@ import {
     useAdvancedMarkerRef,
  } from "@vis.gl/react-google-maps";
  import { PlaceAutocomplete } from "./PlaceAutoComplete";
- import { useEffect, useState } from "react";
+ import { useState } from "react";
  import { MapHandler } from "./MapHandler";
-import { googleMapResponse } from "@/types/folder/GoogleMapResponse";
+import { GoogleMapResponse } from "@/types/folder/googleMapResponse";
  
  
 
@@ -23,34 +23,29 @@ import { googleMapResponse } from "@/types/folder/GoogleMapResponse";
  export default function GoogleMap({
       API_KEY, 
       MAP_ID,
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      value,
       onChange
-   }: Readonly<{API_KEY: string, MAP_ID: string, value: string | null | undefined, onChange: (location: googleMapResponse | null | undefined) => void }>) {
+   }: Readonly<{API_KEY: string, MAP_ID: string, onChange: (location: GoogleMapResponse | null | undefined) => void }>) {
    const [selectedPlace, setSelectedPlace] =
       useState<google.maps.places.Place | null>(null);
    const [markerRef, marker] = useAdvancedMarkerRef();
 
-   useEffect(() => {
-      if (selectedPlace) {
-         onChange(
-            {
-               location: selectedPlace.formattedAddress, 
-               provinceCode: selectedPlace.addressComponents?.find(
-                  (component) => component.types.includes("administrative_area_level_1")
-               )?.longText, 
-               districtCode: selectedPlace.addressComponents?.find(
-                  (component) => component.types.includes("administrative_area_level_2")
-               )?.longText
-            }
-         );
-      }
-   }, [selectedPlace, onChange]);
-
    return (
       <APIProvider apiKey={API_KEY}>
          <div className="autocomplete-control">
-         <PlaceAutocomplete onPlaceSelect={setSelectedPlace} />
+         <PlaceAutocomplete onPlaceSelect={(place) => {
+            setSelectedPlace(place);
+            if (place) {
+               onChange({
+                  jobLocation: place.formattedAddress,
+                  provinceCode: place.addressComponents?.find(
+                     (component) => component.types.includes("administrative_area_level_1")
+                  )?.longText,
+                  districtCode: place.addressComponents?.find(
+                     (component) => component.types.includes("administrative_area_level_2")
+                  )?.longText
+               });
+            }
+         }} />
          </div>
          <Map
          mapId={MAP_ID}

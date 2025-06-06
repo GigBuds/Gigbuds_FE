@@ -10,8 +10,8 @@ interface PersonalInfoSectionProps {
     lastName: string;
     email: string;
     phoneNumber: string;
-    dateOfBirth?: string;
-    address?: string;
+    dob?: string;
+    currentLocation?: string;
   };
 }
 
@@ -45,12 +45,12 @@ const PersonalInfoSection: React.FC<PersonalInfoSectionProps> = ({ userProfile }
     {
       icon: <Calendar size={20} />,
       label: "Ngày sinh",
-      value: userProfile.dateOfBirth ? formatDate(userProfile.dateOfBirth) : "Chưa cập nhật",
+      value: userProfile.dob ? formatDate(userProfile.dob) : "Chưa cập nhật",
     },
     {
       icon: <MapPin size={20} />,
       label: "Địa chỉ",
-      value: userProfile.address || "Chưa cập nhật",
+      value: userProfile.currentLocation || "Chưa cập nhật",
     },
   ];
 

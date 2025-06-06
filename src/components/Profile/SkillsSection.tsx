@@ -34,11 +34,11 @@ const SkillsSection: React.FC<SkillsSectionProps> = ({ skills }) => {
           {skills.map((skill) => (
             <div
               key={skill.id}
-              className="bg-blue-100 text-blue-800 px-3 py-2 rounded-full text-sm font-medium flex items-center gap-2"
+              className="bg-[#FF7345] text-white px-3 py-2 rounded-full text-sm font-medium flex items-center gap-2"
             >
               <span>{skill.skillName}</span>
               {skill.level && (
-                <span className="bg-blue-200 text-blue-900 px-2 py-1 rounded text-xs">
+                <span className="bg-blue-200 px-2 py-1 rounded text-xs">
                   {skill.level}
                 </span>
               )}

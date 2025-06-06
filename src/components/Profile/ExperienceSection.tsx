@@ -7,7 +7,7 @@ import ProfileCard from "./ProfileCard";
 
 interface Experience {
   id: string;
-  title: string;
+  jobPosition: string;
   company: string;
   startDate: string;
   endDate?: string;
@@ -22,7 +22,7 @@ const ExperienceSection: React.FC<ExperienceSectionProps> = ({ experiences }) =>
   if (!experiences || experiences.length === 0) {
     return (
       <div className="bg-white shadow-sm rounded-lg overflow-hidden">
-        <SectionHeader title="Kinh nghiệm làm việc" icon={<Briefcase size={24} />} />
+        <SectionHeader title="Kinh nghiệm làm việc" icon={<Briefcase size={24} color="#FF7345" />} />
         <div className="p-4 text-gray-500 text-center">
           Chưa có thông tin kinh nghiệm làm việc
         </div>
@@ -37,7 +37,7 @@ const ExperienceSection: React.FC<ExperienceSectionProps> = ({ experiences }) =>
         {experiences.map((experience) => (
           <ProfileCard
             key={experience.id}
-            title={experience.title}
+            title={experience.jobPosition}
             subTitle={experience.company}
             startDate={experience.startDate}
             endDate={experience.endDate}

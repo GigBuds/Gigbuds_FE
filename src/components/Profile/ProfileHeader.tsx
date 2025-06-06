@@ -29,7 +29,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({ userProfile }) => {
               alt={fullName}
               width={120}
               height={120}
-              className="rounded-full object-cover border-4 border-blue-500"
+              className="rounded-full object-cover border-4 border-[#FF7345]"
             />
           ) : (
             <div className="w-30 h-30 bg-gray-300 rounded-full flex items-center justify-center border-4 border-blue-500">

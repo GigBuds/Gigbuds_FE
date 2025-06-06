@@ -7,15 +7,15 @@ import GoogleLoginButton from "./GoogleLoginButton";
 import { loginApi } from "@/service/loginService/loginService";
 import { FormValues } from "@/types/login.types";
 import { useRouter } from "next/navigation";
+import { useLoading } from "@/contexts/LoadingContext";
 
 
 const LoginInput = () => {
   const router = useRouter();
   const googleClientId = process.env.GOOGLE_CLIENT_ID || "";
-  const [loading, setLoading] = useState(false);
-
+  const {setIsLoading, isLoading} = useLoading();
   const onFinish = async (values: FormValues) => {
-    setLoading(true);
+    setIsLoading(true);
     try {
       console.log('Calling API with:', values.identifier, values.password);
       const response = await loginApi.login(values.identifier, values.password);
@@ -40,8 +40,13 @@ const LoginInput = () => {
       console.error("Login error:", error);
       toast.error("Login failed. Please check your credentials.");
     } finally {
-      setLoading(false);
-      router.push("/"); // Redirect to home page after login
+      setTimeout(() => {
+        setIsLoading(false); 
+              router.push("/"); // Redirect to home page after login
+      }
+      , 2000); // Adjust the delay as needed
+
+
     }
   };
 
@@ -130,18 +135,18 @@ const LoginInput = () => {
           <Form.Item style={{ marginTop: "5%" }}>
             <motion.button
               type="submit"
-              disabled={loading}
+              disabled={isLoading}
               className="w-full text-[100%] bg-black text-white py-3 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
               initial={{ scale: 1, background: "black", color: "white" }}
               whileTap={{ scale: 0.95 }}
               whileHover={{
-                scale: loading ? 1 : 1.05,
+                scale: isLoading ? 1 : 1.05,
                 color: "black",
-                background: loading ? "black" :
+                background: isLoading ? "black" :
                   "linear-gradient(90deg, #FF7345 33.76%, #FFDC95 99.87%)",
               }}
             >
-              {loading ? "Signing In..." : "Sign In"}
+              {isLoading ? "Signing In..." : "Sign In"}
             </motion.button>
             <div className="w-full flex items-center justify-center mt-[5%]">
               <GoogleLoginButton clientId={googleClientId} />

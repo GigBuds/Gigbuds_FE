@@ -4,6 +4,7 @@ import "./globals.css";
 import Logo from "../../public/Gigbuds Logo.png";
 import LayoutClientShell from "./LayoutClientShell";
 import StoreProvider from "@/components/providers/StoreProvider";
+import { LoadingProvider } from "@/contexts/LoadingContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -34,7 +35,10 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <StoreProvider>
+          <LoadingProvider>
           <LayoutClientShell>{children}</LayoutClientShell>
+
+          </LoadingProvider>
         </StoreProvider>
       </body>
     </html>

@@ -41,11 +41,35 @@ const Sidebar = () => {
         ? document.cookie.split('; ').find(row => row.startsWith('authToken='))
         : null;
    
-         useEffect(() => {
-        const currentMenuItem = menuItems.find(item => item.link === pathname);
-        if (currentMenuItem) {
-            setSelectedItem(currentMenuItem.id);
+   const getSelectedItemFromPath = (currentPath: string): string => {
+        // Direct match first
+        const directMatch = menuItems.find(item => item.link === currentPath);
+        if (directMatch) {
+            return directMatch.id;
         }
+
+        // Handle dynamic routes by checking if the path starts with the menu item link
+        for (const item of menuItems) {
+            if (currentPath.startsWith(item.link) && item.link !== '/') {
+
+             if (currentPath.startsWith(item.link + '/')) {
+                    return item.id;
+                }
+            }
+        }
+
+        // Handle root path separately
+        if (currentPath === '/') {
+            return 'homepage';
+        }
+
+    };
+
+   useEffect(() => {
+        const selectedId = getSelectedItemFromPath(pathname);
+        setSelectedItem(selectedId);
+        console.log('Current pathname:', pathname);
+        console.log('Selected item:', selectedId);
     }, [pathname]);
     
     useEffect(() => {

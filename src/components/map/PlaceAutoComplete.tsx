@@ -25,10 +25,10 @@ export const PlaceAutocomplete = ({
          {}
       );
       placeAutocomplete.name = "place-autocomplete-input";
-      placeAutocomplete.style.border = "5px solid #f54747";
-      placeAutocomplete.style.borderRadius = "10px";
-      placeAutocomplete.style.width = "50%";
+      placeAutocomplete.style.borderRadius = "15px";
+      placeAutocomplete.style.width = "100%";
       placeAutocomplete.style.margin = "auto";
+      placeAutocomplete.style.padding = "10px";
       setPlaceAutocomplete(placeAutocomplete);
    }, [places]);
 
@@ -49,16 +49,21 @@ export const PlaceAutocomplete = ({
       placeAutocomplete.addEventListener("gmp-select", async (event: Event) => {
          const typedEvent = event as PlacePredictionSelectEvent;
          const place: google.maps.places.Place = typedEvent.placePrediction.toPlace();
-         await place.fetchFields({
-            fields: [
-               "viewport",
-               "location",
-               "displayName",
-               "formattedAddress",
-               "addressComponents",
-            ],
-         });
-         onPlaceSelect(place);
+         try {
+            await place.fetchFields({
+               fields: [
+                  "viewport",
+                  "location",
+                  "displayName",
+                  "formattedAddress",
+                  "addressComponents",
+               ],
+            });
+            onPlaceSelect(place);
+         } catch (error) {
+            console.error("Error fetching place details:", error);
+            onPlaceSelect(null); // Clear selected place on error
+         }
       });
    }, [onPlaceSelect, placeAutocomplete]);
 

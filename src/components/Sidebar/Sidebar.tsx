@@ -48,19 +48,23 @@ const Sidebar = () => {
     }, [pathname]);
     
     useEffect(() => {
-        
-        if (selectedItem === 'Đăng xuất') {
-            (async () => {
-                try {
-                    loginApi.logout();
-                    setSelectedItem('Trang Chu');
-                    setUser(null);
-                } catch (error: unknown) {
-                    console.error('Logout error:', error);
-                }
-            })();
+        switch (selectedItem) {
+            case 'Đăng xuất':
+                (async () => {
+                    try {
+                        await loginApi.logout();
+                        setSelectedItem('Trang Chu');
+                        setUser(null);
+                    } catch (error: unknown) {
+                        console.error('Logout error:', error);
+                    }
+                })();
+                break;
+            case 'Write Post':
+                router.push('/employer/job-posts/create');
+                break;
         }
-    }, [selectedItem, setSelectedItem]);
+    }, [selectedItem, setSelectedItem, router]);
 
     useEffect(() => {
         if (id_token) {

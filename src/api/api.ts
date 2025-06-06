@@ -1,4 +1,4 @@
-const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://localhost:7290/api/v1/";
+const baseUrl = process.env.BASE_URL ?? "https://localhost:50876/api/v1/";
 
 
 const fetchApi = {

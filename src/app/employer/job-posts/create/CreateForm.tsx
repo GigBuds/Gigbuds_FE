@@ -20,13 +20,9 @@ export default function CreateForm({API_KEY, MAP_ID, jobPositions}: Readonly<{AP
     console.log('values', values);
     values.accountId = '3'; // TODO: get accountId from user
     try {
-      const response = await fetchApi.post('job-posts', values);
-      if (response.success || response.ok) {
-        toast.success('Bài đăng đã được tạo thành công');
-        form.resetFields();
-      } else {
-        toast.error('Lỗi khi tạo bài đăng');
-      }
+      await fetchApi.post('job-posts', values);
+      toast.success('Bài đăng đã được tạo thành công');
+      form.resetFields();
     } catch (error) {
       console.error('error', error);
       toast.error('Lỗi khi tạo bài đăng');
@@ -247,7 +243,7 @@ export default function CreateForm({API_KEY, MAP_ID, jobPositions}: Readonly<{AP
 
             <Form.Item 
               name="IsMale" 
-              label="Ưu Tiên Giới Tính" 
+              label="Cần ứng viên nam" 
               tooltip="Tùy chọn - Bật nếu vị trí này yêu cầu ứng viên nam"
               valuePropName="checked"
               initialValue={true}

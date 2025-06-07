@@ -102,8 +102,6 @@ const Sidebar = () => {
                 console.error('Failed to decode JWT token');
             }
         }
-        console.log('Decoded user:', user);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [id_token]);
 
     const decodeJWT = (token: string): User | null => {

@@ -31,7 +31,7 @@ const ManageJobPost = () => {
       const response: JobPostApiResponse = await jobPostApi.getJobPosts({
         pageSize: pageSize,
         pageIndex: page,
-        // employerId: employerId,
+        employerId: employerId,
       } as FetchJobPostsParams);
       if (response) {
         console.log('Raw API response:', JSON.stringify(response.items, null, 2));
@@ -144,7 +144,11 @@ const ManageJobPost = () => {
                   Xem hồ sơ ứng viên
                 </motion.div>
                 
-                <JobPostDialog job={job}>
+                <JobPostDialog 
+                  job={job}
+                  API_KEY={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ""}
+                  MAP_ID={process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID || ""}
+                >
                   <motion.div
                     className="w-[45%] text-sm rounded-md bg-blue-600 text-white text-center py-1 cursor-pointer"
                     initial={{ scale: 1 }}
@@ -186,7 +190,7 @@ const ManageJobPost = () => {
       )}
 
       {/* Pagination */}
-      <div className="bottom-0 right-20 fixed items-center justify-center bg-white py-4 ">
+      <div className="bottom-0 right-20 fixed items-center justify-center  py-4 ">
 <Pagination
         currentPage={pageIndex}
         hasItems={jobPostings.length > 0}

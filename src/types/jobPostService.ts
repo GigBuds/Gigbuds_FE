@@ -43,8 +43,21 @@ export interface JobPost {
   applicationsCount?: number;
   districtCode?: string;
   provinceCode?: string;
-  jobPositionId?: string;
+  jobPositionId?: number;
 
+}
+
+export interface JobPositionOption {
+  id: number;
+  jobPositionName: string;
+  jobTypeId: number;
+  jobTypeName: string;
+}
+
+export interface JobPostDialogProps {
+  job: JobPost;
+  children: React.ReactNode;
+  onJobUpdated?: (updatedJob: JobPost) => void;
 }
 
 export interface JobPostsResponse {

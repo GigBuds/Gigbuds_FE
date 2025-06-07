@@ -1,18 +1,22 @@
 import fetchApi from "@/api/api";
 import { CreateJobPostRequest, GetJobPostsParams, JobPost, JobPostsResponse, UpdateJobPostRequest } from "@/types/jobPostService";
 
+interface JobPositionResponse {
+  id: number;
+  jobPositionName: string;
+  jobTypeId: number;
+  jobTypeName: string;
+}
+
 class JobPostApi {
   
   async getJobPosts(params: GetJobPostsParams = {}): Promise<JobPostsResponse> {
-
-
     try {
       const { pageSize = 10, pageIndex = 1, employerId } = params;      
       const queryParams = new URLSearchParams({
         pageSize: pageSize.toString(),
         pageIndex: pageIndex.toString(),
         employerId: employerId || '',
-        
       });
 
       const response = await fetchApi.get(`job-posts?${queryParams.toString()}`);
@@ -103,6 +107,31 @@ class JobPostApi {
     }
   }
   
+  // Get job position by position ID - returns single position
+  async getJobPositionsByPositionId(positionId: string): Promise<JobPositionResponse> {
+    try {
+      const response = await fetchApi.get(`job-positions/${positionId}`);
+      console.log('Get job position by position ID API response:', response);
+      
+      return response;
+    } catch (error) {
+      console.error('Get job position by position ID API error:', error);
+      throw error;
+    }
+  }
+
+  // Get all job positions for dropdown - returns array of positions
+  async getAllJobPositions(): Promise<JobPositionResponse[]> {
+    try {
+      const response = await fetchApi.get('job-positions');
+      console.log('Get all job positions API response:', response);
+      
+      return response;
+    } catch (error) {
+      console.error('Get all job positions API error:', error);
+      throw error;
+    }
+  }
 }
 
 export const jobPostApi = new JobPostApi();

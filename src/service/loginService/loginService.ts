@@ -17,10 +17,11 @@ class LoginApi {
         if (response.id_token) {
           // Decode JWT id_token
           const decodedToken = this.decodeJWT(response.id_token);
-          
+          console.log('decodedToken', decodedToken);
           if (decodedToken) {
+            console.log('decodedToken', decodedToken);
             this.setCookie('authToken', response.id_token, 7);
-            localStorage.setItem('userId', decodedToken.sub);
+            this.setCookie('userId', decodedToken.sub, 7);
             this.setCookie('userEmail', decodedToken.email, 7);
             this.setCookie('roles', JSON.stringify(decodedToken.roles || []), 7);
             if (decodedToken.name) {

@@ -18,7 +18,8 @@ export default function CreateForm({API_KEY, MAP_ID, jobPositions}: Readonly<{AP
   const onFinish = async (values: CreateJobPostRequest) => {
     setIsLoading(true);
     console.log('values', values);
-    values.accountId = '3'; // TODO: get accountId from user
+  
+    values.accountId = '2'; // TODO: get accountId from user
     try {
       await fetchApi.post('job-posts', values);
       toast.success('Bài đăng đã được tạo thành công');

@@ -38,13 +38,26 @@ export interface JobPost {
   isOutstandingPost: boolean;
   vacancyCount: number;
   jobSchedule?: JobSchedule;
-  userId?: string;
+  employerId?: string;
   status?: 'active' | 'inactive' | 'expired';
   applicationsCount?: number;
   districtCode?: string;
   provinceCode?: string;
-  jobPositionId?: string;
+  jobPositionId?: number;
 
+}
+
+export interface JobPositionOption {
+  id: number;
+  jobPositionName: string;
+  jobTypeId: number;
+  jobTypeName: string;
+}
+
+export interface JobPostDialogProps {
+  job: JobPost;
+  children: React.ReactNode;
+  onJobUpdated?: (updatedJob: JobPost) => void;
 }
 
 export interface JobPostsResponse {
@@ -61,7 +74,7 @@ export interface JobPostsResponse {
 export interface GetJobPostsParams {
   pageSize?: number;
   pageIndex?: number;
-  userId?: string;
+  employerId?: string;
   search?: string;
   location?: string;
   employmentType?: string;

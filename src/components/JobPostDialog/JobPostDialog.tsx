@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -13,7 +13,15 @@ import { Separator } from "../../../ui/separator";
 import { Input } from "../../../ui/input";
 import { Textarea } from "../../../ui/textarea";
 import { Label } from "../../../ui/label";
-import { JobPost } from "@/types/jobPostService";
+import { Button } from "../../../ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../../../ui/select";
+import { JobPositionOption, JobPost, JobPostDialogProps } from "@/types/jobPostService";
 import { jobPostApi } from "@/service/jobPostService/jobPostService";
 import {
   CalendarDays,
@@ -27,28 +35,22 @@ import {
   User,
 } from "lucide-react";
 import toast from "react-hot-toast";
-import { Button } from "../../../ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../../../ui/select";
 
-interface JobPostDialogProps {
-  job: JobPost;
-  children: React.ReactNode;
-  onJobUpdated?: (updatedJob: JobPost) => void;
-}
+
 
 const JobPostDialog: React.FC<JobPostDialogProps> = ({
   job,
   children,
   onJobUpdated,
 }) => {
+  const [isOpen, setIsOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [jobPositions, setJobPositions] = useState<JobPositionOption[]>([]);
+  const [currentJobPosition, setCurrentJobPosition] = useState<string>("");
+  const [loadingPositions, setLoadingPositions] = useState(false);
+  const [dataLoaded, setDataLoaded] = useState(false);
+  
   const [formData, setFormData] = useState({
     jobTitle: job.jobTitle || "",
     ageRequirement: job.ageRequirement || "",
@@ -65,61 +67,75 @@ const JobPostDialog: React.FC<JobPostDialogProps> = ({
     vacancyCount: job.vacancyCount || 1,
     isOutstandingPost: job.isOutstandingPost || false,
     jobPositionId: job.jobPositionId || "",
+    // Add job schedule to form data
+    jobSchedule: job.jobSchedule || null,
   });
 
-  // Sample job positions data (you can fetch this from API)
-  const jobPositions = [
-    { value: "1", label: "Nhân viên bán hàng" },
-    { value: "2", label: "Nhân viên phục vụ" },
-    { value: "3", label: "Tài xế" },
-    { value: "4", label: "Bảo vệ" },
-    { value: "5", label: "Nhân viên kho" },
-    { value: "6", label: "Công nhân sản xuất" },
-    { value: "7", label: "Nhân viên giao hàng" },
-    { value: "8", label: "Nhân viên làm sạch" },
-    { value: "9", label: "Nhân viên thu ngân" },
-    { value: "10", label: "Nhân viên marketing" },
-    { value: "11", label: "Nhân viên IT" },
-    { value: "12", label: "Công nhân đóng gói" },
-  ];
+  // Fetch data when dialog opens
+  useEffect(() => {
+    if (isOpen && !dataLoaded) {
+      fetchData();
+    }
+  }, [isOpen, dataLoaded, job.jobPositionId]);
 
-  // Province and District data
-  const provinces = [
-    { value: "HCM", label: "Thành phố Hồ Chí Minh" },
-    { value: "HN", label: "Hà Nội" },
-    { value: "DN", label: "Đà Nẵng" },
-    { value: "CT", label: "Cần Thơ" },
-    { value: "HP", label: "Hải Phòng" },
-  ];
+  const fetchData = async () => {
+    try {
+      setLoadingPositions(true);
 
-  const districts = [
-    // Ho Chi Minh City districts
-    { value: "D001", label: "Quận 1", provinceCode: "HCM" },
-    { value: "D002", label: "Quận 2", provinceCode: "HCM" },
-    { value: "D003", label: "Quận 3", provinceCode: "HCM" },
-    { value: "D004", label: "Quận 4", provinceCode: "HCM" },
-    { value: "D005", label: "Quận 5", provinceCode: "HCM" },
-    { value: "D006", label: "Quận 6", provinceCode: "HCM" },
-    { value: "D007", label: "Quận 7", provinceCode: "HCM" },
-    { value: "D008", label: "Quận 8", provinceCode: "HCM" },
-    { value: "D009", label: "Quận 9", provinceCode: "HCM" },
-    { value: "D010", label: "Quận 10", provinceCode: "HCM" },
-    { value: "D011", label: "Quận 11", provinceCode: "HCM" },
-    { value: "D012", label: "Quận 12", provinceCode: "HCM" },
-    { value: "DTD", label: "Quận Thủ Đức", provinceCode: "HCM" },
-    { value: "DGV", label: "Quận Gò Vấp", provinceCode: "HCM" },
-    { value: "DBT", label: "Quận Bình Thạnh", provinceCode: "HCM" },
-    { value: "DTB", label: "Quận Tân Bình", provinceCode: "HCM" },
-    { value: "DTP", label: "Quận Tân Phú", provinceCode: "HCM" },
-    { value: "DPN", label: "Quận Phú Nhuận", provinceCode: "HCM" },
-    // Hanoi districts
-    { value: "HBD", label: "Quận Ba Đình", provinceCode: "HN" },
-    { value: "HHK", label: "Quận Hoàn Kiếm", provinceCode: "HN" },
-    { value: "HTH", label: "Quận Tây Hồ", provinceCode: "HN" },
-    { value: "HLB", label: "Quận Long Biên", provinceCode: "HN" },
-    { value: "HCG", label: "Quận Cầu Giấy", provinceCode: "HN" },
-    { value: "HDD", label: "Quận Đống Đa", provinceCode: "HN" },
-  ];
+      // Fetch job positions first
+      const positions = await jobPostApi.getAllJobPositions();
+      setJobPositions(positions);
+
+      // Find current position from the fetched positions instead of separate API call
+      if (job.jobPositionId) {
+        const currentPosition = positions.find(
+          (pos) => pos.id.toString() === job.jobPositionId?.toString()
+        );
+        setCurrentJobPosition(
+          currentPosition?.jobPositionName || "Không xác định"
+        );
+      } else {
+        setCurrentJobPosition("Không xác định");
+      }
+
+      setDataLoaded(true);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      toast.error("Không thể tải dữ liệu");
+      setCurrentJobPosition("Không xác định");
+    } finally {
+      setLoadingPositions(false);
+    }
+  };
+
+  const resetFormData = () => {
+    setFormData({
+      jobTitle: job.jobTitle || "",
+      ageRequirement: job.ageRequirement || "",
+      jobDescription: job.jobDescription || "",
+      jobRequirement: job.jobRequirement || "",
+      experienceRequirement: job.experienceRequirement || "",
+      salary: job.salary || 0,
+      salaryUnit: job.salaryUnit || "Hour",
+      jobLocation: job.jobLocation || "",
+      expireTime: job.expireTime ? job.expireTime.split("T")[0] : "",
+      districtCode: job.districtCode || "",
+      provinceCode: job.provinceCode || "",
+      benefit: job.benefit || "",
+      vacancyCount: job.vacancyCount || 1,
+      isOutstandingPost: job.isOutstandingPost || false,
+      jobPositionId: job.jobPositionId || "",
+      jobSchedule: job.jobSchedule || null,
+    });
+  };
+
+  const handleOpenChange = (open: boolean) => {
+    setIsOpen(open);
+    if (!open) {
+      setIsEditing(false);
+      resetFormData();
+    }
+  };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("vi-VN", {
@@ -134,31 +150,9 @@ const JobPostDialog: React.FC<JobPostDialogProps> = ({
     return `${salary.toLocaleString()} ${unit || "VND"}`;
   };
 
-  const getProvinceName = (code: string) => {
-    const province = provinces.find((p) => p.value === code);
-    return province ? province.label : code;
-  };
-
-  const getDistrictName = (code: string) => {
-    const district = districts.find((d) => d.value === code);
-    return district ? district.label : code;
-  };
-
-  const getJobPositionName = (id: string) => {
-    const position = jobPositions.find((p) => p.value === id);
-    return position ? position.label : id;
-  };
-
-  const getFilteredDistricts = () => {
-    return districts.filter((d) => d.provinceCode === formData.provinceCode);
-  };
-
   const handleInputChange = (field: string, value: any) => {
     setFormData((prev) => {
-      const newData = {
-        ...prev,
-        [field]: value,
-      };
+      const newData = { ...prev, [field]: value };
 
       // Reset district when province changes
       if (field === "provinceCode") {
@@ -169,16 +163,16 @@ const JobPostDialog: React.FC<JobPostDialogProps> = ({
     });
   };
 
+
   const handleSave = async () => {
     try {
       setLoading(true);
 
-      // Prepare update data
       const updateData = {
         jobTitle: formData.jobTitle,
         ageRequirement: formData.ageRequirement
-          ? Number(formData.ageRequirement)
-          : null,
+          ? formData.ageRequirement.toString()
+          : undefined,
         jobDescription: formData.jobDescription,
         jobLocation: formData.jobLocation,
         salary: Number(formData.salary),
@@ -194,8 +188,10 @@ const JobPostDialog: React.FC<JobPostDialogProps> = ({
         districtCode: formData.districtCode,
         provinceCode: formData.provinceCode,
         jobPositionId: formData.jobPositionId
-          ? Number(formData.jobPositionId)
-          : null,
+          ? formData.jobPositionId.toString()
+          : undefined,
+        // Add job schedule to update data
+        jobSchedule: formData.jobSchedule || undefined,
       };
 
       const updatedJob = await jobPostApi.updateJobPost(
@@ -206,7 +202,6 @@ const JobPostDialog: React.FC<JobPostDialogProps> = ({
       toast.success("Cập nhật tin tuyển dụng thành công!");
       setIsEditing(false);
 
-      // Call the callback if provided
       if (onJobUpdated) {
         onJobUpdated(updatedJob);
       }
@@ -219,24 +214,7 @@ const JobPostDialog: React.FC<JobPostDialogProps> = ({
   };
 
   const handleCancel = () => {
-    // Reset form data to original values
-    setFormData({
-      jobTitle: job.jobTitle || "",
-      ageRequirement: job.ageRequirement || "",
-      jobDescription: job.jobDescription || "",
-      jobRequirement: job.jobRequirement || "",
-      experienceRequirement: job.experienceRequirement || "",
-      salary: job.salary || 0,
-      salaryUnit: job.salaryUnit || "Hour",
-      jobLocation: job.jobLocation || "",
-      expireTime: job.expireTime ? job.expireTime.split("T")[0] : "",
-      benefit: job.benefit || "",
-      vacancyCount: job.vacancyCount || 1,
-      isOutstandingPost: job.isOutstandingPost || false,
-      districtCode: job.districtCode || "",
-      provinceCode: job.provinceCode || "",
-      jobPositionId: job.jobPositionId || "",
-    });
+    resetFormData();
     setIsEditing(false);
   };
 
@@ -253,7 +231,7 @@ const JobPostDialog: React.FC<JobPostDialogProps> = ({
         const selectedOption = options.find((opt) => opt.value === value);
         return (
           <p className="text-gray-600">
-            {selectedOption?.label || value || "Chưa có thông tin"}
+            {selectedOption?.label || (typeof value === 'string' || typeof value === 'number' ? value : "Chưa có thông tin")}
           </p>
         );
       }
@@ -264,9 +242,17 @@ const JobPostDialog: React.FC<JobPostDialogProps> = ({
           </p>
         );
       }
+      // Special handling for jobPositionId
+      if (field === "jobPositionId") {
+        return (
+          <p className="text-gray-600">
+            {currentJobPosition || "Chưa có thông tin"}
+          </p>
+        );
+      }
       return (
         <p className="text-gray-600 whitespace-pre-wrap">
-          {value || "Chưa có thông tin"}
+          {(typeof value === 'string' || typeof value === 'number') ? value : "Chưa có thông tin"}
         </p>
       );
     }
@@ -309,8 +295,20 @@ const JobPostDialog: React.FC<JobPostDialogProps> = ({
     }
   };
 
+  // Convert jobPositions to options format for the select
+  const jobPositionOptions = jobPositions.map((position) => ({
+    value: position.id.toString(),
+    label: position.jobPositionName,
+  }));
+
+  const salaryUnitOptions = [
+    { value: "Hour", label: "Giờ" },
+    { value: "Shift", label: "Ca" },
+    { value: "Day", label: "Ngày" },
+  ];
+
   return (
-    <Dialog>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
@@ -339,6 +337,7 @@ const JobPostDialog: React.FC<JobPostDialogProps> = ({
                   size="sm"
                   onClick={() => setIsEditing(true)}
                   className="flex items-center gap-2"
+                  disabled={loadingPositions}
                 >
                   <Edit2 className="w-4 h-4" />
                   Chỉnh sửa
@@ -369,76 +368,42 @@ const JobPostDialog: React.FC<JobPostDialogProps> = ({
           </div>
         </DialogHeader>
 
-        <div className="space-y-6">
-          {/* Job Title and Position */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="jobTitle" className="text-sm font-medium">
-                Tiêu đề công việc *
-              </Label>
-              {renderEditableField("Tiêu đề công việc", "jobTitle")}
-            </div>
-            <div>
-              <Label htmlFor="jobPositionId" className="text-sm font-medium">
-                Vị trí công việc *
-              </Label>
-              {isEditing ? (
-                renderEditableField(
-                  "Vị trí công việc",
-                  "jobPositionId",
-                  "select",
-                  jobPositions
-                )
-              ) : (
-                <p className="text-gray-600">
-                  {getJobPositionName(job.jobPositionId?.toString() || "")}
-                </p>
-              )}
-            </div>
+        {loadingPositions && !dataLoaded ? (
+          <div className="flex items-center justify-center py-8">
+            <div className="text-gray-500">Đang tải dữ liệu...</div>
           </div>
-
-          {/* Job Status and Basic Info */}
-          <div className="flex flex-wrap justify-between items-center">
-            <div className="flex items-center flex-col gap-2 text-sm text-gray-600">
-              <div className="flex items-center gap-2 flex-row text-sm font-medium">
-                <Users className="w-4 h-4" />
-                <span>Cần tuyển </span>
+        ) : (
+          <div className="space-y-6">
+            {/* Job Title and Position */}
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="flex-1">
+                <Label htmlFor="jobTitle" className="text-sm font-medium">
+                  Tiêu đề công việc *
+                </Label>
+                {renderEditableField("Tiêu đề công việc", "jobTitle")}
               </div>
-              {isEditing ? (
-                <div className="w-20">
-                  {renderEditableField("Số lượng", "vacancyCount", "number")}
-                </div>
-              ) : (
-                <span>{job.vacancyCount} người</span>
-              )}
-            </div>
-            <div className="flex items-start gap-3 flex-col">
-              <div className="flex items-start gap-2 flex-row text-sm font-medium">
-                <User className="w-4 h-4 text-gray-500 " />
-                <h4 className="">Yêu cầu độ tuổi</h4>
-              </div>
-              <div className="f">
+              <div className="flex-1">
+                <Label htmlFor="jobPositionId" className="text-sm font-medium">
+                  Vị trí công việc *
+                </Label>
                 {isEditing ? (
-                  <div className="flex items-center gap-2">
-                    {renderEditableField("Độ tuổi", "ageRequirement", "number")}
-                    <span className="text-sm text-gray-500">tuổi</span>
-                  </div>
+                  loadingPositions ? (
+                    <p className="text-gray-500">Đang tải...</p>
+                  ) : (
+                    renderEditableField(
+                      "Vị trí công việc",
+                      "jobPositionId",
+                      "select",
+                      jobPositionOptions
+                    )
+                  )
                 ) : (
                   <p className="text-gray-600">
-                    {job.ageRequirement
-                      ? `${job.ageRequirement} tuổi`
-                      : "Không yêu cầu"}
+                    {currentJobPosition || "Đang tải..."}
                   </p>
                 )}
               </div>
             </div>
-          </div>
-
-          <Separator />
-
-          {/* Job Details Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Age Requirement */}
 
             {/* Location */}
             <div className="flex items-start gap-3">
@@ -451,107 +416,149 @@ const JobPostDialog: React.FC<JobPostDialogProps> = ({
               </div>
             </div>
 
+            <Separator />
 
-
-            {/* Salary */}
-            <div className="flex items-start gap-3">
-              <DollarSign className="w-5 h-5 text-gray-500 mt-1" />
-              <div className="flex-1">
-                <h4 className="font-semibold text-gray-900">Mức lương</h4>
-                {isEditing ? (
-                  <div className="flex gap-2">
-                    <div className="flex-1">
-                      {renderEditableField("Lương", "salary", "number")}
-                    </div>
-                    <div className="w-24">
-                      {renderEditableField("Đơn vị", "salaryUnit", "select", [
-                        { value: "VND", label: "VND" },
-                        { value: "USD", label: "USD" },
-                        { value: "Hour", label: "Giờ" },
-                        { value: "Day", label: "Ngày" },
-                        { value: "Month", label: "Tháng" },
-                      ])}
-                    </div>
+            {/* Job Details */}
+            <div className="flex flex-col space-y-6">
+              {/* Main Job Info Row */}
+              <div className="flex flex-col sm:flex-row justify-between gap-4 items-start">
+                {/* Vacancy Count */}
+                <div className="flex flex-col items-center gap-2 text-sm text-gray-600 flex-1">
+                  <div className="flex items-center gap-2 text-sm font-medium">
+                    <Users className="w-4 h-4 flex-shrink-0" />
+                    <span className="whitespace-nowrap">Cần tuyển</span>
                   </div>
-                ) : (
-                  <p className="text-gray-600">
-                    {formatSalary(job.salary, job.salaryUnit)}
-                  </p>
-                )}
+                  {isEditing ? (
+                    <div className="w-20">
+                      {renderEditableField("Số lượng", "vacancyCount", "number")}
+                    </div>
+                  ) : (
+                    <span className="text-center">{job.vacancyCount} người</span>
+                  )}
+                </div>
+
+                {/* Age Requirement */}
+                <div className="flex flex-col items-center gap-2 text-sm text-gray-600 flex-1">
+                  <div className="flex items-center gap-2 text-sm font-medium">
+                    <User className="w-4 h-4 flex-shrink-0" />
+                    <h4 className="whitespace-nowrap">Độ tuổi</h4>
+                  </div>
+                  <div className="w-full max-w-[80px]">
+                    {isEditing ? (
+                      renderEditableField("Độ tuổi", "ageRequirement", "number")
+                    ) : (
+                      <p className="text-gray-600 text-center">
+                        {job.ageRequirement
+                          ? `${job.ageRequirement} tuổi`
+                          : "Không yêu cầu"}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Salary */}
+                <div className="flex flex-col items-center gap-2 text-sm text-gray-600 flex-1">
+                  <div className="flex items-center gap-2 text-sm font-medium">
+                    <DollarSign className="w-5 h-5" />
+                    <h4 className="font-semibold text-gray-900 whitespace-nowrap">Mức lương</h4>
+                  </div>
+                  {isEditing ? (
+                    <div className="flex flex-col sm:flex-row gap-2 items-center w-full max-w-[200px]">
+                      <div className="flex-1 min-w-[100px]">
+                        {renderEditableField("Lương", "salary", "number")}
+                      </div>
+                      <div className="flex-shrink-0 min-w-[80px]">
+                        {renderEditableField(
+                          "Đơn vị",
+                          "salaryUnit",
+                          "select",
+                          salaryUnitOptions
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-gray-600 text-center">
+                      {formatSalary(job.salary, job.salaryUnit)}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Secondary Info Row */}
+              <div className="flex flex-col sm:flex-row gap-6">
+                {/* Expire Date */}
+                <div className="flex items-start gap-3 flex-1">
+                  <CalendarDays className="w-5 h-5 text-gray-500 mt-1 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-semibold text-gray-900">
+                      Hạn nộp hồ sơ
+                    </h4>
+                    {renderEditableField("Hạn nộp", "expireTime", "date")}
+                  </div>
+                </div>
+
+                {/* Application Count */}
+                <div className="flex items-start gap-3 flex-1">
+                  <Users className="w-5 h-5 text-gray-500 mt-1 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-semibold text-gray-900">
+                      Số lượng ứng viên
+                    </h4>
+                    <p className="text-gray-600">
+                      {job.applicationsCount || 0} người đã ứng tuyển
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
 
-            {/* Expire Date */}
-            <div className="flex items-start gap-3">
-              <CalendarDays className="w-5 h-5 text-gray-500 mt-1" />
-              <div className="flex-1">
-                <h4 className="font-semibold text-gray-900">Hạn nộp hồ sơ</h4>
-                {renderEditableField("Hạn nộp", "expireTime", "date")}
-              </div>
+            <Separator />
+
+            {/* Job Description */}
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                Mô tả công việc *
+              </h3>
+              {renderEditableField(
+                "Mô tả công việc",
+                "jobDescription",
+                "textarea"
+              )}
             </div>
 
-            {/* Application Count */}
-            <div className="flex items-start gap-3">
-              <Users className="w-5 h-5 text-gray-500 mt-1" />
-              <div>
-                <h4 className="font-semibold text-gray-900">
-                  Số lượng ứng viên
-                </h4>
-                <p className="text-gray-600">
-                  {job.applicationsCount || 0} người đã ứng tuyển
-                </p>
-              </div>
+            {/* Job Requirements */}
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                Yêu cầu công việc *
+              </h3>
+              {renderEditableField(
+                "Yêu cầu công việc",
+                "jobRequirement",
+                "textarea"
+              )}
             </div>
-          </div>
 
-          <Separator />
+            {/* Experience Requirements */}
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                Yêu cầu kinh nghiệm
+              </h3>
+              {renderEditableField(
+                "Yêu cầu kinh nghiệm",
+                "experienceRequirement",
+                "textarea"
+              )}
+            </div>
 
-          {/* Job Description */}
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-3">
-              Mô tả công việc *
-            </h3>
-            {renderEditableField(
-              "Mô tả công việc",
-              "jobDescription",
-              "textarea"
-            )}
-          </div>
+            {/* Benefits */}
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                Quyền lợi
+              </h3>
+              {renderEditableField("Quyền lợi", "benefit", "textarea")}
+            </div>
 
-          {/* Job Requirements */}
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-3">
-              Yêu cầu công việc *
-            </h3>
-            {renderEditableField(
-              "Yêu cầu công việc",
-              "jobRequirement",
-              "textarea"
-            )}
-          </div>
-
-          {/* Experience Requirements */}
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-3">
-              Yêu cầu kinh nghiệm
-            </h3>
-            {renderEditableField(
-              "Yêu cầu kinh nghiệm",
-              "experienceRequirement",
-              "textarea"
-            )}
-          </div>
-
-          {/* Benefits */}
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-3">
-              Quyền lợi
-            </h3>
-            {renderEditableField("Quyền lợi", "benefit", "textarea")}
-          </div>
-
-          {/* Job Schedule - Read only for now */}
-          {job.jobSchedule && (
+            {/* Job Schedule */}
             <>
               <Separator />
               <div>
@@ -562,16 +569,16 @@ const JobPostDialog: React.FC<JobPostDialogProps> = ({
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
                       <span className="font-medium">Số ca làm việc:</span>{" "}
-                      {job.jobSchedule.shiftCount}
+                      {job.jobSchedule?.shiftCount}
                     </div>
                     <div>
                       <span className="font-medium">Ca tối thiểu:</span>{" "}
-                      {job.jobSchedule.minimumShift}
+                      {job.jobSchedule?.minimumShift}
                     </div>
                   </div>
 
-                  {job.jobSchedule.jobShifts &&
-                    job.jobSchedule.jobShifts.length > 0 && (
+                  {job.jobSchedule?.jobShifts &&
+                    job.jobSchedule?.jobShifts.length > 0 && (
                       <div>
                         <h4 className="font-medium mb-2">
                           Chi tiết ca làm việc:
@@ -579,12 +586,12 @@ const JobPostDialog: React.FC<JobPostDialogProps> = ({
                         <div className="space-y-2">
                           {job.jobSchedule.jobShifts.map((shift, index) => (
                             <div
-                              key={shift.id || index}
+                              key={index}
                               className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg"
                             >
                               <Clock className="w-4 h-4 text-gray-500" />
                               <span className="font-medium">
-                                {formatDate(shift.date)}
+                                {shift.dayOfWeek}
                               </span>
                               <span className="text-gray-600">
                                 {shift.startTime} - {shift.endTime}
@@ -597,8 +604,8 @@ const JobPostDialog: React.FC<JobPostDialogProps> = ({
                 </div>
               </div>
             </>
-          )}
-        </div>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );

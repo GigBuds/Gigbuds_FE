@@ -6,19 +6,33 @@ import { JobPost } from "@/types/jobPostService";
 import { useRouter } from 'next/navigation';
 import JobPostDialog from "@/components/JobPostDialog/JobPostDialog";
 import { useLoading } from '@/contexts/LoadingContext';
+import Pagination from "@/components/Pagination/Pagination";
 
 const ManageJobPost = () => {
   const [jobPostings, setJobPostings] = useState<JobPost[]>([]);
+  const [pageIndex, setPageIndex] = useState<number>(1);
   const { setIsLoading } = useLoading();
   const router = useRouter();
-  
-  const fetchJobPosts = useCallback(async () => {
+  const pageSize = 6;
+
+  interface FetchJobPostsParams {
+    pageSize: number;
+    pageIndex: number;
+    employerId: string;
+  }
+
+  interface JobPostApiResponse {
+    items?: JobPost[];
+  }
+
+  const fetchJobPosts = useCallback(async (employerId: string, page: number = 1): Promise<void> => {
     try {
-      setIsLoading(true); // Start loading
-      const response = await jobPostApi.getJobPosts({
-        pageSize: 10,
-        pageIndex: 1
-      });
+      setIsLoading(true);
+      const response: JobPostApiResponse = await jobPostApi.getJobPosts({
+        pageSize: pageSize,
+        pageIndex: page,
+        employerId: employerId,
+      } as FetchJobPostsParams);
       if (response) {
         console.log('Raw API response:', JSON.stringify(response.items, null, 2));
         setJobPostings(response.items || []);
@@ -26,22 +40,52 @@ const ManageJobPost = () => {
       } else {
         console.error('No job posts found in the response');
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Failed to fetch job posts:', error);
     } finally {
-      setTimeout(() => {
-        setIsLoading(false); // Stop loading after a delay
-      }, 1500); // Adjust the delay as needed
-
+      setTimeout((): void => {
+        setIsLoading(false);
+      }, 1500);
     }
-  }, [setIsLoading]);
+  }, [setIsLoading, pageSize]);
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1) {
+      setPageIndex(newPage);
+      const accountId = document.cookie
+        .split("; ")
+        .find((row) => row.startsWith("accountId="))
+        ?.split("=")[1];
+      if (accountId) {
+        fetchJobPosts(accountId, newPage);
+      }
+    }
+  };
 
   React.useEffect(() => {
-    fetchJobPosts();
-  }, [fetchJobPosts]);
+    const accountId = document.cookie
+      .split("; ")
+      .find((row) => row.startsWith("accountId="))
+      ?.split("=")[1];
+    if (!accountId) {
+      router.push("/login");
+      return;
+    }
+
+    fetchJobPosts(accountId, pageIndex);
+  }, [fetchJobPosts, router, pageIndex]);
 
   return (
     <div className="h-full w-full flex flex-col">
+      {/* Header */}
+      <div className="mb-4">
+        <h1 className="text-2xl font-bold text-gray-800">Quản lý tin tuyển dụng</h1>
+        <div className="text-sm text-gray-600 mt-1">
+          Trang {pageIndex} - Hiển thị {jobPostings.length} tin tuyển dụng
+        </div>
+      </div>
+
+      {/* Job posts grid */}
       <div className="w-full flex flex-wrap gap-6">
         {jobPostings.map((job) => (
           <div
@@ -100,7 +144,11 @@ const ManageJobPost = () => {
                   Xem hồ sơ ứng viên
                 </motion.div>
                 
-                <JobPostDialog job={job}>
+                <JobPostDialog 
+                  job={job}
+                  API_KEY={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ""}
+                  MAP_ID={process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID || ""}
+                >
                   <motion.div
                     className="w-[45%] text-sm rounded-md bg-blue-600 text-white text-center py-1 cursor-pointer"
                     initial={{ scale: 1 }}
@@ -132,6 +180,27 @@ const ManageJobPost = () => {
           </div>
         ))}
       </div>
+
+      {/* Empty state */}
+      {jobPostings.length === 0 && (
+        <div className="flex flex-col items-center justify-center py-12">
+          <div className="text-gray-400 text-lg mb-2">Không có tin tuyển dụng nào</div>
+          <div className="text-gray-500 text-sm">Hãy tạo tin tuyển dụng đầu tiên của bạn</div>
+        </div>
+      )}
+
+      {/* Pagination */}
+      <div className="bottom-0 right-20 fixed items-center justify-center  py-4 ">
+<Pagination
+        currentPage={pageIndex}
+        hasItems={jobPostings.length > 0}
+        itemsCount={jobPostings.length}
+        pageSize={pageSize}
+        onPageChange={handlePageChange}
+      />
+      </div>
+
+      
     </div>
   );
 };

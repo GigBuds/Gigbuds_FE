@@ -1,4 +1,4 @@
-const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://localhost:7290/api/v1/";
+const baseUrl = process.env.BASE_URL ?? "https://localhost:50876/api/v1/";
 
 const getAuthHeaders = (): HeadersInit => {
   const accessToken = typeof window !== 'undefined' 
@@ -69,14 +69,11 @@ const fetchApi = {
 
   async get(endpoint: string) {
     const url = `${baseUrl}${endpoint}`;
-    console.log('Making GET request to:', url);
     
     const response = await fetch(url, {
       method: 'GET',
       headers: getAuthHeaders(),
     });
-
-    console.log('GET Response status:', response.status);
 
     if (!response.ok) {
       throw new Error(`Error: ${response.status} ${response.statusText}`);

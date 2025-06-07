@@ -110,6 +110,6 @@ export interface UpdateJobPostRequest extends Partial<CreateJobPostRequest> {
 
 export interface JobPosition {
   id: number;
-  jobPositionName: string;
-  jobTypeName: string;
+  jobPositionName?: string;
+  jobTypeName?: string;
 }

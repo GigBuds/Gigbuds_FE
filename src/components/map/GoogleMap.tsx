@@ -10,8 +10,6 @@ import {
  import { MapHandler } from "./MapHandler";
 import { GoogleMapResponse } from "@/types/folder/googleMapResponse";
  
- 
-
    /**
    * GoogleMap component that integrates Google Maps with Place Autocomplete functionality.
    *

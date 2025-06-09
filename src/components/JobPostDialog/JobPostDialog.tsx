@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from "react";
 import {
@@ -21,11 +22,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../../../ui/select";
-import { JobPositionOption, JobPost, JobPostDialogProps } from "@/types/jobPostService";
+import { JobPositionOption, JobPostDialogProps } from "@/types/jobPostService";
 import { jobPostApi } from "@/service/jobPostService/jobPostService";
 import {
   CalendarDays,
-  MapPin,
   DollarSign,
   Users,
   Clock,
@@ -35,10 +35,14 @@ import {
   User,
 } from "lucide-react";
 import toast from "react-hot-toast";
-
+import { GoogleMapResponse } from "@/types/folder/googleMapResponse";
+import GoogleMap from "../map/GoogleMap";
+import { useRouter } from "next/navigation";
 
 
 const JobPostDialog: React.FC<JobPostDialogProps> = ({
+  API_KEY,
+  MAP_ID,
   job,
   children,
   onJobUpdated,
@@ -50,7 +54,8 @@ const JobPostDialog: React.FC<JobPostDialogProps> = ({
   const [currentJobPosition, setCurrentJobPosition] = useState<string>("");
   const [loadingPositions, setLoadingPositions] = useState(false);
   const [dataLoaded, setDataLoaded] = useState(false);
-  
+  const router = useRouter();
+
   const [formData, setFormData] = useState({
     jobTitle: job.jobTitle || "",
     ageRequirement: job.ageRequirement || "",
@@ -67,11 +72,10 @@ const JobPostDialog: React.FC<JobPostDialogProps> = ({
     vacancyCount: job.vacancyCount || 1,
     isOutstandingPost: job.isOutstandingPost || false,
     jobPositionId: job.jobPositionId || "",
-    // Add job schedule to form data
     jobSchedule: job.jobSchedule || null,
+    isMale: false,
   });
 
-  // Fetch data when dialog opens
   useEffect(() => {
     if (isOpen && !dataLoaded) {
       fetchData();
@@ -82,11 +86,9 @@ const JobPostDialog: React.FC<JobPostDialogProps> = ({
     try {
       setLoadingPositions(true);
 
-      // Fetch job positions first
       const positions = await jobPostApi.getAllJobPositions();
       setJobPositions(positions);
 
-      // Find current position from the fetched positions instead of separate API call
       if (job.jobPositionId) {
         const currentPosition = positions.find(
           (pos) => pos.id.toString() === job.jobPositionId?.toString()
@@ -126,7 +128,17 @@ const JobPostDialog: React.FC<JobPostDialogProps> = ({
       isOutstandingPost: job.isOutstandingPost || false,
       jobPositionId: job.jobPositionId || "",
       jobSchedule: job.jobSchedule || null,
+      isMale: false,
     });
+  };
+
+  const handleMapChange = (response: GoogleMapResponse | null | undefined) => {
+    setFormData(prev => ({
+      ...prev,
+      jobLocation: response?.jobLocation ?? '',
+      districtCode: response?.districtCode ?? '',
+      provinceCode: response?.provinceCode ?? '',
+    }));
   };
 
   const handleOpenChange = (open: boolean) => {
@@ -154,7 +166,6 @@ const JobPostDialog: React.FC<JobPostDialogProps> = ({
     setFormData((prev) => {
       const newData = { ...prev, [field]: value };
 
-      // Reset district when province changes
       if (field === "provinceCode") {
         newData.districtCode = "";
       }
@@ -162,7 +173,6 @@ const JobPostDialog: React.FC<JobPostDialogProps> = ({
       return newData;
     });
   };
-
 
   const handleSave = async () => {
     try {
@@ -190,22 +200,24 @@ const JobPostDialog: React.FC<JobPostDialogProps> = ({
         jobPositionId: formData.jobPositionId
           ? formData.jobPositionId.toString()
           : undefined,
-        // Add job schedule to update data
         jobSchedule: formData.jobSchedule || undefined,
+        isMale: formData.isMale,
       };
 
       const updatedJob = await jobPostApi.updateJobPost(
         job.id.toString(),
         updateData
       );
-
+     
       toast.success("Cập nhật tin tuyển dụng thành công!");
       setIsEditing(false);
+      router.push(`/manage-job-post`);
 
       if (onJobUpdated) {
         onJobUpdated(updatedJob);
       }
     } catch (error) {
+       
       console.error("Error updating job post:", error);
       toast.error("Có lỗi xảy ra khi cập nhật tin tuyển dụng!");
     } finally {
@@ -242,7 +254,6 @@ const JobPostDialog: React.FC<JobPostDialogProps> = ({
           </p>
         );
       }
-      // Special handling for jobPositionId
       if (field === "jobPositionId") {
         return (
           <p className="text-gray-600">
@@ -295,7 +306,6 @@ const JobPostDialog: React.FC<JobPostDialogProps> = ({
     }
   };
 
-  // Convert jobPositions to options format for the select
   const jobPositionOptions = jobPositions.map((position) => ({
     value: position.id.toString(),
     label: position.jobPositionName,
@@ -374,7 +384,6 @@ const JobPostDialog: React.FC<JobPostDialogProps> = ({
           </div>
         ) : (
           <div className="space-y-6">
-            {/* Job Title and Position */}
             <div className="flex flex-col md:flex-row gap-4">
               <div className="flex-1">
                 <Label htmlFor="jobTitle" className="text-sm font-medium">
@@ -405,24 +414,27 @@ const JobPostDialog: React.FC<JobPostDialogProps> = ({
               </div>
             </div>
 
-            {/* Location */}
-            <div className="flex items-start gap-3">
-              <MapPin className="w-5 h-5 text-gray-500 mt-1" />
-              <div className="flex-1">
-                <h4 className="font-semibold text-gray-900">
-                  Địa điểm làm việc
-                </h4>
-                {renderEditableField("Địa điểm", "jobLocation")}
-              </div>
+            <div className="items-center gap-3">
+              <Label htmlFor="jobPositionId" className="text-sm font-medium">
+                Địa điểm làm việc *
+              </Label>
+              <span className="text-gray-600 text-sm mb-4">
+                {job.jobLocation || "Chưa xác định"}
+              </span>
+
+              <GoogleMap
+                onChange={handleMapChange}
+                API_KEY={API_KEY}
+                MAP_ID={MAP_ID}
+                initialLocation={job.jobLocation || ""}
+                hideAutocomplete={!isEditing}
+              />
             </div>
 
             <Separator />
 
-            {/* Job Details */}
             <div className="flex flex-col space-y-6">
-              {/* Main Job Info Row */}
               <div className="flex flex-col sm:flex-row justify-between gap-4 items-start">
-                {/* Vacancy Count */}
                 <div className="flex flex-col items-center gap-2 text-sm text-gray-600 flex-1">
                   <div className="flex items-center gap-2 text-sm font-medium">
                     <Users className="w-4 h-4 flex-shrink-0" />
@@ -437,7 +449,6 @@ const JobPostDialog: React.FC<JobPostDialogProps> = ({
                   )}
                 </div>
 
-                {/* Age Requirement */}
                 <div className="flex flex-col items-center gap-2 text-sm text-gray-600 flex-1">
                   <div className="flex items-center gap-2 text-sm font-medium">
                     <User className="w-4 h-4 flex-shrink-0" />
@@ -456,7 +467,6 @@ const JobPostDialog: React.FC<JobPostDialogProps> = ({
                   </div>
                 </div>
 
-                {/* Salary */}
                 <div className="flex flex-col items-center gap-2 text-sm text-gray-600 flex-1">
                   <div className="flex items-center gap-2 text-sm font-medium">
                     <DollarSign className="w-5 h-5" />
@@ -484,9 +494,7 @@ const JobPostDialog: React.FC<JobPostDialogProps> = ({
                 </div>
               </div>
 
-              {/* Secondary Info Row */}
               <div className="flex flex-col sm:flex-row gap-6">
-                {/* Expire Date */}
                 <div className="flex items-start gap-3 flex-1">
                   <CalendarDays className="w-5 h-5 text-gray-500 mt-1 flex-shrink-0" />
                   <div className="flex-1 min-w-0">
@@ -497,7 +505,6 @@ const JobPostDialog: React.FC<JobPostDialogProps> = ({
                   </div>
                 </div>
 
-                {/* Application Count */}
                 <div className="flex items-start gap-3 flex-1">
                   <Users className="w-5 h-5 text-gray-500 mt-1 flex-shrink-0" />
                   <div className="flex-1 min-w-0">
@@ -514,7 +521,6 @@ const JobPostDialog: React.FC<JobPostDialogProps> = ({
 
             <Separator />
 
-            {/* Job Description */}
             <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-3">
                 Mô tả công việc *
@@ -526,7 +532,6 @@ const JobPostDialog: React.FC<JobPostDialogProps> = ({
               )}
             </div>
 
-            {/* Job Requirements */}
             <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-3">
                 Yêu cầu công việc *
@@ -538,7 +543,6 @@ const JobPostDialog: React.FC<JobPostDialogProps> = ({
               )}
             </div>
 
-            {/* Experience Requirements */}
             <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-3">
                 Yêu cầu kinh nghiệm
@@ -550,7 +554,6 @@ const JobPostDialog: React.FC<JobPostDialogProps> = ({
               )}
             </div>
 
-            {/* Benefits */}
             <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-3">
                 Quyền lợi
@@ -558,7 +561,6 @@ const JobPostDialog: React.FC<JobPostDialogProps> = ({
               {renderEditableField("Quyền lợi", "benefit", "textarea")}
             </div>
 
-            {/* Job Schedule */}
             <>
               <Separator />
               <div>
@@ -591,7 +593,7 @@ const JobPostDialog: React.FC<JobPostDialogProps> = ({
                             >
                               <Clock className="w-4 h-4 text-gray-500" />
                               <span className="font-medium">
-                                {shift.dayOfWeek}
+                                {shift.dayOfWeek === 0 ? "Chủ nhật" : `Thứ ${shift.dayOfWeek}`}
                               </span>
                               <span className="text-gray-600">
                                 {shift.startTime} - {shift.endTime}

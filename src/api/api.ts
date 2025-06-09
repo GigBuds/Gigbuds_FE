@@ -1,5 +1,5 @@
-const baseUrl = process.env.BASE_URL ?? "https://localhost:50876/api/v1/";
-
+// const baseUrl = process.env.BASE_URL ?? "https://localhost:50876/api/v1/";
+const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "https://localhost:50876/api/v1/";
 const getAuthHeaders = (): HeadersInit => {
   const accessToken = typeof window !== 'undefined' 
     ? document.cookie.split('; ').find(row => row.startsWith('accessToken='))?.split('=')[1]
@@ -27,7 +27,7 @@ const fetchApi = {
       console.log('Response status:', response.status);
       console.log('Response headers:', Object.fromEntries(response.headers.entries()));
 
-      if (!response.ok) {
+      if (!response.ok && response.status !== 204) {
         const errorText = await response.text();
         console.log('Error response body:', errorText);
         let errorMessage = `Error: ${response.status} ${response.statusText}`;
@@ -95,11 +95,11 @@ const fetchApi = {
 
     console.log('PUT Response status:', response.status);
 
-    if (!response.ok) {
+    if (!response.ok && response.status !== 204) {
       throw new Error(`Error: ${response.status} ${response.statusText}`);
     }
 
-    return response.json();
+    return response;
   },
 
   async delete(endpoint: string) {

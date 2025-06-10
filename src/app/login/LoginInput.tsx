@@ -4,33 +4,35 @@ import { Form, Input, Button, Checkbox } from "antd";
 import { FaRegEye, FaRegEyeSlash } from "react-icons/fa";
 import toast from "react-hot-toast";
 import GoogleLoginButton from "./GoogleLoginButton";
-import { loginApi } from "@/service/loginService/loginService";
 import { FormValues } from "@/types/login.types";
 import { useRouter } from "next/navigation";
 import { useLoading } from "@/contexts/LoadingContext";
+import { useAuth } from "@/hooks/useAuth";
 
 
 const LoginInput = () => {
   const router = useRouter();
-  const googleClientId = process.env.GOOGLE_CLIENT_ID || "";
+  const googleClientId = process.env.GOOGLE_CLIENT_ID ?? "";
   const {setIsLoading, isLoading} = useLoading();
+  const {login} = useAuth();
+
   const onFinish = async (values: FormValues) => {
     setIsLoading(true);
     try {
       console.log('Calling API with:', values.identifier, values.password);
-      const response = await loginApi.login(values.identifier, values.password);
+      const response = await login(values.identifier, values.password);
       
       // Handle successful login
       toast.success("Login successful!");
       console.log("Login response:", response);
-      
     } catch (error) {
       console.error("Login error:", error);
       toast.error("Login failed. Please check your credentials.");
     } finally {
       setTimeout(() => {
         setIsLoading(false); 
-              router.push("/"); // Redirect to home page after login
+        console.log('redirecting to home page');
+        router.push("/"); // Redirect to home page after login
       }
       , 2000); // Adjust the delay as needed
 

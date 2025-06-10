@@ -97,10 +97,10 @@ export interface CreateJobPostRequest {
     vacancyCount: number;
     districtCode: string;
     provinceCode: string;
-    isOutstandingPost: boolean;
     jobPositionId: string;
-    isMale: boolean;
     jobSchedule: JobScheduleRequest;
+    startDate: string;
+    endDate: string;
 }
 
 export interface UpdateJobPostRequest extends Partial<CreateJobPostRequest> {

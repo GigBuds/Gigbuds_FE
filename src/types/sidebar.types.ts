@@ -8,9 +8,14 @@ export interface MenuItem {
 }
 
 export interface User {
-  sub: string;
+  id: number;
+  firstName: string;
+  lastName: string;
+  phone: string;
+  birthDate: Date;
+  isMale: boolean;
+  name: string;
   email: string;
-  name?: string;
   roles?: string[];
 }
 

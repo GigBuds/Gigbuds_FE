@@ -16,7 +16,7 @@ class JobPostApi {
       const queryParams = new URLSearchParams({
         pageSize: pageSize.toString(),
         pageIndex: pageIndex.toString(),
-        employerId: employerId || '',
+        employerId: employerId ?? '',
       });
 
       const response = await fetchApi.get(`job-posts?${queryParams.toString()}`);

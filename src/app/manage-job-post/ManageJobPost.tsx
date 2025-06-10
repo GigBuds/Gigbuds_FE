@@ -10,13 +10,19 @@ import Pagination from "@/components/Pagination/Pagination";
 import { selectUser } from "@/lib/redux/features/userSlice";
 import { useAppSelector } from "@/lib/redux/hooks";
 
-const ManageJobPost = () => {
+interface ManageJobPostProps {
+  API_KEY: string;
+  MAP_ID: string;
+}
+
+const ManageJobPost: React.FC<ManageJobPostProps> = ({ API_KEY, MAP_ID }) => {
   const [jobPostings, setJobPostings] = useState<JobPost[]>([]);
   const [pageIndex, setPageIndex] = useState<number>(1);
   const { setIsLoading } = useLoading();
   const user = useAppSelector(selectUser);
   const router = useRouter();
   const pageSize = 6;
+
 
   interface FetchJobPostsParams {
     pageSize: number;
@@ -138,8 +144,8 @@ const ManageJobPost = () => {
                 
                 <JobPostDialog 
                   job={job}
-                  API_KEY={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || ""}
-                  MAP_ID={process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID || ""}
+                  API_KEY={API_KEY}
+                  MAP_ID={MAP_ID}
                 >
                   <motion.div
                     className="w-[45%] text-sm rounded-md bg-blue-600 text-white text-center py-1 cursor-pointer"

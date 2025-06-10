@@ -55,6 +55,8 @@ export interface JobPositionOption {
 }
 
 export interface JobPostDialogProps {
+  API_KEY: string;
+  MAP_ID: string;
   job: JobPost;
   children: React.ReactNode;
   onJobUpdated?: (updatedJob: JobPost) => void;

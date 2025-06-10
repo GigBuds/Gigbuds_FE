@@ -6,6 +6,7 @@ export default async function CreateJobPost() {
   const API_KEY = process.env.GOOGLE_MAPS_API_KEY ?? "";
   const MAP_ID = process.env.GOOGLE_MAPS_MAP_ID ?? "";
   
+  
   const jobPositions: JobPosition[] = await fetchApi.get('job-positions');
   const groupedJobPositions = jobPositions.reduce((acc, jobPosition) => {
     const typeName = jobPosition.jobTypeName ?? 'Khác';

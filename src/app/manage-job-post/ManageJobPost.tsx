@@ -7,6 +7,8 @@ import { useRouter } from 'next/navigation';
 import JobPostDialog from "@/components/JobPostDialog/JobPostDialog";
 import { useLoading } from '@/contexts/LoadingContext';
 import Pagination from "@/components/Pagination/Pagination";
+import { selectUser } from "@/lib/redux/features/userSlice";
+import { useAppSelector } from "@/lib/redux/hooks";
 
 interface ManageJobPostProps {
   API_KEY: string;
@@ -17,6 +19,7 @@ const ManageJobPost: React.FC<ManageJobPostProps> = ({ API_KEY, MAP_ID }) => {
   const [jobPostings, setJobPostings] = useState<JobPost[]>([]);
   const [pageIndex, setPageIndex] = useState<number>(1);
   const { setIsLoading } = useLoading();
+  const user = useAppSelector(selectUser);
   const router = useRouter();
   const pageSize = 6;
 
@@ -31,13 +34,13 @@ const ManageJobPost: React.FC<ManageJobPostProps> = ({ API_KEY, MAP_ID }) => {
     items?: JobPost[];
   }
 
-  const fetchJobPosts = useCallback(async (employerId: string, page: number = 1): Promise<void> => {
+  const fetchJobPosts = useCallback(async (page: number = 1): Promise<void> => {
     try {
       setIsLoading(true);
       const response: JobPostApiResponse = await jobPostApi.getJobPosts({
         pageSize: pageSize,
         pageIndex: page,
-        employerId: employerId,
+        employerId: user.id?.toString() ?? '',
       } as FetchJobPostsParams);
       if (response) {
         console.log('Raw API response:', JSON.stringify(response.items, null, 2));
@@ -53,33 +56,22 @@ const ManageJobPost: React.FC<ManageJobPostProps> = ({ API_KEY, MAP_ID }) => {
         setIsLoading(false);
       }, 1500);
     }
-  }, [setIsLoading, pageSize]);
+  }, [setIsLoading, pageSize, user.id]);
 
   const handlePageChange = (newPage: number) => {
     if (newPage >= 1) {
       setPageIndex(newPage);
-      const accountId = document.cookie
-        .split("; ")
-        .find((row) => row.startsWith("accountId="))
-        ?.split("=")[1];
-      if (accountId) {
-        fetchJobPosts(accountId, newPage);
-      }
+      fetchJobPosts(newPage);
     }
   };
 
   React.useEffect(() => {
-    const accountId = document.cookie
-      .split("; ")
-      .find((row) => row.startsWith("accountId="))
-      ?.split("=")[1];
-    if (!accountId) {
+    if (!user.id) {
       router.push("/login");
       return;
     }
-
-    fetchJobPosts(accountId, pageIndex);
-  }, [fetchJobPosts, router, pageIndex]);
+    fetchJobPosts(pageIndex);
+  }, [fetchJobPosts, router, pageIndex, user.id]);
 
   return (
     <div className="h-full w-full flex flex-col">

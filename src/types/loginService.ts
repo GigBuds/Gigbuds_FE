@@ -4,7 +4,7 @@ export interface LoginRequest {
 }
 
 export interface LoginResponse {
-  refresh_token: unknown;
+  refresh_token: string;
   success: boolean;
   access_token?: string;
   id_token?: string;
@@ -20,6 +20,10 @@ export interface JWTPayload {
   sub: string;
   email: string;
   name?: string;
+  familyName?: string;
+  phone?: string;
+  birthDate?: Date;
+  isMale?: boolean;
   roles?: string[];
   exp: number;
   [key: string]: unknown;

@@ -9,11 +9,12 @@ import { MdOutlineSupervisorAccount } from "react-icons/md";
 import { TbEdit } from "react-icons/tb";
 import { BiSupport } from "react-icons/bi";
 import * as Texts from './text';
-import { jwtDecode } from 'jwt-decode';
-import { loginApi } from '@/service/loginService/loginService';
-import { MenuItem, User } from '@/types/sidebar.types';
+import { MenuItem } from '@/types/sidebar.types';
 import { usePathname, useRouter } from 'next/navigation';
 import NotificationSection from '../Notification/NotificationSection';
+import { useAuth } from '@/hooks/useAuth';
+import { clearUserState, selectUser } from '@/lib/redux/features/userSlice';
+import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks';
 
 
 
@@ -36,10 +37,9 @@ const Sidebar = () => {
     const pathname = usePathname();
     const [isOpen, setIsOpen] = useState(false);
     const [selectedItem, setSelectedItem] = useState('homepage');
-    const [user, setUser] = useState<User | null>(null);
-    const id_token = typeof document !== 'undefined'
-        ? document.cookie.split('; ').find(row => row.startsWith('authToken='))
-        : null;
+    const user = useAppSelector(selectUser);
+    const {logout} = useAuth();
+    const dispatch = useAppDispatch();
    
    const getSelectedItemFromPath = (currentPath: string): string => {
         // Direct match first
@@ -77,9 +77,9 @@ const Sidebar = () => {
             case 'Đăng xuất':
                 (async () => {
                     try {
-                        await loginApi.logout();
+                        await logout();
                         setSelectedItem('Trang Chu');
-                        setUser(null);
+                        dispatch(clearUserState());
                     } catch (error: unknown) {
                         console.error('Logout error:', error);
                     }
@@ -90,34 +90,6 @@ const Sidebar = () => {
                 break;
         }
     }, [selectedItem, setSelectedItem, router]);
-
-    useEffect(() => {
-        if (id_token) {
-            const token = id_token.split('=')[1];
-            const decodedUser = decodeJWT(token);
-            console.log('Decoded user:', decodedUser);
-            if (decodedUser) {
-                setUser(decodedUser);
-            } else {
-                console.error('Failed to decode JWT token');
-            }
-        }
-    }, [id_token]);
-
-    const decodeJWT = (token: string): User | null => {
-        try {
-            const decoded = jwtDecode(token) as User;
-            return {
-                sub: decoded.sub,
-                email: decoded.email,
-                name: decoded.name,
-                roles: decoded.roles || [],
-            };
-        } catch (error) {
-            console.error('JWT decode error:', error);
-            return null;
-        }
-    }
 
     const sidebarVariants = {
         open: { width: '250px' },

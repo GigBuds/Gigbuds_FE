@@ -4,14 +4,24 @@ import { User } from "@/types/sidebar.types";
 
 export interface UserState {
     id: number | null;
-    sub: string | null;
+    firstName: string | null;
+    lastName: string | null;
+    phone: string | null;
+    birthDate: Date | null;
+    isMale: boolean | null;
+    name: string | null;
     email: string | null;
     roles: string[] | null;
 }
 
 const initialState: UserState = {
     id: null,
-    sub: null,
+    firstName: null,
+    lastName: null,
+    phone: null,
+    birthDate: null,
+    isMale: null,
+    name: null,
     email: null,
     roles: null,
 }
@@ -21,16 +31,30 @@ const userSlice = createSlice({
     initialState,
     reducers: {
         setUser: (state, action: PayloadAction<User>) => {
-            state.sub = action.payload.sub;
+            state.id = action.payload.id;
+            state.firstName = action.payload.firstName;
+            state.lastName = action.payload.lastName;
+            state.phone = action.payload.phone;
+            state.birthDate = action.payload.birthDate;
+            state.isMale = action.payload.isMale;
+            state.name = action.payload.name;
             state.email = action.payload.email;
             state.roles = action.payload.roles || [];
         },
-        clearUserId(state) {
+        clearUserState(state) {
             state.id = null;
+            state.firstName = null;
+            state.lastName = null;
+            state.phone = null;
+            state.birthDate = null;
+            state.isMale = null;
+            state.name = null;
+            state.email = null;
+            state.roles = null;
         }
     },
 })
 
-export const { setUser, clearUserId } = userSlice.actions;
+export const { setUser, clearUserState } = userSlice.actions;
 export const selectUser = (store: RootState) => store.persistedReducer.user;
 export default userSlice.reducer;

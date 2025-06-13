@@ -1,3 +1,0 @@
-{
-  "buildCommand": "npm ci --platform=linux --arch=x64 && npm run build"
-}

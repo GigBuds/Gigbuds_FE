@@ -8,6 +8,11 @@
     "start": "next start",
     "lint": "next lint"
   },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "os": ["linux", "darwin", "win32"],
+  
   "dependencies": {
     "@ant-design/v5-patch-for-react-19": "^1.0.3",
     "@fullcalendar/core": "^6.1.17",

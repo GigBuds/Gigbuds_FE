@@ -279,6 +279,8 @@ export default function CreateForm({API_KEY, MAP_ID, jobPositions}: Readonly<{AP
                 onChange={handleMapChange} 
                 API_KEY={API_KEY} 
                 MAP_ID={MAP_ID}
+                initialLocation={"Việt Nam"}
+                hideAutocomplete = {false}
               />
             </Form.Item>
             

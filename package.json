@@ -11,9 +11,6 @@
   "engines": {
     "node": ">=18.0.0"
   },
-  "os": ["linux", "darwin", "win64"],
-  "cpu": ["x64", "arm64"],
-  
   "dependencies": {
     "@ant-design/v5-patch-for-react-19": "^1.0.3",
     "@fullcalendar/core": "^6.1.17",
@@ -29,7 +26,6 @@
     "@radix-ui/react-tabs": "^1.1.12",
     "@react-oauth/google": "^0.12.2",
     "@reduxjs/toolkit": "^2.8.2",
-    "@tailwindcss/oxide-win32-x64-msvc": "^4.1.7",
     "@tailwindcss/postcss": "^4.1.7",
     "@tiptap/extension-bullet-list": "^2.12.0",
     "@tiptap/extension-list-item": "^2.12.0",
@@ -44,7 +40,6 @@
     "input-otp": "^1.4.2",
     "jsonwebtoken": "^9.0.2",
     "jwt-decode": "^4.0.0",
-    "lightningcss-win32-x64-msvc": "^1.30.1",
     "lucide-react": "^0.511.0",
     "motion": "^12.12.1",
     "next": "^15.3.2",
@@ -60,6 +55,16 @@
     "redux-persist": "^6.0.0",
     "tailwind-merge": "^3.3.0",
     "tailwindcss": "^4.1.7"
+  },
+  "optionalDependencies": {
+    "@tailwindcss/oxide-win32-x64-msvc": "^4.1.7",
+    "@tailwindcss/oxide-linux-x64-gnu": "^4.1.7",
+    "@tailwindcss/oxide-darwin-x64": "^4.1.7",
+    "@tailwindcss/oxide-darwin-arm64": "^4.1.7",
+    "lightningcss-win32-x64-msvc": "^1.30.1",
+    "lightningcss-linux-x64-gnu": "^1.30.1",
+    "lightningcss-darwin-x64": "^1.30.1",
+    "lightningcss-darwin-arm64": "^1.30.1"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

@@ -52,7 +52,7 @@ const UserProfilePage = () => {
   const userId = params.userId as string;
   
   const [userProfile, setUserProfile] = React.useState<UserProfile | null>(null);
-    const {setIsLoading, isLoading} = useLoading();
+    const {setIsLoading} = useLoading();
   const [error, setError] = React.useState<string | null>(null);
 
   const fetchUserProfile = React.useCallback(async () => {

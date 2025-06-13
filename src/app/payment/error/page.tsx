@@ -44,7 +44,7 @@ export default function PaymentErrorPage() {
                     <li>Payment gateway temporary unavailability</li>
                     <li>Browser or app compatibility issues</li>
                   </ul>
-                  <p className="text-sm font-medium">Don't worry - no charges were made to your account.</p>
+                  <p className="text-sm font-medium">Dont worry - no charges were made to your account.</p>
                 </div>
               </div>
             </div>
@@ -118,7 +118,7 @@ export default function PaymentErrorPage() {
                   <Mail className="w-6 h-6 text-green-600" />
                 </div>
                 <h5 className="font-medium text-gray-900 mb-1">Email Support</h5>
-                <p className="text-sm text-gray-600 mb-3">We'll respond within 1 hour</p>
+                <p className="text-sm text-gray-600 mb-3">We will respond within 1 hour</p>
                 <button
                   onClick={() => window.open('mailto:support@gigbuds.com')}
                   className="text-green-600 hover:text-green-700 font-medium text-sm"

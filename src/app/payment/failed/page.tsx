@@ -172,7 +172,7 @@ export default function PaymentFailedPage() {
                   {(!status || status?.toUpperCase() === 'FAILED') && (
                     <p>The payment could not be processed. This might be due to insufficient funds, network issues, or bank restrictions.</p>
                   )}
-                  <p className="text-sm">Don't worry - no charges were made to your account.</p>
+                  <p className="text-sm">Dont worry - no charges were made to your account.</p>
                 </div>
               </div>
             </div>

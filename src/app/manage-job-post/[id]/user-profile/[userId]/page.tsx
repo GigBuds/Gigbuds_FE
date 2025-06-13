@@ -10,8 +10,8 @@ import SkillsSection from "@/components/Profile/SkillsSection";
 import ExperienceSection from "@/components/Profile/ExperienceSection";
 import EducationSection from "@/components/Profile/EducationSection";
 import PersonalInfoSection from "@/components/Profile/PersonalInfoSection";
-import jobSeekerService from "@/services/JobSeekerService/JobSeekerService";
 import { useLoading } from "@/contexts/LoadingContext";
+import jobSeekerService from "@/service/jobSeekerService/JobSeekerService";
 
 
 interface UserProfile {

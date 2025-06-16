@@ -10,8 +10,8 @@ import SkillsSection from "@/components/Profile/SkillsSection";
 import ExperienceSection from "@/components/Profile/ExperienceSection";
 import EducationSection from "@/components/Profile/EducationSection";
 import PersonalInfoSection from "@/components/Profile/PersonalInfoSection";
-import jobSeekerService from "@/services/JobSeekerService/JobSeekerService";
 import { useLoading } from "@/contexts/LoadingContext";
+import jobSeekerService from "@/service/jobSeekerService/JobSeekerService";
 
 
 interface UserProfile {
@@ -52,7 +52,7 @@ const UserProfilePage = () => {
   const userId = params.userId as string;
   
   const [userProfile, setUserProfile] = React.useState<UserProfile | null>(null);
-    const {setIsLoading, isLoading} = useLoading();
+    const {setIsLoading} = useLoading();
   const [error, setError] = React.useState<string | null>(null);
 
   const fetchUserProfile = React.useCallback(async () => {

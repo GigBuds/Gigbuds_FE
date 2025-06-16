@@ -1,21 +1,16 @@
 import React from 'react'
 import ManageApplication from './ManageApplication'
 
-interface PageProps {
-  params: {
-    id: string;
-  }
-}
-
-const page = ({ params }: PageProps) => {
+const page = async ({ params }: { params: Promise<{ id: string }> }) => {
+  const { id } = await params;
+  
   const selectedJob = {
-    id: parseInt(params.id),
+    id: parseInt(id),
   };
 
-
   return (
-    <div className='flex w-full  p-5'>
-      <ManageApplication selectedJob={selectedJob}  />
+    <div className='flex w-full p-5'>
+      <ManageApplication selectedJob={selectedJob} />
     </div>
   )
 }

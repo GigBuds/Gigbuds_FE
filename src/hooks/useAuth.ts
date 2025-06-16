@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useAppDispatch } from '@/lib/redux/hooks';
-import { setUser, clearUserState } from '@/lib/redux/features/userSlice';
+import { setUserWithMemberships, clearUserState } from '@/lib/redux/features/userSlice';
 import { LoginResponse } from '@/types/loginService';
 import { User } from '@/types/sidebar.types';
+import { LoginApi } from '@/service/loginService/loginService';
 
 /**
  * Custom hook for authentication management
@@ -53,10 +54,13 @@ export const useAuth = (): {
             }
 
             if (data.success && data.user) {
-                // Map the user data and dispatch to Redux
+                // Map the user data and get memberships
                 const userData = mapJWTToUser(data.user);
-                dispatch(setUser(userData));
-                console.log('User data stored in Redux:', userData);
+                const memberships = data.memberships || [];
+                
+                // Dispatch both user and membership data to Redux
+                dispatch(setUserWithMemberships({ user: userData, memberships }));
+                console.log('User data and memberships stored in Redux:', userData, memberships);
             }
             
             return data;
@@ -78,7 +82,7 @@ export const useAuth = (): {
                 credentials: 'include',
             });
 
-            // Clear Redux state
+            // Clear Redux state (includes user and membership data)
             dispatch(clearUserState());
             console.log('User logged out and Redux state cleared');
         } catch (err) {

@@ -3,12 +3,13 @@ import { RootState } from "../store";
 import { User } from "@/types/sidebar.types";
 
 export interface Membership {
-    MembershipId: number;
+    Id: number;
     Title: string;
     Type: string;
     StartDate: string;
     EndDate: string;
     Status: string;
+    MembershipId: number;
 }
 
 export interface UserState {
@@ -21,10 +22,7 @@ export interface UserState {
     name: string | null;
     email: string | null;
     roles: string[] | null;
-    // Membership information
-    memberships: Membership[];
-    membershipId: number | null; // Primary membership for backward compatibility
-    membershipTitle: string | null; // Primary membership title
+    memberships: Membership[] | null; // Add this line
 }
 
 const initialState: UserState = {
@@ -37,10 +35,7 @@ const initialState: UserState = {
     name: null,
     email: null,
     roles: null,
-    // Membership information
-    memberships: [],
-    membershipId: null,
-    membershipTitle: null,
+    memberships: null, // Add this line
 }
 
 const userSlice = createSlice({
@@ -63,14 +58,6 @@ const userSlice = createSlice({
             console.log(memberships);
             state.memberships = memberships;
             
-            // Set primary membership (first one for backward compatibility)
-            if (memberships.length > 0) {
-                state.membershipId = memberships[0].MembershipId;
-                state.membershipTitle = memberships[0].Title;
-            } else {
-                state.membershipId = null;
-                state.membershipTitle = null;
-            }
         },
         setUserWithMemberships: (state, action: PayloadAction<{user: User, memberships: Membership[]}>) => {
             const { user, memberships } = action.payload;
@@ -89,14 +76,6 @@ const userSlice = createSlice({
             // Set membership info
             state.memberships = memberships;
             
-            // Set primary membership (first one for backward compatibility)
-            if (memberships.length > 0) {
-                state.membershipId = memberships[0].MembershipId;
-                state.membershipTitle = memberships[0].Title;
-            } else {
-                state.membershipId = null;
-                state.membershipTitle = null;
-            }
         },
         clearUserState(state) {
             state.id = null;
@@ -108,10 +87,7 @@ const userSlice = createSlice({
             state.name = null;
             state.email = null;
             state.roles = null;
-            // Clear membership information
             state.memberships = [];
-            state.membershipId = null;
-            state.membershipTitle = null;
         }
     },
 })
@@ -121,8 +97,7 @@ export const selectUser = (store: RootState) => store.persistedReducer.user;
 export const selectUserId = (store: RootState) => store.persistedReducer.user.id;
 export const selectMemberships = (store: RootState) => store.persistedReducer.user.memberships;
 export const selectMembershipInfo = (store: RootState) => ({
-    membershipId: store.persistedReducer.user.membershipId,
-    membershipTitle: store.persistedReducer.user.membershipTitle,
+
     memberships: store.persistedReducer.user.memberships,
 });
 export default userSlice.reducer;

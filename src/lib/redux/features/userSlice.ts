@@ -2,6 +2,16 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { RootState } from "../store";
 import { User } from "@/types/sidebar.types";
 
+export interface Membership {
+    Id: number;
+    Title: string;
+    Type: string;
+    StartDate: string;
+    EndDate: string;
+    Status: string;
+    MembershipId: number;
+}
+
 export interface UserState {
     id: number | null;
     firstName: string | null;
@@ -12,6 +22,7 @@ export interface UserState {
     name: string | null;
     email: string | null;
     roles: string[] | null;
+    memberships: Membership[] | null; // Add this line
 }
 
 const initialState: UserState = {
@@ -24,6 +35,7 @@ const initialState: UserState = {
     name: null,
     email: null,
     roles: null,
+    memberships: null, // Add this line
 }
 
 const userSlice = createSlice({
@@ -39,19 +51,12 @@ const userSlice = createSlice({
             state.isMale = action.payload.isMale;
             state.name = action.payload.name;
             state.email = action.payload.email;
-            state.roles = action.payload.roles || [];
+            state.roles = action.payload.roles;
+            state.memberships = action.payload.memberships; // Add this line
         },
-        clearUserState(state) {
-            state.id = null;
-            state.firstName = null;
-            state.lastName = null;
-            state.phone = null;
-            state.birthDate = null;
-            state.isMale = null;
-            state.name = null;
-            state.email = null;
-            state.roles = null;
-        }
+        clearUserState: (state) => {
+            return initialState;
+        },
     },
 })
 

@@ -63,7 +63,7 @@ export default function MobileIntermediatePage() {
     setIsRedirecting(true);
     
     // Use development deep link for now - change to gigbuds:// for production APK
-    const deepLinkUrl = `exp://172.16.16.7:8082/--/payment-result?status=${status}&orderCode=${orderCode}`;
+    const deepLinkUrl = `exp://192.168.0.105:8081/--/payment-result?status=${status}&orderCode=${orderCode}`;
     // For production APK: const deepLinkUrl = `gigbuds://payment-result?status=${status}&orderCode=${orderCode}`;
     
     console.log('Redirecting to mobile app:', deepLinkUrl);

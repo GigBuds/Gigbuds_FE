@@ -24,23 +24,25 @@ const LoginInput = () => {
   const onFinish = async (values: FormValues) => {
     setIsLoading(true);
     try {
-      console.log('Calling API with:', values.identifier, values.password);
       const response = await login(values.identifier, values.password);
       
-      // Handle successful login
-      toast.success("Login successful!");
-      console.log("Login response:", response);
-      router.push("/"); // Redirect to home page after login
+      if (response?.id_token) {
+        // Handle successful login
+        toast.success("Login successful!");
+        console.log("Login response:", response);
+
+      } else {
+        toast.error("Login failed. Please check your credentials.");
+      }
     } catch (error) {
       console.error("Login error:", error);
       toast.error("Login failed. Please check your credentials.");
     } finally {
       setTimeout(() => {
         setIsLoading(false); 
-      }
-      , 2000); // Adjust the delay as needed
-
-
+        console.log('redirecting to home page');
+        router.push("/"); // Redirect to home page after login
+      }, 2000);
     }
   };
 

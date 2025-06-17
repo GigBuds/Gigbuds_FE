@@ -12,6 +12,7 @@ interface Experience {
   startDate: string;
   endDate?: string;
   description?: string;
+  
 }
 
 interface ExperienceSectionProps {

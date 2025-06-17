@@ -26,6 +26,37 @@ export default function PaymentResultPage() {
   const dispatch = useAppDispatch();
   const userId = useAppSelector(selectUserId);
 
+  // Clean up old payment results from localStorage (older than 24 hours)
+  const cleanupOldPaymentResults = () => {
+    try {
+      const processedPaymentsKey = 'processedPayments';
+      const processedPayments = JSON.parse(localStorage.getItem(processedPaymentsKey) || '[]');
+      const cleanupTimestamp = Date.now() - (24 * 60 * 60 * 1000); // 24 hours ago
+      
+      processedPayments.forEach((paymentKey: string) => {
+        const resultKey = `paymentResult-${paymentKey}`;
+        const timestampKey = `paymentTimestamp-${paymentKey}`;
+        const timestamp = localStorage.getItem(timestampKey);
+        
+        if (timestamp && parseInt(timestamp) < cleanupTimestamp) {
+          localStorage.removeItem(resultKey);
+          localStorage.removeItem(timestampKey);
+        }
+      });
+      
+      // Clean up the processed payments array
+      const recentPayments = processedPayments.filter((paymentKey: string) => {
+        const timestampKey = `paymentTimestamp-${paymentKey}`;
+        const timestamp = localStorage.getItem(timestampKey);
+        return timestamp && parseInt(timestamp) >= cleanupTimestamp;
+      });
+      
+      localStorage.setItem(processedPaymentsKey, JSON.stringify(recentPayments));
+    } catch (error) {
+      console.error('Error cleaning up old payment results:', error);
+    }
+  };
+
   // Extract parameters from URL
   const orderCode = searchParams.get('orderCode');
   const status = searchParams.get('status');
@@ -88,6 +119,37 @@ export default function PaymentResultPage() {
         return;
       }
 
+      // Clean up old payment results first
+      cleanupOldPaymentResults();
+
+      // Check if this payment has already been processed
+      const processedPaymentsKey = 'processedPayments';
+      const processedPayments = JSON.parse(localStorage.getItem(processedPaymentsKey) || '[]');
+      const paymentKey = `${orderCode}-${status}`;
+      
+      if (processedPayments.includes(paymentKey)) {
+        console.log('🔄 Payment already processed, loading from cache...');
+        // Load cached result if available
+        const cachedResultKey = `paymentResult-${paymentKey}`;
+        const cachedResult = localStorage.getItem(cachedResultKey);
+        
+        if (cachedResult) {
+          setResult(JSON.parse(cachedResult));
+        } else {
+          // Fallback: show success message for already processed payments
+          setResult({
+            success: status?.toUpperCase() === 'PAID',
+            message: status?.toUpperCase() === 'PAID' 
+              ? 'Payment has been processed successfully' 
+              : 'Payment was not completed',
+            orderCode: orderCode,
+            amount: amount ? parseFloat(amount) : undefined,
+          });
+        }
+        setLoading(false);
+        return;
+      }
+
       try {
         setLoading(true);
         
@@ -116,17 +178,31 @@ export default function PaymentResultPage() {
           
           setResult(paymentResult);
           
+          // Cache the result and mark as processed
+          localStorage.setItem(`paymentResult-${paymentKey}`, JSON.stringify(paymentResult));
+          localStorage.setItem(`paymentTimestamp-${paymentKey}`, Date.now().toString());
+          processedPayments.push(paymentKey);
+          localStorage.setItem(processedPaymentsKey, JSON.stringify(processedPayments));
+          
           // If payment is successful, renew the ID token to include new membership info
           if (paymentResult.success && status?.toUpperCase() === 'PAID') {
             console.log('✅ Payment successful! Renewing ID token...');
             await renewIdTokenAfterPayment();
           }
         } else {
-          setResult({
+          const paymentResult = {
             success: false,
             message: data.message || 'Payment processing failed',
             orderCode: orderCode,
-          });
+          };
+          
+          setResult(paymentResult);
+          
+          // Cache the failed result and mark as processed
+          localStorage.setItem(`paymentResult-${paymentKey}`, JSON.stringify(paymentResult));
+          localStorage.setItem(`paymentTimestamp-${paymentKey}`, Date.now().toString());
+          processedPayments.push(paymentKey);
+          localStorage.setItem(processedPaymentsKey, JSON.stringify(processedPayments));
         }
       } catch (err) {
         console.error('Payment return error:', err);

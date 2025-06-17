@@ -55,6 +55,7 @@ export const useAuth = (): {
             if (data.success && data.user) {
                 // Map the user data and dispatch to Redux
                 const userData = mapJWTToUser(data.user);
+                console.log("userData", userData);
                 dispatch(setUser(userData));
                 console.log('User data stored in Redux:', userData);
             }
@@ -86,8 +87,6 @@ export const useAuth = (): {
         }
     };
 
-         // Note: HTTP-only cookies cannot be accessed from client-side JavaScript
-     // Authentication status should be checked via API calls
      const isAuthenticated = async (): Promise<boolean> => {
          try {
              const response = await fetch('/api/auth/verify', {
@@ -109,7 +108,7 @@ export const useAuth = (): {
         isAuthenticated
     };
 }; 
-const mapJWTToUser = (userData: { id: string; name?: string; email: string; roles?: string[] }): User => {
+const mapJWTToUser = (userData: { id: string; name?: string; email: string; role?: string[] }): User => {
     return {
         id: parseInt(userData.id) || 0,
         firstName: userData.name?.split(' ')[0] || '',
@@ -119,6 +118,6 @@ const mapJWTToUser = (userData: { id: string; name?: string; email: string; role
         isMale: false, // Set default, can be updated later
         name: userData.name || userData.email,
         email: userData.email,
-        roles: userData.roles || []
+        role: userData.role || []
     };
 }; 

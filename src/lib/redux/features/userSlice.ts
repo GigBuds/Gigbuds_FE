@@ -11,7 +11,7 @@ export interface UserState {
     isMale: boolean | null;
     name: string | null;
     email: string | null;
-    roles: string[] | null;
+    role: string[] | null;
 }
 
 const initialState: UserState = {
@@ -23,7 +23,7 @@ const initialState: UserState = {
     isMale: null,
     name: null,
     email: null,
-    roles: null,
+    role: null,
 }
 
 const userSlice = createSlice({
@@ -39,7 +39,7 @@ const userSlice = createSlice({
             state.isMale = action.payload.isMale;
             state.name = action.payload.name;
             state.email = action.payload.email;
-            state.roles = action.payload.roles || [];
+            state.role = action.payload.role || [];
         },
         clearUserState(state) {
             state.id = null;
@@ -50,7 +50,7 @@ const userSlice = createSlice({
             state.isMale = null;
             state.name = null;
             state.email = null;
-            state.roles = null;
+            state.role = null;
         }
     },
 })

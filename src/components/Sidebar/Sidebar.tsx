@@ -15,6 +15,7 @@ import NotificationSection from '../Notification/NotificationSection';
 import { useAuth } from '@/hooks/useAuth';
 import { clearUserState, selectUser } from '@/lib/redux/features/userSlice';
 import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks';
+import { selectNotifications } from '@/lib/redux/features/notificationSlice';
 
 
 
@@ -40,7 +41,7 @@ const Sidebar = () => {
     const user = useAppSelector(selectUser);
     const {logout} = useAuth();
     const dispatch = useAppDispatch();
-   
+    const notifications = useAppSelector(selectNotifications);
    const getSelectedItemFromPath = (currentPath: string): string => {
         // Direct match first
         const directMatch = menuItems.find(item => item.link === currentPath);
@@ -220,7 +221,7 @@ const Sidebar = () => {
         
         {/* Main Content Area */}
         <div className=' bg-[#F3F7FF] lg:pl-[5vw] md:pl-[9vw] sm:pl-[11vw]  pl-[14vw] z-10 grow'> 
-                    <NotificationSection />
+        <NotificationSection notifications={notifications.notifications} />
         </div>
     </div>
   )

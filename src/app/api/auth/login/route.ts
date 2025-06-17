@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
                 id: decoded.sub,
                 email: decoded.email,
                 name: decoded.name,
-                ...(decoded.roles ? { roles: decoded.roles } : {}),
+                ...(decoded.role ? { role: decoded.role } : {}),
             };
         }
 

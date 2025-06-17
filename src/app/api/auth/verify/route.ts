@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
                 id: decoded.sub,
                 email: decoded.email,
                 name: decoded.name,
-                roles: decoded.roles,
+                role: decoded.role,
             }
         });
 

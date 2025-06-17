@@ -8,13 +8,18 @@ import { FormValues } from "@/types/login.types";
 import { useRouter } from "next/navigation";
 import { useLoading } from "@/contexts/LoadingContext";
 import { useAuth } from "@/hooks/useAuth";
-
+import { useAppSelector } from "@/lib/redux/hooks";
+import { selectUser } from "@/lib/redux/features/userSlice";
+import Cookies from "js-cookie";
 
 const LoginInput = () => {
   const router = useRouter();
   const googleClientId = process.env.GOOGLE_CLIENT_ID ?? "";
   const {setIsLoading, isLoading} = useLoading();
   const {login} = useAuth();
+  const user = useAppSelector(selectUser);
+  const accessToken = Cookies.get("accessToken");
+  if (user.id !== null && accessToken) router.push("/");
 
   const onFinish = async (values: FormValues) => {
     setIsLoading(true);
@@ -25,14 +30,13 @@ const LoginInput = () => {
       // Handle successful login
       toast.success("Login successful!");
       console.log("Login response:", response);
+      router.push("/"); // Redirect to home page after login
     } catch (error) {
       console.error("Login error:", error);
       toast.error("Login failed. Please check your credentials.");
     } finally {
       setTimeout(() => {
         setIsLoading(false); 
-        console.log('redirecting to home page');
-        router.push("/"); // Redirect to home page after login
       }
       , 2000); // Adjust the delay as needed
 

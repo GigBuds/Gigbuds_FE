@@ -16,7 +16,7 @@ export interface User {
   isMale: boolean;
   name: string;
   email: string;
-  roles?: string[];
+  role?: string[];
 }
 
 export interface SidebarVariants {

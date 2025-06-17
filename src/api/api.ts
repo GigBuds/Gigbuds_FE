@@ -1,5 +1,5 @@
 // const baseUrl = process.env.BASE_URL ?? "https://localhost:50876/api/v1/";
-const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "https://localhost:50876/api/v1/";
+const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "https://localhost:7096/api/v1/";
 const getAuthHeaders = (): HeadersInit => {
   const accessToken = typeof window !== 'undefined' 
     ? document.cookie.split('; ').find(row => row.startsWith('accessToken='))?.split('=')[1]

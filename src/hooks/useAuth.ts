@@ -1,14 +1,16 @@
 import { useState } from 'react';
 import { useAppDispatch } from '@/lib/redux/hooks';
-import { setUser, clearUserState } from '@/lib/redux/features/userSlice';
+import { setUser, clearUserState, Membership } from '@/lib/redux/features/userSlice';
 import { LoginResponse } from '@/types/loginService';
 import { User } from '@/types/sidebar.types';
+import { LoginApi } from '@/service/loginService/loginService';
+import { jwtDecode } from 'jwt-decode';
 
 /**
  * Custom hook for authentication management
  * 
  * Features:
- * - Login with email/phone and password
+ * - Login with email/phone and password using LoginApi service
  * - JWT token management (access & refresh tokens)
  * - User state management with Redux
  * - Automatic token decoding and user data mapping
@@ -22,7 +24,7 @@ import { User } from '@/types/sidebar.types';
 
 export const useAuth = (): {
     login: (identifier: string, password: string) => Promise<LoginResponse | null>;
-    logout: () => Promise<void>;
+    logout: () => void;
     isLoading: boolean;
     error: string | null;
     clearError: () => void;
@@ -37,24 +39,13 @@ export const useAuth = (): {
         setError(null);
 
         try {
-            const response = await fetch('/api/auth/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ identifier, password }),
-                credentials: 'include'
-            });
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(data.message || 'Login failed');
-            }
-
-            if (data.success && data.user) {
-                // Map the user data and dispatch to Redux
-                const userData = mapJWTToUser(data.user);
+            // Use the LoginApi service instead of direct fetch
+            const data = await LoginApi.login(identifier, password);
+            console.log('Login response:', data);
+            if (data && data.id_token) { // Use id_token instead of user
+                // Decode the JWT token to get user data
+                const jwtDecoded = jwtDecode(data.id_token) as any;
+                const userData = mapJWTToUser(jwtDecoded);
                 dispatch(setUser(userData));
                 console.log('User data stored in Redux:', userData);
             }
@@ -70,35 +61,25 @@ export const useAuth = (): {
         }
     };
 
-    const logout = async () => {
-        try {
-            // Call the logout API route to clear HTTP-only cookies
-            await fetch('/api/auth/logout', {
-                method: 'POST',
-                credentials: 'include',
-            });
-
-            // Clear Redux state
-            dispatch(clearUserState());
-            console.log('User logged out and Redux state cleared');
-        } catch (err) {
-            console.error('Logout error:', err);
-        }
+    const logout = () => {
+        // Just clear Redux state, no API call needed
+        dispatch(clearUserState());
+        console.log('User logged out and Redux state cleared');
     };
 
-         // Note: HTTP-only cookies cannot be accessed from client-side JavaScript
-     // Authentication status should be checked via API calls
-     const isAuthenticated = async (): Promise<boolean> => {
-         try {
-             const response = await fetch('/api/auth/verify', {
-                 method: 'GET',
-                 credentials: 'include',
-             });
-             return response.ok;
-         } catch {
-             return false;
-         }
-     }
+    // Note: HTTP-only cookies cannot be accessed from client-side JavaScript
+    // Authentication status should be checked via API calls
+    const isAuthenticated = async (): Promise<boolean> => {
+        try {
+            const response = await fetch('/api/auth/verify', {
+                method: 'GET',
+                credentials: 'include',
+            });
+            return response.ok;
+        } catch {
+            return false;
+        }
+    }
 
     return {
         login,
@@ -109,16 +90,40 @@ export const useAuth = (): {
         isAuthenticated
     };
 }; 
-const mapJWTToUser = (userData: { id: string; name?: string; email: string; roles?: string[] }): User => {
+
+const mapJWTToUser = (userData: any): User => {
+    // Parse roles from string to array
+    const roles = typeof userData.role === 'string' 
+        ? userData.role.split(',').map((role: string) => role.trim())
+        : userData.role || [];
+
+    // Parse birthdate
+    const birthDate = userData.birthdate ? new Date(userData.birthdate) : new Date();
+
+    // Parse gender (True/False string to boolean)
+    const isMale = userData.gender === "True" || userData.gender === true;
+
+    // Parse memberships from JSON string
+    let memberships: Membership[] = [];
+    if (userData.memberships) {
+        try {
+            memberships = JSON.parse(userData.memberships);
+        } catch (error) {
+            console.error('Error parsing memberships:', error);
+            memberships = [];
+        }
+    }
+
     return {
-        id: parseInt(userData.id) || 0,
-        firstName: userData.name?.split(' ')[0] || '',
-        lastName: userData.name?.split(' ').slice(1).join(' ') || '',
-        phone: '', // Set default empty, can be updated later
-        birthDate: new Date(), // Set default, can be updated later
-        isMale: false, // Set default, can be updated later
-        name: userData.name || userData.email,
-        email: userData.email,
-        roles: userData.roles || []
+        id: parseInt(userData.sub) || 0, // 'sub' is the user ID in JWT
+        firstName: userData.name || '',
+        lastName: userData.family_name || '',
+        phone: userData.phone_number || '',
+        birthDate: birthDate,
+        isMale: isMale,
+        name: `${userData.name || ''} ${userData.family_name || ''}`.trim(),
+        email: userData.email || '',
+        roles: roles,
+        memberships: memberships // Add this line
     };
-}; 
+};

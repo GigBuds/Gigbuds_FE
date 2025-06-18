@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
 
 import { Button, DatePicker, Input, InputNumber, Form, Select, Card, Typography, Divider, Tooltip } from "antd";
@@ -12,6 +13,7 @@ import { useAppSelector } from "@/lib/redux/hooks";
 import { selectUser } from "@/lib/redux/features/userSlice";
 import dayjs, { Dayjs } from "dayjs";
 import { jobPostApi } from "@/service/jobPostService/jobPostService";
+import { useRouter } from "next/navigation";
 
 const { Title, Text } = Typography;
 
@@ -21,7 +23,7 @@ export default function CreateForm({API_KEY, MAP_ID}: Readonly<{API_KEY: string,
   const [jobPositions, setJobPositions] = useState<Record<string, JobPosition[]>>({});
   const [loadingPositions, setLoadingPositions] = useState<boolean>(true);
   const user = useAppSelector(selectUser);
-
+  const router = useRouter();
   console.log(API_KEY, MAP_ID);
 
   // Fetch job positions on component mount
@@ -101,8 +103,7 @@ export default function CreateForm({API_KEY, MAP_ID}: Readonly<{API_KEY: string,
       toast.success('Bài đăng đã được tạo thành công');
       form.resetFields();
       
-      // Optional: Redirect to job posts list or specific job post
-      // router.push('/employer/job-posts');
+      router.push('/manage-job-post');
       
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {

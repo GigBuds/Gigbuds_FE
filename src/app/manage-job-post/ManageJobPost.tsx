@@ -52,9 +52,7 @@ const ManageJobPost: React.FC<ManageJobPostProps> = ({ API_KEY, MAP_ID }) => {
     } catch (error: unknown) {
       console.error('Failed to fetch job posts:', error);
     } finally {
-      setTimeout((): void => {
-        setIsLoading(false);
-      }, 1500);
+      setIsLoading(false);
     }
   }, [setIsLoading, pageSize, user.id]);
 

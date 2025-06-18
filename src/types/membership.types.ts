@@ -36,6 +36,6 @@ export interface PaymentResponse {
     checkoutUrl?: string;
     paymentUrl?: string;
     transactionId?: string;
-    [key: string]: any;
+    [key: string]: unknown;
   };
 }

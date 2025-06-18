@@ -80,7 +80,7 @@ const UserProfilePage = () => {
         setIsLoading(false);
       }, 2000);
     }
-  }, [userId]);
+  }, [userId, setIsLoading, userProfile]);
 
   const handleRetry = () => {
     fetchUserProfile();
@@ -127,9 +127,16 @@ const UserProfilePage = () => {
           
           <SkillsSection skills={userProfile.skillTags} />
           
-          <ExperienceSection experiences={userProfile.accountExperienceTags} />
+          <ExperienceSection experiences={userProfile.accountExperienceTags.map(exp => ({
+            ...exp,
+            jobPosition: exp.title
+          }))} />
           
-          <EducationSection educations={userProfile.educationalLevels} />
+          <EducationSection educations={userProfile.educationalLevels.map(edu => ({
+            ...edu,
+            major: edu.fieldOfStudy,
+            schoolName: edu.institutionName
+          }))} />
           
           <PersonalInfoSection userProfile={userProfile} />
         </div>

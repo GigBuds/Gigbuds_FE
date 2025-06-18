@@ -22,6 +22,20 @@ import Cookies from 'js-cookie';
  * @property {string|null} error - Error message if any
  */
 
+export interface userData {
+    role: string | string[];
+    gender: string | boolean;
+    memberships?: string;
+    sub: string;
+    name?: string;
+    family_name?: string;
+    phone_number?: string;
+    email?: string;
+    birthdate?: string | Date;
+    [key: string]: unknown; // Allow additional properties
+
+}
+
 export const useAuth = (): {
     login: (identifier: string, password: string) => Promise<LoginResponse | null>;
     logout: () => void;
@@ -43,7 +57,7 @@ export const useAuth = (): {
             const data = await LoginApi.login(identifier, password);
             if (data && data.id_token) { // Use id_token instead of user
                 
-                const jwtDecoded = jwtDecode(data.id_token) as any;
+                const jwtDecoded = jwtDecode(data.id_token) as userData;
                 const userData = mapJWTToUser(jwtDecoded);
                 
                 if (data.access_token) {
@@ -99,7 +113,7 @@ export const useAuth = (): {
     };
 }; 
 
-const mapJWTToUser = (userData: any): User => {
+const mapJWTToUser = (userData: userData ): User => {
     // Parse roles from string to array
     const roles = typeof userData.role === 'string' 
         ? userData.role.split(',').map((role: string) => role.trim())

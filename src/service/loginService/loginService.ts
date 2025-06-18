@@ -22,7 +22,7 @@ export class LoginApi {
    * @param token - The JWT token to decode
    * @returns The decoded token payload
    */
-  static decodeToken(token: string): any {
+  static decodeToken(token: string): unknown {
     try {
       return jwtDecode(token);
     } catch (error) {
@@ -47,9 +47,9 @@ export class LoginApi {
    * @param idToken - The ID token to extract membership from
    * @returns Array of membership objects
    */
-  static extractMembershipsFromToken(idToken: string): any[] {
+  static extractMembershipsFromToken(idToken: string): unknown[] {
     try {
-      const decoded = this.decodeToken(idToken);
+      const decoded = this.decodeToken(idToken) as { memberships?: string } | null;
       if (!decoded) return [];
 
       // Check if memberships claim exists
@@ -98,7 +98,7 @@ export class LoginApi {
   static getMembershipInfo(): { 
     membershipId: number | null; 
     membershipTitle: string | null; 
-    memberships: any[] 
+    memberships: unknown[] 
   } {
     console.warn('LoginApi.getMembershipInfo() is deprecated for web. Use useAppSelector(selectMembershipInfo) instead.');
     return {

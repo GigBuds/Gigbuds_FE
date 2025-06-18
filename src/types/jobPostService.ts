@@ -47,6 +47,7 @@ export interface JobPost {
 
 }
 
+
 export interface JobPositionOption {
   id: number;
   jobPositionName: string;
@@ -59,7 +60,6 @@ export interface JobPostDialogProps {
   MAP_ID: string;
   job: JobPost;
   children: React.ReactNode;
-  onJobUpdated?: (updatedJob: JobPost) => void;
 }
 
 export interface JobPostsResponse {

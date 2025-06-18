@@ -19,7 +19,7 @@ interface ExperienceSectionProps {
   experiences: Experience[];
 }
 
-const ExperienceSection: React.FC<ExperienceSectionProps> = ({ experiences }) => {
+const ExperienceSection: React.FC<ExperienceSectionProps> = ({ experiences } ) => {
   if (!experiences || experiences.length === 0) {
     return (
       <div className="bg-white shadow-sm rounded-lg overflow-hidden">

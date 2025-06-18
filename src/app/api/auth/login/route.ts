@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { LoginApi } from '@/service/loginService/loginService';
 import { jwtDecode } from 'jwt-decode';
 import { JWTPayload } from '@/types/loginService';
+import { Membership } from '@/types/sidebar.types';
 
 export async function POST(request: NextRequest) {
     try {
@@ -20,7 +21,7 @@ export async function POST(request: NextRequest) {
 
         // Prepare user data from id_token if available, else from response.user
         let user = response.user;
-        let memberships: any[] = [];
+        let memberships: Membership[] = [];
         
         if (response.id_token) {
             const decoded = jwtDecode<JWTPayload>(response.id_token);
@@ -28,16 +29,12 @@ export async function POST(request: NextRequest) {
                 id: decoded.sub,
                 email: decoded.email,
                 name: decoded.name,
-                ...(decoded.roles ? { roles: decoded.roles } : {}),
+                ...(decoded.role ? { role: decoded.role } : {}),
             };
             
             // Extract memberships from ID token
-            if ((decoded as any).memberships) {
-                try {
-                    memberships = JSON.parse((decoded as any).memberships);
-                } catch (e) {
-                    console.error('Error parsing memberships from token:', e);
-                }
+            if (decoded.memberships) {
+                memberships = [decoded.memberships];
             }
         }
 

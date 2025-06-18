@@ -23,6 +23,7 @@ import NotificationSection from '../Notification/NotificationSection'
 import { useAuth } from '@/hooks/useAuth'
 import { clearUserState, selectUser } from '@/lib/redux/features/userSlice'
 import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks'
+import { selectNotifications } from '@/lib/redux/features/notificationSlice'
 import { BsShieldLock } from "react-icons/bs";
 
 
@@ -70,6 +71,7 @@ const Sidebar = () => {
   
   const [isOpen, setIsOpen] = useState(false)
   const [selectedItem, setSelectedItem] = useState('homepage')
+  const notifications = useAppSelector(selectNotifications)
 
   // Helper function to determine selected item from current path
   const getSelectedItemFromPath = (currentPath: string): string => {
@@ -263,7 +265,7 @@ const Sidebar = () => {
       
       {/* Main Content Area */}
       <div className='bg-[#F3F7FF] lg:pl-[5vw] md:pl-[9vw] sm:pl-[11vw] pl-[14vw] z-10 grow'> 
-        <NotificationSection />
+        <NotificationSection notifications={notifications.notifications} />
       </div>
     </div>
   )

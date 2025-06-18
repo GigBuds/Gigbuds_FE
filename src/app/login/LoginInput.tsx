@@ -8,13 +8,16 @@ import { FormValues } from "@/types/login.types";
 import { useRouter } from "next/navigation";
 import { useLoading } from "@/contexts/LoadingContext";
 import { useAuth } from "@/hooks/useAuth";
-
+import { useAppSelector } from "@/lib/redux/hooks";
+import { selectUser } from "@/lib/redux/features/userSlice";
 
 const LoginInput = () => {
   const router = useRouter();
   const googleClientId = process.env.GOOGLE_CLIENT_ID ?? "";
   const {setIsLoading, isLoading} = useLoading();
   const {login} = useAuth();
+  const user = useAppSelector(selectUser);
+  if (user.id !== null) router.push("/");
 
   const onFinish = async (values: FormValues) => {
 

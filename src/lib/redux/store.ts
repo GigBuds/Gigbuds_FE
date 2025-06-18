@@ -1,32 +1,22 @@
 import { configureStore } from "@reduxjs/toolkit"
 import { persistReducer } from "redux-persist"
 import localReducer from "./localReducer"
-import createWebStorage from "redux-persist/es/storage/createWebStorage"
 import tempReducer from "./tempReducer";
+import localStorage from "redux-persist/lib/storage";
 
-const createNoopStorage = () => {
-    return {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        getItem(_key: string) {
-            return Promise.resolve(null);
-        },
-        setItem(_key: string, value: string) {
-            return Promise.resolve(value);
-        },
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        removeItem(_key: string) {
-            return Promise.resolve();
-        },
-    }
-}
+const createNoopStorage = () => ({
+  getItem() { return Promise.resolve(null); },
+  setItem(_key: string, value: string) { return Promise.resolve(value); },
+  removeItem() { return Promise.resolve(); },
+});
 
-const rootStorage = typeof window !== "undefined" ? createWebStorage("local") : createNoopStorage();
-
-// luu torng local storage
-// luu cho kahc -
+const storage =
+  typeof window !== 'undefined'
+    ? localStorage
+    : createNoopStorage();
 const persistConfig = {
     key: "root",
-    storage: rootStorage, // use local storage as the storage engine
+    storage: storage, // use local storage as the storage engine
     timeout: 500
   };
   

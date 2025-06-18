@@ -5,7 +5,6 @@ import React, { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import ProfileHeader from "@/components/Profile/ProfileHeader";
 import ErrorComponent from "@/components/Common/ErrorComponent";
-import ProfileButtons from "@/components/Profile/ProfileButtons";
 import SkillsSection from "@/components/Profile/SkillsSection";
 import ExperienceSection from "@/components/Profile/ExperienceSection";
 import EducationSection from "@/components/Profile/EducationSection";

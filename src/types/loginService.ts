@@ -24,7 +24,7 @@ export interface JWTPayload {
   phone?: string;
   birthDate?: Date;
   isMale?: boolean;
-  roles?: string[];
+  role?: string[];
   exp: number;
   [key: string]: unknown;
 }

@@ -20,6 +20,8 @@ export async function POST(request: NextRequest) {
 
         // Prepare user data from id_token if available, else from response.user
         let user = response.user;
+        let memberships: any[] = [];
+        
         if (response.id_token) {
             const decoded = jwtDecode<JWTPayload>(response.id_token);
             user = {
@@ -28,11 +30,21 @@ export async function POST(request: NextRequest) {
                 name: decoded.name,
                 ...(decoded.roles ? { roles: decoded.roles } : {}),
             };
+            
+            // Extract memberships from ID token
+            if ((decoded as any).memberships) {
+                try {
+                    memberships = JSON.parse((decoded as any).memberships);
+                } catch (e) {
+                    console.error('Error parsing memberships from token:', e);
+                }
+            }
         }
 
         const result = NextResponse.json({
             success: true,
             user,
+            memberships, // Include memberships in response
         });
 
         // Set access token cookie

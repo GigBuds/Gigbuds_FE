@@ -44,24 +44,27 @@ const fetchApi = {
         throw new Error(errorMessage);
       }
 
-      // Check if response has content
-      const contentType = response.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/json')) {
-        return { success: true, message: 'Operation completed successfully' };
-      }
-
+      // Get the response text first
       const responseText = await response.text();
       if (!responseText) {
         return { success: true, message: 'Operation completed successfully' };
       }
 
-      try {
-        const data = JSON.parse(responseText);
-        console.log('Success response:', data);
-        return data;
-      } catch (jsonError) {
-        console.error('JSON parse error:', jsonError);
-        return { success: true, message: 'Operation completed successfully' };
+      // Check if response has JSON content type
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        try {
+          const data = JSON.parse(responseText);
+          console.log('Success response (JSON):', data);
+          return data;
+        } catch (jsonError) {
+          console.error('JSON parse error:', jsonError);
+          return { success: true, message: 'Operation completed successfully' };
+        }
+      } else {
+        // For non-JSON responses (like JWT tokens), return the raw text
+        console.log('Success response (text):', responseText);
+        return responseText;
       }
     } catch (fetchError) {
       console.error('Fetch error:', fetchError);

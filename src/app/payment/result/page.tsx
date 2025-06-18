@@ -3,6 +3,9 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { CheckCircle, XCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { useAppSelector, useAppDispatch } from '@/lib/redux/hooks';
+import { selectUserId, setMemberships } from '@/lib/redux/features/userSlice';
+import fetchApi from '@/api/api';
 
 interface PaymentResult {
   success: boolean;
@@ -17,16 +20,132 @@ export default function PaymentResultPage() {
   const [result, setResult] = useState<PaymentResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [renewingToken, setRenewingToken] = useState(false);
+  
+  // Redux hooks
+  const dispatch = useAppDispatch();
+  const userId = useAppSelector(selectUserId);
+
+  // Clean up old payment results from localStorage (older than 24 hours)
+  const cleanupOldPaymentResults = () => {
+    try {
+      const processedPaymentsKey = 'processedPayments';
+      const processedPayments = JSON.parse(localStorage.getItem(processedPaymentsKey) || '[]');
+      const cleanupTimestamp = Date.now() - (24 * 60 * 60 * 1000); // 24 hours ago
+      
+      processedPayments.forEach((paymentKey: string) => {
+        const resultKey = `paymentResult-${paymentKey}`;
+        const timestampKey = `paymentTimestamp-${paymentKey}`;
+        const timestamp = localStorage.getItem(timestampKey);
+        
+        if (timestamp && parseInt(timestamp) < cleanupTimestamp) {
+          localStorage.removeItem(resultKey);
+          localStorage.removeItem(timestampKey);
+        }
+      });
+      
+      // Clean up the processed payments array
+      const recentPayments = processedPayments.filter((paymentKey: string) => {
+        const timestampKey = `paymentTimestamp-${paymentKey}`;
+        const timestamp = localStorage.getItem(timestampKey);
+        return timestamp && parseInt(timestamp) >= cleanupTimestamp;
+      });
+      
+      localStorage.setItem(processedPaymentsKey, JSON.stringify(recentPayments));
+    } catch (error) {
+      console.error('Error cleaning up old payment results:', error);
+    }
+  };
 
   // Extract parameters from URL
   const orderCode = searchParams.get('orderCode');
   const status = searchParams.get('status');
   const amount = searchParams.get('amount');
 
+  // Function to renew ID token after successful payment
+  const renewIdTokenAfterPayment = async () => {
+    try {
+      setRenewingToken(true);
+      console.log('🔄 Renewing ID token after successful payment...');
+      
+      if (!userId) {
+        console.warn('⚠️ Could not get user ID from Redux, skipping token renewal');
+        return;
+      }
+
+      // Call renew token API using fetchApi (cookies handled automatically)
+      const response = await fetchApi.post('Identities/renew-id-token', { userId });
+      console.log('🔄 Renewing ID token after successful payment...', response);
+      
+      // Extract memberships from the new ID token and update Redux
+      if (response && typeof response === 'string') {
+        try {
+          // Decode the new ID token to extract memberships
+          const base64Url = response.split('.')[1];
+          const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+          const jsonPayload = decodeURIComponent(
+            atob(base64)
+              .split('')
+              .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+              .join('')
+          );
+          const decoded = JSON.parse(jsonPayload);
+          console.log('🔍 Decoded renewed token:', decoded);
+          
+          if (decoded.memberships) {
+            const memberships = JSON.parse(decoded.memberships);
+            dispatch(setMemberships(memberships));
+            console.log('✅ Memberships updated in Redux:', memberships);
+          }
+        } catch (decodeError) {
+          console.error('Error decoding renewed token:', decodeError);
+        }
+      }
+      
+      console.log('✅ ID token renewed successfully after payment');
+    } catch (error) {
+      console.error('❌ Error renewing ID token after payment:', error);
+      // Don't throw error here as payment was successful, just log the issue
+    } finally {
+      setRenewingToken(false);
+    }
+  };
+
   useEffect(() => {
     const handlePaymentReturn = async () => {
       if (!orderCode || !status) {
         setError('Missing payment parameters');
+        setLoading(false);
+        return;
+      }
+
+      // Clean up old payment results first
+      cleanupOldPaymentResults();
+
+      // Check if this payment has already been processed
+      const processedPaymentsKey = 'processedPayments';
+      const processedPayments = JSON.parse(localStorage.getItem(processedPaymentsKey) || '[]');
+      const paymentKey = `${orderCode}-${status}`;
+      
+      if (processedPayments.includes(paymentKey)) {
+        console.log('🔄 Payment already processed, loading from cache...');
+        // Load cached result if available
+        const cachedResultKey = `paymentResult-${paymentKey}`;
+        const cachedResult = localStorage.getItem(cachedResultKey);
+        
+        if (cachedResult) {
+          setResult(JSON.parse(cachedResult));
+        } else {
+          // Fallback: show success message for already processed payments
+          setResult({
+            success: status?.toUpperCase() === 'PAID',
+            message: status?.toUpperCase() === 'PAID' 
+              ? 'Payment has been processed successfully' 
+              : 'Payment was not completed',
+            orderCode: orderCode,
+            amount: amount ? parseFloat(amount) : undefined,
+          });
+        }
         setLoading(false);
         return;
       }
@@ -50,18 +169,40 @@ export default function PaymentResultPage() {
         console.log('API Response:', { status: response.status, data });
         
         if (response.ok) {
-          setResult({
+          const paymentResult = {
             success: data.success,
             message: data.message,
             orderCode: orderCode,
             amount: amount ? parseFloat(amount) : undefined,
-          });
+          };
+          
+          setResult(paymentResult);
+          
+          // Cache the result and mark as processed
+          localStorage.setItem(`paymentResult-${paymentKey}`, JSON.stringify(paymentResult));
+          localStorage.setItem(`paymentTimestamp-${paymentKey}`, Date.now().toString());
+          processedPayments.push(paymentKey);
+          localStorage.setItem(processedPaymentsKey, JSON.stringify(processedPayments));
+          
+          // If payment is successful, renew the ID token to include new membership info
+          if (paymentResult.success && status?.toUpperCase() === 'PAID') {
+            console.log('✅ Payment successful! Renewing ID token...');
+            await renewIdTokenAfterPayment();
+          }
         } else {
-          setResult({
+          const paymentResult = {
             success: false,
             message: data.message || 'Payment processing failed',
             orderCode: orderCode,
-          });
+          };
+          
+          setResult(paymentResult);
+          
+          // Cache the failed result and mark as processed
+          localStorage.setItem(`paymentResult-${paymentKey}`, JSON.stringify(paymentResult));
+          localStorage.setItem(`paymentTimestamp-${paymentKey}`, Date.now().toString());
+          processedPayments.push(paymentKey);
+          localStorage.setItem(processedPaymentsKey, JSON.stringify(processedPayments));
         }
       } catch (err) {
         console.error('Payment return error:', err);
@@ -152,6 +293,14 @@ export default function PaymentResultPage() {
           <p className="text-gray-600 mb-6">
             {statusInfo?.message}
           </p>
+
+          {/* Token Renewal Indicator */}
+          {renewingToken && (
+            <div className="flex items-center justify-center bg-blue-50 border border-blue-200 rounded-lg p-3 mb-6">
+              <Loader2 className="w-4 h-4 text-blue-600 animate-spin mr-2" />
+              <span className="text-blue-800 text-sm font-medium">Updating your membership...</span>
+            </div>
+          )}
 
           {/* Order Details */}
           {result && (

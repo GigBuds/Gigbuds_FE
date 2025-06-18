@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAppDispatch } from '@/lib/redux/hooks';
-import { setUser, clearUserState, Membership } from '@/lib/redux/features/userSlice';
+import { setUserWithMemberships, clearUserState, Membership } from '@/lib/redux/features/userSlice';
 import { LoginResponse } from '@/types/loginService';
 import { User } from '@/types/sidebar.types';
 import { LoginApi } from '@/service/loginService/loginService';
@@ -45,7 +45,6 @@ export const useAuth = (): {
                 
                 const jwtDecoded = jwtDecode(data.id_token) as any;
                 const userData = mapJWTToUser(jwtDecoded);
-                dispatch(setUser(userData));
                 
                 if (data.access_token) {
                     Cookies.set('access_token', data.access_token, {
@@ -55,6 +54,8 @@ export const useAuth = (): {
                         path: '/'
                     });
                 }
+                dispatch(setUserWithMemberships({ user: userData, memberships: userData.memberships }));
+                console.log('User data stored in Redux:', userData);
             }
             
             return data;

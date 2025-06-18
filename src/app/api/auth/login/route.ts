@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
 
         // Prepare user data from id_token if available, else from response.user
         let user = response.user;
-        let memberships: any[] = [];
+        let memberships: unknown[] = [];
         
         if (response.id_token) {
             const decoded = jwtDecode<JWTPayload>(response.id_token);
@@ -32,9 +32,9 @@ export async function POST(request: NextRequest) {
             };
             
             // Extract memberships from ID token
-            if ((decoded as any).memberships) {
+            if (decoded.memberships) {
                 try {
-                    memberships = JSON.parse((decoded as any).memberships);
+                    memberships = JSON.parse(decoded.memberships as string);
                 } catch (e) {
                     console.error('Error parsing memberships from token:', e);
                 }

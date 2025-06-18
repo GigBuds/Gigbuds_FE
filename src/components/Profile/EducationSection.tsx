@@ -5,7 +5,7 @@ import { GraduationCap } from "lucide-react";
 import SectionHeader from "./SectionHeader";
 import ProfileCard from "./ProfileCard";
 
-interface Education {
+export interface Education {
   id: string;
   major: string;
   schoolName: string;

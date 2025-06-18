@@ -85,7 +85,7 @@ export interface GetJobPostsParams {
 }
 
 export interface CreateJobPostRequest {
-    accountId: string;
+    accountId: number;
     jobTitle: string;
     ageRequirement: string;
     jobDescription: string;

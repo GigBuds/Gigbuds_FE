@@ -3,7 +3,7 @@ import { handleConnectionCycleCallbacks } from "./handleConnectionCycleCallbacks
 import { HubConnection } from "@microsoft/signalr";
 import { handleNotificationCallbacks } from "./handleNotificationCallbacks";
 
-const HUB_URL = process.env.HUB_URL ?? 'https://localhost:7096/hub/notifications';
+const HUB_URL = process.env.HUB_URL ?? 'https://gigbuds-c3fagtfwe2brewha.eastasia-01.azurewebsites.net/hub/notifications';
 console.log("SignalR: HUB_URL", HUB_URL);
 
 async function GetAccessToken() {

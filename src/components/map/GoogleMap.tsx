@@ -100,7 +100,7 @@ import { GoogleMapResponse } from "@/types/folder/googleMapResponse";
 
          return () => clearTimeout(timer);
       }
-   }, [initialLocation]);
+   }, [initialLocation, onChange]);
 
    return (
       <APIProvider apiKey={API_KEY}>

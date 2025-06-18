@@ -10,7 +10,6 @@ import { useLoading } from "@/contexts/LoadingContext";
 import { useAuth } from "@/hooks/useAuth";
 import { useAppSelector } from "@/lib/redux/hooks";
 import { selectUser } from "@/lib/redux/features/userSlice";
-import Cookies from "js-cookie";
 
 const LoginInput = () => {
   const router = useRouter();
@@ -18,8 +17,7 @@ const LoginInput = () => {
   const {setIsLoading, isLoading} = useLoading();
   const {login} = useAuth();
   const user = useAppSelector(selectUser);
-  const accessToken = Cookies.get("accessToken");
-  if (user.id !== null && accessToken) router.push("/");
+  if (user.id !== null) router.push("/");
 
   const onFinish = async (values: FormValues) => {
     setIsLoading(true);

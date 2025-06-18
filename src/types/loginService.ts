@@ -1,3 +1,5 @@
+import { Membership } from "./sidebar.types";
+
 export interface LoginRequest {
   identifier: string;
   password: string;
@@ -26,5 +28,5 @@ export interface JWTPayload {
   isMale?: boolean;
   role?: string[];
   exp: number;
-  [key: string]: unknown;
+  memberships?: Membership;
 }

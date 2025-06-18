@@ -14,7 +14,7 @@ export default function SignalRProvider({ children }: Readonly<{ children: React
         const startConnection = async () => {
         if (user.id !== null) {
             await signalRService.StartConnection();
-            if (user.role?.includes("Employer")) {
+            if (user.roles?.includes("Employer")) {
                 console.log("SignalR: Add to employer group", user);
                 signalRService.AddToGroup("employer");
             } else {

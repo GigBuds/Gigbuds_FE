@@ -58,7 +58,7 @@ class JobPostApi {
       const response = await fetchApi.put(`job-posts/${id}`, data);
       console.log('Update job post API response:', response);
       
-      return response;
+      return response.json() as Promise<JobPost>;
     } catch (error) {
       console.error('Update job post API error:', error);
       throw error;

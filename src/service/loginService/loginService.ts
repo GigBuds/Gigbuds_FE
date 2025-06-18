@@ -1,7 +1,8 @@
 // filepath: n:\SEM8\Gigbuds_FE\src\service\Login-Register\LoginService.ts
 
 import fetchApi from "@/api/api";
-import { LoginRequest, LoginResponse } from "@/types/loginService";
+import { JWTPayload, LoginRequest, LoginResponse } from "@/types/loginService";
+import { Membership } from "@/types/sidebar.types";
 import { jwtDecode } from "jwt-decode";
 
 export class LoginApi {
@@ -22,7 +23,7 @@ export class LoginApi {
    * @param token - The JWT token to decode
    * @returns The decoded token payload
    */
-  static decodeToken(token: string): any {
+  static decodeToken(token: string): JWTPayload | null {
     try {
       return jwtDecode(token);
     } catch (error) {
@@ -47,7 +48,7 @@ export class LoginApi {
    * @param idToken - The ID token to extract membership from
    * @returns Array of membership objects
    */
-  static extractMembershipsFromToken(idToken: string): any[] {
+  static extractMembershipsFromToken(idToken: string): Membership[] {
     try {
       const decoded = this.decodeToken(idToken);
       if (!decoded) return [];
@@ -55,7 +56,7 @@ export class LoginApi {
       // Check if memberships claim exists
       if (decoded.memberships) {
         try {
-          return JSON.parse(decoded.memberships);
+          return [decoded.memberships];
         } catch (e) {
           console.error('Error parsing memberships from token:', e);
           return [];
@@ -98,7 +99,7 @@ export class LoginApi {
   static getMembershipInfo(): { 
     membershipId: number | null; 
     membershipTitle: string | null; 
-    memberships: any[] 
+    memberships: Membership[] 
   } {
     console.warn('LoginApi.getMembershipInfo() is deprecated for web. Use useAppSelector(selectMembershipInfo) instead.');
     return {

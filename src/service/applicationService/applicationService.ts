@@ -31,7 +31,7 @@ class ApplicationApi {
             const response = await fetchApi.put(`job-applications/${applicationId}/status`, { status });
             console.log('Update application status API response:', response);
             
-            return response;
+            return response.json() as Promise<Application>;
         } catch (error) {
             console.error('Update application status API error:', error);
             throw error;

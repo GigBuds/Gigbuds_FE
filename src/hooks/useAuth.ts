@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useAppDispatch } from '@/lib/redux/hooks';
 import { setUserWithMemberships, clearUserState, Membership } from '@/lib/redux/features/userSlice';
-import { LoginResponse } from '@/types/loginService';
+import { JWTPayload, LoginResponse } from '@/types/loginService';
 import { User } from '@/types/sidebar.types';
 import { LoginApi } from '@/service/loginService/loginService';
 import { jwtDecode } from 'jwt-decode';
@@ -44,7 +44,7 @@ export const useAuth = (): {
             console.log('Login response:', data);
             if (data && data.id_token) { // Use id_token instead of user
                 // Decode the JWT token to get user data
-                const jwtDecoded = jwtDecode(data.id_token) as any;
+                const jwtDecoded = jwtDecode(data.id_token) as JWTPayload;
                 const userData = mapJWTToUser(jwtDecoded);
                 dispatch(setUserWithMemberships({ user: userData, memberships: userData.memberships }));
                 console.log('User data stored in Redux:', userData);
@@ -91,39 +91,36 @@ export const useAuth = (): {
     };
 }; 
 
-const mapJWTToUser = (userData: any): User => {
-    // Parse roles from string to array
-    const roles = typeof userData.role === 'string' 
-        ? userData.role.split(',').map((role: string) => role.trim())
-        : userData.role || [];
-
+const mapJWTToUser = (userData: JWTPayload): User => {
+    console.log('User data:', userData);
     // Parse birthdate
-    const birthDate = userData.birthdate ? new Date(userData.birthdate) : new Date();
+    const birthDate = userData.birthDate ? new Date(userData.birthDate) : new Date();
 
     // Parse gender (True/False string to boolean)
-    const isMale = userData.gender === "True" || userData.gender === true;
+    const isMale = userData.isMale === true;
 
     // Parse memberships from JSON string
-    let memberships: Membership[] = [];
-    if (userData.memberships) {
-        try {
-            memberships = JSON.parse(userData.memberships);
-        } catch (error) {
-            console.error('Error parsing memberships:', error);
-            memberships = [];
-        }
-    }
+    const memberships: Membership[] = [userData.memberships!];
+    // if (userData.memberships) {
+    console.log('Memberships:', userData.memberships);
+    //     try {
+    //         memberships = JSON.parse(userData.memberships);
+    //     } catch (error) {
+    //         console.error('Error parsing memberships:', error);
+    //         memberships = [];
+    //     }
+    // }
 
     return {
         id: parseInt(userData.sub) || 0, // 'sub' is the user ID in JWT
         firstName: userData.name || '',
-        lastName: userData.family_name || '',
-        phone: userData.phone_number || '',
+        lastName: userData.familyName || '',
+        phone: userData.phone || '',
         birthDate: birthDate,
         isMale: isMale,
-        name: `${userData.name || ''} ${userData.family_name || ''}`.trim(),
+        name: `${userData.name || ''} ${userData.familyName || ''}`.trim(),
         email: userData.email || '',
-        roles: roles,
+        roles: userData.role || [],
         memberships: memberships // Add this line
     };
 };

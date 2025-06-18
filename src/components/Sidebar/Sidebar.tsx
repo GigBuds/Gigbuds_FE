@@ -24,6 +24,8 @@ import { useAuth } from '@/hooks/useAuth'
 import { clearUserState, selectUser } from '@/lib/redux/features/userSlice'
 import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks'
 import { selectNotifications } from '@/lib/redux/features/notificationSlice'
+import { BsShieldLock } from "react-icons/bs";
+
 
 // Menu items configuration
 const menuItems: MenuItem[] = [
@@ -32,6 +34,7 @@ const menuItems: MenuItem[] = [
   { id: 'manage-job-post', label: Texts.JOB_POSTINGS, icon: <LuUserSearch/>, link: '/manage-job-post' },
   { id: 'candidate-profiles', label: Texts.CANDIDATE_PROFILES, icon: <MdOutlineSupervisorAccount/>, link: '/candidate-profiles' },
   { id: 'messages', label: Texts.MESSAGES, icon: <TiMessages/>, link: '/messages' },
+  { id: 'memberships', label: "Đăng ký thành viên", icon: <BsShieldLock />, link: '/memberships' },
   { id: 'account-settings', label: Texts.ACCOUNT_SETTINGS, icon: <IoSettingsOutline/>, link: '/account-settings' },
   { id: 'support', label: Texts.SUPPORT, icon: <BiSupport/>, link: '/support' },
   { id: 'terms-policy', label: Texts.TERMS_POLICY, icon: <IoDocumentTextOutline/>, link: '/terms-policy' },

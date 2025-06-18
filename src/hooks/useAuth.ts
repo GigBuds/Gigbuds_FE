@@ -5,7 +5,7 @@ import { JWTPayload, LoginResponse } from '@/types/loginService';
 import { User } from '@/types/sidebar.types';
 import { LoginApi } from '@/service/loginService/loginService';
 import { jwtDecode } from 'jwt-decode';
-
+import Cookies from 'js-cookie';
 /**
  * Custom hook for authentication management
  * 
@@ -33,19 +33,27 @@ export const useAuth = (): {
     const dispatch = useAppDispatch();
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    
 
     const login = async (identifier: string, password: string): Promise<LoginResponse | null> => {
         setIsLoading(true);
         setError(null);
-
         try {
             // Use the LoginApi service instead of direct fetch
             const data = await LoginApi.login(identifier, password);
-            console.log('Login response:', data);
             if (data && data.id_token) { // Use id_token instead of user
-                // Decode the JWT token to get user data
-                const jwtDecoded = jwtDecode(data.id_token) as JWTPayload;
+                
+                const jwtDecoded = jwtDecode(data.id_token) as any;
                 const userData = mapJWTToUser(jwtDecoded);
+                
+                if (data.access_token) {
+                    Cookies.set('access_token', data.access_token, {
+                        expires: 30, // 30 days
+                        // secure: process.env.NODE_ENV === 'production',
+                        sameSite: 'strict',
+                        path: '/'
+                    });
+                }
                 dispatch(setUserWithMemberships({ user: userData, memberships: userData.memberships }));
                 console.log('User data stored in Redux:', userData);
             }

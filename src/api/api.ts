@@ -2,8 +2,10 @@
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "https://localhost:50876/api/v1/";
 const getAuthHeaders = (): HeadersInit => {
   const accessToken = typeof window !== 'undefined' 
-    ? document.cookie.split('; ').find(row => row.startsWith('accessToken='))?.split('=')[1]
+    ? document.cookie.split('; ').find(row => row.startsWith('access_token='))?.split('=')[1]
     : null;
+
+  console.log('Access Token:', accessToken);
 
   return {
     'Content-Type': 'application/json',

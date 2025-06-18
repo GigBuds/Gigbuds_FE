@@ -17,6 +17,7 @@ const LoginInput = () => {
   const {login} = useAuth();
 
   const onFinish = async (values: FormValues) => {
+
     setIsLoading(true);
     try {
       const response = await login(values.identifier, values.password);
@@ -24,20 +25,20 @@ const LoginInput = () => {
       if (response?.id_token) {
         // Handle successful login
         toast.success("Login successful!");
-        console.log("Login response:", response);
-
+        setTimeout(() => {
+        setIsLoading(false); 
+        console.log('redirecting to home page');
+        router.push("/"); // Redirect to home page after login
+      }, 2000);
       } else {
         toast.error("Login failed. Please check your credentials.");
+        setIsLoading(false);
       }
     } catch (error) {
       console.error("Login error:", error);
       toast.error("Login failed. Please check your credentials.");
     } finally {
-      setTimeout(() => {
-        setIsLoading(false); 
-        console.log('redirecting to home page');
-        router.push("/"); // Redirect to home page after login
-      }, 2000);
+      setIsLoading(false);
     }
   };
 

@@ -5,15 +5,9 @@ export interface LoginRequest {
 
 export interface LoginResponse {
   refresh_token: string;
-  success: boolean;
   access_token?: string;
   id_token?: string;
-  user?: {
-    id: string;
-    email: string;
-    name?: string;
-  };
-  message?: string;
+
 }
 
 export interface JWTPayload {

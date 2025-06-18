@@ -120,32 +120,33 @@ const mapJWTToUser = (userData: userData ): User => {
         : userData.role || [];
 
     // Parse birthdate
-    const birthDate = userData.birthdate ? new Date(userData.birthdate) : new Date();
+    const birthDate = userData.birthDate ? new Date(userData.birthDate) : new Date();
 
     // Parse gender (True/False string to boolean)
-    const isMale = userData.gender === "True" || userData.gender === true;
+    const isMale = userData.isMale === true;
 
     // Parse memberships from JSON string
-    let memberships: Membership[] = [];
-    if (userData.memberships) {
-        try {
-            memberships = JSON.parse(userData.memberships);
-        } catch (error) {
-            console.error('Error parsing memberships:', error);
-            memberships = [];
-        }
-    }
+    const memberships: Membership[] = [userData.memberships!];
+    // if (userData.memberships) {
+    console.log('Memberships:', userData.memberships);
+    //     try {
+    //         memberships = JSON.parse(userData.memberships);
+    //     } catch (error) {
+    //         console.error('Error parsing memberships:', error);
+    //         memberships = [];
+    //     }
+    // }
 
     return {
         id: parseInt(userData.sub) || 0, // 'sub' is the user ID in JWT
         firstName: userData.name || '',
-        lastName: userData.family_name || '',
-        phone: userData.phone_number || '',
+        lastName: userData.familyName || '',
+        phone: userData.phone || '',
         birthDate: birthDate,
         isMale: isMale,
-        name: `${userData.name || ''} ${userData.family_name || ''}`.trim(),
+        name: `${userData.name || ''} ${userData.familyName || ''}`.trim(),
         email: userData.email || '',
-        roles: roles,
+        roles: userData.role || [],
         memberships: memberships // Add this line
     };
 };

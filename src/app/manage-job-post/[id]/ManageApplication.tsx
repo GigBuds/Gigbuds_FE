@@ -80,7 +80,7 @@ const ManageApplication = ({
       setApplications((prev) =>
         prev.map((app) =>
           app.id === applicationId
-            ? { ...app, status: newStatus as Application["applicationStatus"] }
+            ? { ...app, status: newStatus }
             : app
         )
       );

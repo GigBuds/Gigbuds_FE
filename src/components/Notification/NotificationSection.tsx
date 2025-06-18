@@ -1,12 +1,11 @@
 "use client";
 import logo from "../../../public/Gigbuds Logo.png";
 import Image from "next/image";
-import { noti } from "./data";
+import { Notification } from "@/types/notification.types";
 // Time utility function
 
 
-const NotificationSection = () => {
-
+const NotificationSection = ({ notifications }: { notifications: Notification[] }) => {
 
     const getTimeAgo = (timestamp: string): string => {
         const now = new Date();
@@ -36,11 +35,10 @@ const NotificationSection = () => {
     return (
         <div className="pl-2 flex items-center justify-center flex-col w-full h-full pt-[5%]">
             <div className="text-xl font-bold">
-                    Thông báo của bạn
-                </div>
+                Thông báo của bạn
+            </div>
             <div className="flex flex-col w-full overflow-y-auto h-[90vh]">
-                
-                {noti.map((notification) => (
+                {notifications.map((notification) => (
                     <div
                         key={notification.id}
                         className="shadow-md px-1 py-3 flex flex-row items-center gap-4"
@@ -55,12 +53,12 @@ const NotificationSection = () => {
                             <h3 className="text-md font-semibold line-clamp-1">{notification.title}</h3>
                             <div>
                                 <p className="text-sm text-gray-700 line-clamp-2">
-                                    <span className="font-bold text-[#FF7345]">{notification.userName}</span> {notification.content}
+                                    {notification.content}
                                 </p>
                             </div>
 
                             <p className="text-[80%] text-gray-500">
-                                {getTimeAgo(notification.timestamp)}
+                                {getTimeAgo(notification.timestamp.toString())}
                             </p>
                         </div>
 

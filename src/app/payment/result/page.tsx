@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { CheckCircle, XCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { useAppSelector, useAppDispatch } from '@/lib/redux/hooks';
@@ -27,7 +27,7 @@ export default function PaymentResultPage() {
   const userId = useAppSelector(selectUserId);
 
   // Clean up old payment results from localStorage (older than 24 hours)
-  const cleanupOldPaymentResults = () => {
+  const cleanupOldPaymentResults = useCallback(() => {
     try {
       const processedPaymentsKey = 'processedPayments';
       const processedPayments = JSON.parse(localStorage.getItem(processedPaymentsKey) || '[]');
@@ -55,7 +55,7 @@ export default function PaymentResultPage() {
     } catch (error) {
       console.error('Error cleaning up old payment results:', error);
     }
-  };
+  }, []);
 
   // Extract parameters from URL
   const orderCode = searchParams.get('orderCode');
@@ -63,7 +63,7 @@ export default function PaymentResultPage() {
   const amount = searchParams.get('amount');
 
   // Function to renew ID token after successful payment
-  const renewIdTokenAfterPayment = async () => {
+  const renewIdTokenAfterPayment = useCallback(async () => {
     try {
       setRenewingToken(true);
       console.log('🔄 Renewing ID token after successful payment...');
@@ -109,7 +109,7 @@ export default function PaymentResultPage() {
     } finally {
       setRenewingToken(false);
     }
-  };
+  }, [userId, dispatch]);
 
   useEffect(() => {
     const handlePaymentReturn = async () => {
@@ -213,7 +213,7 @@ export default function PaymentResultPage() {
     };
 
     handlePaymentReturn();
-  }, [orderCode, status, amount]);
+  }, [orderCode, status, amount, cleanupOldPaymentResults, setResult, setLoading, setError, renewIdTokenAfterPayment]);
 
   const getStatusInfo = () => {
     if (error) {

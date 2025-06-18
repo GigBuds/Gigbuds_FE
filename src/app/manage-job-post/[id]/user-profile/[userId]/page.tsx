@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import React from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import ProfileHeader from "@/components/Profile/ProfileHeader";
 import ErrorComponent from "@/components/Common/ErrorComponent";
@@ -12,9 +12,10 @@ import EducationSection from "@/components/Profile/EducationSection";
 import PersonalInfoSection from "@/components/Profile/PersonalInfoSection";
 import { useLoading } from "@/contexts/LoadingContext";
 import jobSeekerService from "@/service/jobSeekerService/JobSeekerService";
+import { Experience } from "@/components/Profile/ExperienceSection";
+import { Education } from "@/components/Profile/EducationSection";
 
-
-interface UserProfile {
+export interface UserProfile {
   id: string;
   firstName: string;
   lastName: string;
@@ -28,34 +29,19 @@ interface UserProfile {
     skillName: string;
     level?: string;
   }>;
-  accountExperienceTags: Array<{
-    id: string;
-    title: string;
-    company: string;
-    startDate: string;
-    endDate?: string;
-    description?: string;
-  }>;
-  educationalLevels: Array<{
-    id: string;
-    institutionName: string;
-    degree: string;
-    fieldOfStudy: string;
-    startDate: string;
-    endDate?: string;
-    gpa?: string;
-  }>;
+  accountExperienceTags: Experience[];
+  educationalLevels: Education[];
 }
 
 const UserProfilePage = () => {
   const params = useParams();
   const userId = params.userId as string;
   
-  const [userProfile, setUserProfile] = React.useState<UserProfile | null>(null);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
     const {setIsLoading} = useLoading();
-  const [error, setError] = React.useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const fetchUserProfile = React.useCallback(async () => {
+  const fetchUserProfile = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
@@ -67,13 +53,13 @@ const UserProfilePage = () => {
       const response = await jobSeekerService.getJobSeekerById(userId);
 
       if (response.success) {
-        setUserProfile(response.data || null);
+        setUserProfile(response.data as unknown as UserProfile);
       } else {
-        setError(response.error || "Không thể tải thông tin profile");
+        setError(response.error ?? "Không thể tải thông tin profile");
       }
     } catch (err: any) {
       console.error("Error fetching user profile:", err);
-      setError(err.message || "Đã xảy ra lỗi khi tải thông tin profile");
+      setError(err.message ?? "Đã xảy ra lỗi khi tải thông tin profile");
     } finally {
       console.log("User Profile:", userProfile);
       setTimeout(() => {
@@ -94,7 +80,7 @@ const UserProfilePage = () => {
     console.log("Update Schedule Pressed");
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     fetchUserProfile();
   }, [fetchUserProfile]);
 

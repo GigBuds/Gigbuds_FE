@@ -5,14 +5,13 @@ import { Briefcase } from "lucide-react";
 import SectionHeader from "./SectionHeader";
 import ProfileCard from "./ProfileCard";
 
-interface Experience {
+export interface Experience {
   id: string;
   jobPosition: string;
   company: string;
   startDate: string;
   endDate?: string;
   description?: string;
-  
 }
 
 interface ExperienceSectionProps {

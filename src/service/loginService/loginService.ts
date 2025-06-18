@@ -50,13 +50,13 @@ export class LoginApi {
    */
   static extractMembershipsFromToken(idToken: string): Membership[] {
     try {
-      const decoded = this.decodeToken(idToken);
+      const decoded = this.decodeToken(idToken) as { memberships?: string } | null;
       if (!decoded) return [];
 
       // Check if memberships claim exists
       if (decoded.memberships) {
         try {
-          return [decoded.memberships];
+          return JSON.parse(decoded.memberships);
         } catch (e) {
           console.error('Error parsing memberships from token:', e);
           return [];

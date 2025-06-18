@@ -78,10 +78,10 @@ export default function CreateForm({API_KEY, MAP_ID}: Readonly<{API_KEY: string,
       jobPositionId: values.jobPositionId,
       startDate: values.startDate?.toISOString(),
       endDate: values.endDate?.toISOString(),
-      JobSchedule: {
+      jobSchedule: {
         shiftCount: values.JobSchedule?.shiftCount || 0,
         minimumShift: values.JobSchedule?.minimumShift || 0,
-        JobShifts: values.JobSchedule?.jobShifts?.map((shift: any) => ({
+        jobShifts: values.JobSchedule?.jobShifts?.map((shift: any) => ({
           dayOfWeek: shift.dayOfWeek,
           startTime: shift.startTime,
           endTime: shift.endTime,
@@ -105,7 +105,6 @@ export default function CreateForm({API_KEY, MAP_ID}: Readonly<{API_KEY: string,
       
       router.push('/manage-job-post');
       
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error('Create job post error:', error);
       

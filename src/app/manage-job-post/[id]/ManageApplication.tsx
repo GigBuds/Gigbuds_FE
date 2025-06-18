@@ -48,8 +48,6 @@ const ManageApplication = ({
           setApplications(response);
         } else if (response.data && Array.isArray(response.data)) {
           setApplications(response.data);
-        } else if (response.items && Array.isArray(response.items)) {
-          setApplications(response.items);
         } else {
           console.warn("Unexpected response format:", response);
           setApplications([]);

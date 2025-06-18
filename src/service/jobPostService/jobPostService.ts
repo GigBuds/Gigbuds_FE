@@ -53,12 +53,19 @@ class JobPostApi {
     }
   }
 
-  async updateJobPost(id: string, data: UpdateJobPostRequest): Promise<JobPost> {
+  async updateJobPost(id: string, data: UpdateJobPostRequest): Promise<{ success: boolean }> {
     try {
       const response = await fetchApi.put(`job-posts/${id}`, data);
       console.log('Update job post API response:', response);
       
-      return response.json() as Promise<JobPost>;
+      // Handle 204 No Content response
+      if (response.status === 204) {
+        return { success: true };
+      }
+      
+      // For other successful responses, parse JSON
+      const result = await response.json();
+      return result;
     } catch (error) {
       console.error('Update job post API error:', error);
       throw error;

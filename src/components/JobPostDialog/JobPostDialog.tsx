@@ -37,7 +37,6 @@ import {
 import toast from "react-hot-toast";
 import { GoogleMapResponse } from "@/types/folder/googleMapResponse";
 import GoogleMap from "../map/GoogleMap";
-import { useRouter } from "next/navigation";
 
 
 const JobPostDialog: React.FC<JobPostDialogProps> = ({
@@ -45,7 +44,6 @@ const JobPostDialog: React.FC<JobPostDialogProps> = ({
   MAP_ID,
   job,
   children,
-  onJobUpdated,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -54,7 +52,6 @@ const JobPostDialog: React.FC<JobPostDialogProps> = ({
   const [currentJobPosition, setCurrentJobPosition] = useState<string>("");
   const [loadingPositions, setLoadingPositions] = useState(false);
   const [dataLoaded, setDataLoaded] = useState(false);
-  const router = useRouter();
 
   const [formData, setFormData] = useState({
     jobTitle: job.jobTitle || "",
@@ -208,14 +205,14 @@ const JobPostDialog: React.FC<JobPostDialogProps> = ({
         job.id.toString(),
         updateData
       );
+
+      if (updatedJob.success) {
      
       toast.success("Cập nhật tin tuyển dụng thành công!");
       setIsEditing(false);
-      router.push(`/manage-job-post`);
-
-      if (onJobUpdated) {
-        onJobUpdated(updatedJob);
+      window.location.reload();
       }
+
     } catch (error) {
        
       console.error("Error updating job post:", error);

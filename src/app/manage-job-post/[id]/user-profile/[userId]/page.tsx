@@ -12,8 +12,6 @@ import EducationSection from "@/components/Profile/EducationSection";
 import PersonalInfoSection from "@/components/Profile/PersonalInfoSection";
 import { useLoading } from "@/contexts/LoadingContext";
 import jobSeekerService from "@/service/jobSeekerService/JobSeekerService";
-import { Experience } from "@/components/Profile/ExperienceSection";
-import { Education } from "@/components/Profile/EducationSection";
 
 export interface UserProfile {
   id: string;
@@ -29,8 +27,8 @@ export interface UserProfile {
     skillName: string;
     level?: string;
   }>;
-  accountExperienceTags: Experience[];
-  educationalLevels: Education[];
+  accountExperienceTags: any[]; // Changed to any[] to handle API data flexibility
+  educationalLevels: any[]; // Changed to any[] to handle API data flexibility
 }
 
 const UserProfilePage = () => {
@@ -38,7 +36,7 @@ const UserProfilePage = () => {
   const userId = params.userId as string;
   
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-    const {setIsLoading} = useLoading();
+  const { setIsLoading } = useLoading();
   const [error, setError] = useState<string | null>(null);
 
   const fetchUserProfile = useCallback(async () => {
@@ -53,7 +51,9 @@ const UserProfilePage = () => {
       const response = await jobSeekerService.getJobSeekerById(userId);
 
       if (response.success) {
-        setUserProfile(response.data as unknown as UserProfile);
+        const profileData = response.data as unknown as UserProfile;
+        setUserProfile(profileData);
+        console.log("User Profile loaded:", profileData);
       } else {
         setError(response.error ?? "Không thể tải thông tin profile");
       }
@@ -61,28 +61,20 @@ const UserProfilePage = () => {
       console.error("Error fetching user profile:", err);
       setError(err.message ?? "Đã xảy ra lỗi khi tải thông tin profile");
     } finally {
-      console.log("User Profile:", userProfile);
-      setTimeout(() => {
-        setIsLoading(false);
-      }, 2000);
+      setIsLoading(false);
     }
-  }, [userId, setIsLoading, userProfile]);
+  }, [userId, setIsLoading]); // Removed userProfile from dependencies
 
-  const handleRetry = () => {
-    fetchUserProfile();
-  };
-
-  const handleEditProfile = () => {
-    console.log("Edit Profile Pressed");
-  };
-
-  const handleUpdateSchedule = () => {
-    console.log("Update Schedule Pressed");
-  };
-
-  useEffect(() => {
+  const handleRetry = useCallback(() => {
     fetchUserProfile();
   }, [fetchUserProfile]);
+
+
+  useEffect(() => {
+    if (userId) {
+      fetchUserProfile();
+    }
+  }, [userId, fetchUserProfile]);
 
   if (error) {
     return (
@@ -95,10 +87,39 @@ const UserProfilePage = () => {
   if (!userProfile) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
-        <p className="text-gray-600">Không tìm thấy thông tin profile</p>
+        <div className="text-center">
+          <div className="mb-4">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          </div>
+          <p className="text-gray-600">Đang tải thông tin profile...</p>
+        </div>
       </div>
     );
   }
+
+  // Helper function to safely map experience data
+  const mapExperienceData = (experiences: any[]) => {
+    return experiences?.map(exp => ({
+      id: exp.id || String(Math.random()),
+      jobPosition: exp.title || exp.jobPosition || 'Chưa cập nhật',
+      company: exp.company || exp.companyName || 'Chưa cập nhật',
+      startDate: exp.startDate || exp.fromDate || '',
+      endDate: exp.endDate || exp.toDate || undefined,
+      description: exp.description || exp.jobDescription || undefined
+    })) || [];
+  };
+
+  // Helper function to safely map education data
+  const mapEducationData = (educations: any[]) => {
+    return educations?.map(edu => ({
+      id: edu.id || String(Math.random()),
+      major: edu.fieldOfStudy || edu.major || 'Chưa cập nhật',
+      schoolName: edu.institutionName || edu.schoolName || 'Chưa cập nhật',
+      startDate: edu.startDate || edu.fromDate || '',
+      endDate: edu.endDate || edu.toDate || undefined,
+      degree: edu.degree || edu.level || 'Chưa cập nhật'
+    })) || [];
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -106,16 +127,16 @@ const UserProfilePage = () => {
         <ProfileHeader userProfile={userProfile} />
 
         <div className="pt-2.5 pb-5 px-4 space-y-4 overflow-y-auto max-h-[calc(100vh-200px)]">
-          <ProfileButtons 
-            onEditProfile={handleEditProfile}
-            onUpdateSchedule={handleUpdateSchedule}
+          
+          <SkillsSection skills={userProfile.skillTags || []} />
+          
+          <ExperienceSection 
+            experiences={mapExperienceData(userProfile.accountExperienceTags)} 
           />
           
-          <SkillsSection skills={userProfile.skillTags} />
-          
-          <ExperienceSection experiences={userProfile.accountExperienceTags } />
-          
-          <EducationSection educations={userProfile.educationalLevels} />
+          <EducationSection 
+            educations={mapEducationData(userProfile.educationalLevels)} 
+          />
           
           <PersonalInfoSection userProfile={userProfile} />
         </div>

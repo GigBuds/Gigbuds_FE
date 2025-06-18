@@ -7,39 +7,119 @@ import { CreateJobPostRequest, JobPosition, JobSchedule } from "@/types/jobPostS
 import EmployerShiftCalendar from "@/components/EmployerShiftCalendar";
 import { GoogleMapResponse } from "@/types/folder/googleMapResponse";
 import toast from "react-hot-toast";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAppSelector } from "@/lib/redux/hooks";
 import { selectUser } from "@/lib/redux/features/userSlice";
 import dayjs, { Dayjs } from "dayjs";
+import { jobPostApi } from "@/service/jobPostService/jobPostService";
 
 const { Title, Text } = Typography;
 
-export default function CreateForm({API_KEY, MAP_ID, jobPositions}: Readonly<{API_KEY: string, MAP_ID: string, jobPositions: Record<string, JobPosition[]>}>) {
+export default function CreateForm({API_KEY, MAP_ID}: Readonly<{API_KEY: string, MAP_ID: string}>) {
   const [form] = Form.useForm();
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [jobPositions, setJobPositions] = useState<Record<string, JobPosition[]>>({});
+  const [loadingPositions, setLoadingPositions] = useState<boolean>(true);
   const user = useAppSelector(selectUser);
 
-  console.log('user', user);
-  const onFinish = async (values: CreateJobPostRequest) => {
-    setIsLoading(true);
-    console.log('values', values);
-  
-    values.accountId = user.id?.toString() ?? '';
-    try {
-      const response = await fetch('/api/job-posts', {
-        method: 'POST',
-        body: JSON.stringify(values),
-        credentials: 'include',
-      });
-      const data = await response.json();
-      if (!data.success) {
-        throw new Error(data.message);
+  console.log(API_KEY, MAP_ID);
+
+  // Fetch job positions on component mount
+  useEffect(() => {
+    const fetchJobPositions = async () => {
+      try {
+        setLoadingPositions(true);
+        const positions = await jobPostApi.getAllJobPositions();
+        
+        // Group positions by job type
+        const groupedPositions = positions.reduce((acc, position) => {
+          const typeName = position.jobTypeName ?? 'Khác';
+          acc[typeName] ??= [];
+          acc[typeName].push(position);
+          return acc;
+        }, {} as Record<string, JobPosition[]>);
+
+        setJobPositions(groupedPositions);
+        console.log('Fetched job positions:', groupedPositions);
+      } catch (error) {
+        console.error('Error fetching job positions:', error);
+        toast.error('Không thể tải danh sách vị trí công việc');
+        setJobPositions({});
+      } finally {
+        setLoadingPositions(false);
       }
+    };
+
+    fetchJobPositions();
+  }, []);
+  
+  const onFinish = async (values: any) => {
+    setIsLoading(true);
+    console.log('Form values:', values);
+  
+    // Transform form values to match API schema
+    const requestPayload: CreateJobPostRequest = {
+      accountId: user?.id ? user.id : 0, // Ensure accountId is set
+      jobTitle: values.jobTitle,
+      ageRequirement: values.ageRequirement,
+      jobDescription: values.jobDescription,
+      jobRequirement: values.jobRequirement,
+      experienceRequirement: values.experienceRequirement,
+      salary: values.salary,
+      salaryUnit: values.salaryUnit,
+      jobLocation: values.jobLocation,
+      expireTime: values.expireTime?.toISOString(),
+      benefit: values.benefit,
+      vacancyCount: values.vacancyCount,
+      districtCode: values.districtCode,
+      provinceCode: values.provinceCode,
+      jobPositionId: values.jobPositionId,
+      startDate: values.startDate?.toISOString(),
+      endDate: values.endDate?.toISOString(),
+      JobSchedule: {
+        shiftCount: values.JobSchedule?.shiftCount || 0,
+        minimumShift: values.JobSchedule?.minimumShift || 0,
+        JobShifts: values.JobSchedule?.jobShifts?.map((shift: any) => ({
+          dayOfWeek: shift.dayOfWeek,
+          startTime: shift.startTime,
+          endTime: shift.endTime,
+        })) || []
+      }
+    };
+    
+    if (!requestPayload.accountId) {
+      toast.error('Vui lòng đăng nhập để tạo bài đăng');
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      // Use the service instead of direct API call
+      const response = await jobPostApi.createJobPost(requestPayload);
+      
+      console.log('Create job post response:', response);
       toast.success('Bài đăng đã được tạo thành công');
       form.resetFields();
-    } catch (error) {
-      console.error('error', error);
-      toast.error('Lỗi khi tạo bài đăng');
+      
+      // Optional: Redirect to job posts list or specific job post
+      // router.push('/employer/job-posts');
+      
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+      console.error('Create job post error:', error);
+      
+      // Handle different types of errors
+      let errorMessage = 'Lỗi khi tạo bài đăng';
+      
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      }
+      
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -65,17 +145,17 @@ export default function CreateForm({API_KEY, MAP_ID, jobPositions}: Readonly<{AP
     });
     console.log('schedule', schedule);
   };
-
+  
   const handleMapChange = (response: GoogleMapResponse | null | undefined) => {
     form.setFieldsValue({
-      JobLocation: response?.jobLocation ?? '',
-      DistrictCode: response?.districtCode ?? '',
-      ProvinceCode: response?.provinceCode ?? '',
-    });
+        jobLocation: response?.jobLocation ?? '',
+        districtCode: response?.districtCode ?? '',
+        provinceCode: response?.provinceCode ?? '',
+      });
   };
 
   const disabledEndDate = (current: Dayjs) => {
-    const startDate = form.getFieldValue('StartDate');
+    const startDate = form.getFieldValue('startDate');
     return current && (current < dayjs().startOf('day') || (startDate && current < dayjs(startDate).startOf('day')));
   };
 
@@ -104,7 +184,7 @@ export default function CreateForm({API_KEY, MAP_ID, jobPositions}: Readonly<{AP
           <Card className="mb-8 shadow border-l-4 border-l-blue-500 bg-blue-50/40">
             <div className="text-center">
               <Form.Item 
-                name="JobTitle" 
+                name="jobTitle" 
                 label={<span className="text-lg font-semibold">Tiêu Đề Công Việc <Tooltip title="Tên công việc sẽ hiển thị nổi bật"><InfoCircleOutlined className="ml-1 text-blue-400" /></Tooltip></span>}
                 rules={[{ required: true, message: 'Vui lòng nhập tiêu đề công việc' }]}
                 className="mb-0"
@@ -123,7 +203,7 @@ export default function CreateForm({API_KEY, MAP_ID, jobPositions}: Readonly<{AP
           <Card className="mb-8 shadow-sm bg-white/80">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               <Form.Item 
-                name="JobDescription" 
+                name="jobDescription" 
                 label={<span>Mô Tả Công Việc <Tooltip title="Các nhiệm vụ, trách nhiệm chính"><InfoCircleOutlined /></Tooltip></span>} 
                 rules={[{ required: true, message: 'Vui lòng nhập mô tả công việc' }]}
               > 
@@ -136,7 +216,7 @@ export default function CreateForm({API_KEY, MAP_ID, jobPositions}: Readonly<{AP
               </Form.Item>
               
               <Form.Item 
-                name="JobRequirement" 
+                name="jobRequirement" 
                 label={<span>Yêu Cầu Công Việc <Tooltip title="Trình độ, kỹ năng, kinh nghiệm"><InfoCircleOutlined /></Tooltip></span>} 
                 rules={[{ required: true, message: 'Vui lòng nhập yêu cầu công việc' }]}
               > 
@@ -151,14 +231,16 @@ export default function CreateForm({API_KEY, MAP_ID, jobPositions}: Readonly<{AP
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-4">
               <Form.Item 
-                name="JobPositionId" 
+                name="jobPositionId" 
                 label={<span>Danh Mục Công Việc <Tooltip title="Giúp phân loại công việc"><InfoCircleOutlined /></Tooltip></span>} 
               > 
                 <Select 
                   size="large"
                   showSearch
                   optionFilterProp="label"
-                  placeholder="Chọn danh mục công việc"
+                  placeholder={loadingPositions ? "Đang tải..." : "Chọn danh mục công việc"}
+                  loading={loadingPositions}
+                  disabled={loadingPositions}
                   options={
                     Object.entries(jobPositions).map(([key, positions]) => ({
                       label: key,
@@ -173,7 +255,7 @@ export default function CreateForm({API_KEY, MAP_ID, jobPositions}: Readonly<{AP
               </Form.Item>
 
               <Form.Item 
-                name="VacancyCount" 
+                name="vacancyCount" 
                 label={<span>Số Lượng Vị Trí <Tooltip title="Số lượng vị trí cần tuyển"><InfoCircleOutlined /></Tooltip></span>} 
                 rules={[{ required: true, message: 'Vui lòng nhập số lượng vị trí tuyển dụng' }]}
               >
@@ -192,7 +274,7 @@ export default function CreateForm({API_KEY, MAP_ID, jobPositions}: Readonly<{AP
           <Card className="mb-8 shadow-sm bg-white/80">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <Form.Item 
-                name="Salary" 
+                name="salary" 
                 label={<span>Mức Lương <Tooltip title="Mức lương cơ bản"><InfoCircleOutlined /></Tooltip></span>} 
                 rules={[{ required: true, message: 'Vui lòng nhập mức lương' }]}
               >
@@ -208,7 +290,7 @@ export default function CreateForm({API_KEY, MAP_ID, jobPositions}: Readonly<{AP
               </Form.Item>
 
               <Form.Item 
-                name="SalaryUnit" 
+                name="salaryUnit" 
                 label={<span>Tần Suất Trả Lương <Tooltip title="Theo giờ, ngày hoặc ca"><InfoCircleOutlined /></Tooltip></span>} 
                 rules={[{ required: true, message: 'Vui lòng chọn đơn vị lương' }]}
               >
@@ -220,7 +302,7 @@ export default function CreateForm({API_KEY, MAP_ID, jobPositions}: Readonly<{AP
               </Form.Item>
 
               <Form.Item 
-                name="Benefit" 
+                name="benefit" 
                 label={<span>Phúc Lợi & Quyền Lợi <Tooltip title="Các phúc lợi, quyền lợi"><InfoCircleOutlined /></Tooltip></span>} 
                 rules={[{ required: true, message: 'Vui lòng nhập thông tin phúc lợi' }]}
               >
@@ -238,7 +320,7 @@ export default function CreateForm({API_KEY, MAP_ID, jobPositions}: Readonly<{AP
           <Card className="mb-8 shadow-sm bg-white/80">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <Form.Item 
-                name="AgeRequirement" 
+                name="ageRequirement" 
                 label={<span>Tuổi Tối Thiểu <Tooltip title="Yêu cầu tuổi tối thiểu"><InfoCircleOutlined /></Tooltip></span>} 
                 rules={[{ required: true, message: 'Vui lòng nhập yêu cầu về tuổi' }]}
               >
@@ -253,7 +335,7 @@ export default function CreateForm({API_KEY, MAP_ID, jobPositions}: Readonly<{AP
               </Form.Item>
 
               <Form.Item 
-                name="ExperienceRequirement" 
+                name="experienceRequirement" 
                 label={<span>Kinh Nghiệm Yêu Cầu <Tooltip title="Số năm kinh nghiệm"><InfoCircleOutlined /></Tooltip></span>} 
                 rules={[{ required: true, message: 'Vui lòng nhập yêu cầu kinh nghiệm' }]}
               >
@@ -270,7 +352,7 @@ export default function CreateForm({API_KEY, MAP_ID, jobPositions}: Readonly<{AP
           <Divider orientation="left" plain><CheckCircleOutlined className="mr-2 text-blue-500" />Địa Điểm Làm Việc</Divider>
           <Card className="mb-8 shadow-sm bg-white/80">
             <Form.Item 
-              name="JobLocation" 
+              name="jobLocation" 
               label={<span>Địa Điểm Làm Việc <Tooltip title="Chọn vị trí trên bản đồ"><InfoCircleOutlined /></Tooltip></span>} 
               rules={[{ required: true, message: 'Vui lòng chọn địa điểm làm việc' }]}
               className="mb-0"
@@ -284,10 +366,10 @@ export default function CreateForm({API_KEY, MAP_ID, jobPositions}: Readonly<{AP
               />
             </Form.Item>
             
-            <Form.Item hidden name="DistrictCode" rules={[{ required: false }]}> 
+            <Form.Item hidden name="districtCode" rules={[{ required: false }]}> 
               <Input />
             </Form.Item>
-            <Form.Item hidden name="ProvinceCode" rules={[{ required: false }]}> 
+            <Form.Item hidden name="provinceCode" rules={[{ required: false }]}> 
               <Input /> 
             </Form.Item>
           </Card>
@@ -313,7 +395,7 @@ export default function CreateForm({API_KEY, MAP_ID, jobPositions}: Readonly<{AP
           <Card className="mb-8 shadow-sm bg-white/80">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <Form.Item 
-                name="ExpireTime" 
+                name="expireTime" 
                 label={<span>Hạn Chót Ứng Tuyển <Tooltip title="Ngày hết hạn ứng tuyển"><InfoCircleOutlined /></Tooltip></span>} 
                 rules={[{ required: true, message: 'Vui lòng thiết lập thời hạn' }]}
               >
@@ -329,7 +411,7 @@ export default function CreateForm({API_KEY, MAP_ID, jobPositions}: Readonly<{AP
               </Form.Item>
 
               <Form.Item 
-                name="StartDate" 
+                name="startDate" 
                 label={<span>Ngày Bắt Đầu Công Việc <Tooltip title="Ngày bắt đầu"><InfoCircleOutlined /></Tooltip></span>}
               >
                 <DatePicker 
@@ -341,16 +423,16 @@ export default function CreateForm({API_KEY, MAP_ID, jobPositions}: Readonly<{AP
                   className="w-full rounded-lg"
                   format="YYYY-MM-DD HH:mm"
                   onChange={() => {
-                    const startDate = form.getFieldValue('StartDate');
-                    const endDate = form.getFieldValue('EndDate');
+                    const startDate = form.getFieldValue('startDate');
+                    const endDate = form.getFieldValue('endDate');
                     if (endDate && startDate && dayjs(endDate).isBefore(dayjs(startDate))) {
-                      form.setFieldsValue({ EndDate: null });
+                      form.setFieldsValue({ endDate: null });
                     }
                   }}
                 />
               </Form.Item>
               <Form.Item 
-                name="EndDate" 
+                name="endDate" 
                 label={<span>Ngày Kết Thúc Công Việc <Tooltip title="Ngày kết thúc"><InfoCircleOutlined /></Tooltip></span>}
               >
                 <DatePicker 

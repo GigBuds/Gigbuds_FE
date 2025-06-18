@@ -56,7 +56,7 @@ export class LoginApi {
       // Check if memberships claim exists
       if (decoded.memberships) {
         try {
-          return decoded.memberships;
+          return JSON.parse(decoded.memberships);
         } catch (e) {
           console.error('Error parsing memberships from token:', e);
           return [];

@@ -6,6 +6,7 @@ import { User } from '@/types/sidebar.types';
 import { LoginApi } from '@/service/loginService/loginService';
 import { jwtDecode } from 'jwt-decode';
 import Cookies from 'js-cookie';
+
 /**
  * Custom hook for authentication management
  * 
@@ -22,18 +23,22 @@ import Cookies from 'js-cookie';
  * @property {string|null} error - Error message if any
  */
 
-export interface userData {
+export interface UserData {
     role: string | string[];
-    gender: string | boolean;
+    gender?: string | boolean;
+    isMale?: boolean;
     memberships?: string;
     sub: string;
     name?: string;
+    given_name?: string;
     family_name?: string;
+    familyName?: string;
     phone_number?: string;
+    phone?: string;
     email?: string;
     birthdate?: string | Date;
+    birthDate?: string | Date;
     [key: string]: unknown; // Allow additional properties
-
 }
 
 export const useAuth = (): {
@@ -48,26 +53,25 @@ export const useAuth = (): {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     
-
     const login = async (identifier: string, password: string): Promise<LoginResponse | null> => {
         setIsLoading(true);
         setError(null);
         try {
             // Use the LoginApi service instead of direct fetch
             const data = await LoginApi.login(identifier, password);
-            if (data && data.id_token) { // Use id_token instead of user
-                
-                const jwtDecoded = jwtDecode(data.id_token) as userData;
+            if (data && data.id_token) {
+                const jwtDecoded = jwtDecode(data.id_token) as UserData;
                 const userData = mapJWTToUser(jwtDecoded);
                 
                 if (data.access_token) {
                     Cookies.set('access_token', data.access_token, {
                         expires: 30, // 30 days
-                        // secure: process.env.NODE_ENV === 'production',
+                        secure: process.env.NODE_ENV === 'production',
                         sameSite: 'strict',
                         path: '/'
                     });
                 }
+                
                 dispatch(setUserWithMemberships({ user: userData, memberships: userData.memberships }));
                 console.log('User data stored in Redux:', userData);
             }
@@ -84,7 +88,10 @@ export const useAuth = (): {
     };
 
     const logout = () => {
-        // Just clear Redux state, no API call needed
+        // Clear cookies
+        Cookies.remove('access_token', { path: '/' });
+        
+        // Clear Redux state
         dispatch(clearUserState());
         console.log('User logged out and Redux state cleared');
     };
@@ -101,7 +108,7 @@ export const useAuth = (): {
         } catch {
             return false;
         }
-    }
+    };
 
     return {
         login,
@@ -113,40 +120,61 @@ export const useAuth = (): {
     };
 }; 
 
-const mapJWTToUser = (userData: userData ): User => {
+const mapJWTToUser = (userData: UserData): User => {
     // Parse roles from string to array
     const roles = typeof userData.role === 'string' 
         ? userData.role.split(',').map((role: string) => role.trim())
         : userData.role || [];
 
-    // Parse birthdate
-    const birthDate = userData.birthDate ? new Date(userData.birthDate) : new Date();
+    // Parse birthdate - handle multiple possible field names
+    let birthDate = new Date();
+    if (userData.birthdate) {
+        birthDate = new Date(userData.birthdate);
+    } else if (userData.birthDate) {
+        birthDate = new Date(userData.birthDate);
+    }
 
-    // Parse gender (True/False string to boolean)
-    const isMale = userData.isMale === true;
+    // Parse gender - handle multiple possible field names and values
+    let isMale = false;
+    if (typeof userData.isMale === 'boolean') {
+        isMale = userData.isMale;
+    } else if (typeof userData.gender === 'boolean') {
+        isMale = userData.gender;
+    } else if (typeof userData.gender === 'string') {
+        isMale = userData.gender.toLowerCase() === 'male' || userData.gender.toLowerCase() === 'true';
+    }
 
-    // Parse memberships from JSON string
-    const memberships: Membership[] = [userData.memberships!];
-    // if (userData.memberships) {
-    console.log('Memberships:', userData.memberships);
-    //     try {
-    //         memberships = JSON.parse(userData.memberships);
-    //     } catch (error) {
-    //         console.error('Error parsing memberships:', error);
-    //         memberships = [];
-    //     }
-    // }
+    // Parse memberships from JSON string or use as array
+    let memberships: Membership[] = [];
+    if (userData.memberships) {
+        try {
+            if (typeof userData.memberships === 'string') {
+                memberships = JSON.parse(userData.memberships);
+            } else {
+                memberships = [userData.memberships as Membership];
+            }
+        } catch (error) {
+            console.error('Error parsing memberships:', error);
+            console.log('Memberships data:', userData.memberships);
+            memberships = [];
+        }
+    }
+
+    // Handle name fields - JWT might use different field names
+    const firstName = userData.name || userData.given_name || '';
+    const lastName = userData.family_name || userData.familyName || '';
+    const phone = userData.phone_number || userData.phone || '';
 
     return {
         id: parseInt(userData.sub) || 0, // 'sub' is the user ID in JWT
-        firstName: userData.name || '',
-        lastName: userData.familyName || '',
-        phone: userData.phone || '',
-        birthDate: birthDate,
-        isMale: isMale,
-        name: `${userData.name || ''} ${userData.familyName || ''}`.trim(),
+        firstName,
+        lastName,
+        phone,
+        birthDate,
+        isMale,
+        name: `${firstName} ${lastName}`.trim(),
         email: userData.email || '',
-        roles: userData.role || [],
-        memberships: memberships // Add this line
+        roles,
+        memberships
     };
 };

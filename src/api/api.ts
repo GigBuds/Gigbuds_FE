@@ -67,7 +67,10 @@ const fetchApi = {
     try {
       const response = await fetch(url, {
         method: 'POST',
-        headers: getAuthHeaders(),
+        headers: {
+          ...getAuthHeaders(),
+          'ngrok-skip-browser-warning': 'true',
+        },
         body: JSON.stringify(body),
       });
 
@@ -85,7 +88,10 @@ const fetchApi = {
     try {
       const response = await fetch(url, {
         method: 'GET',
-        headers: getAuthHeaders(),
+        headers: {
+          ...getAuthHeaders(),
+          'ngrok-skip-browser-warning': 'true',
+        },
       });
 
       if (!response.ok) {
@@ -106,7 +112,10 @@ const fetchApi = {
     try {
       const response = await fetch(url, {
         method: 'PUT',
-        headers: getAuthHeaders(),
+        headers: {
+          ...getAuthHeaders(),
+          'ngrok-skip-browser-warning': 'true',
+        },
         body: JSON.stringify(body),
       });
 
@@ -130,7 +139,10 @@ const fetchApi = {
     try {
       const response = await fetch(url, {
         method: 'DELETE',
-        headers: getAuthHeaders(),
+        headers: {
+          ...getAuthHeaders(),
+          'ngrok-skip-browser-warning': 'true',
+        },
       });
 
       logResponse('DELETE', response);

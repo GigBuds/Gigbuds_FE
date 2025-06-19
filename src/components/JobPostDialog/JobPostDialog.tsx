@@ -15,6 +15,7 @@ import { Input } from "../../../ui/input";
 import { Textarea } from "../../../ui/textarea";
 import { Label } from "../../../ui/label";
 import { Button } from "../../../ui/button";
+import { Button as BtnAntd} from "antd";
 import {
   Select,
   SelectContent,
@@ -33,21 +34,25 @@ import {
   Save,
   X,
   User,
+  StopCircle,
+  CheckCircle,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { GoogleMapResponse } from "@/types/folder/googleMapResponse";
 import GoogleMap from "../map/GoogleMap";
-
 
 const JobPostDialog: React.FC<JobPostDialogProps> = ({
   API_KEY,
   MAP_ID,
   job,
   children,
+  onJobStatusChanged,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [loadingToggleStatus, setLoadingToggleStatus] = useState(false);
+  const [loadingFinishJobPost, setLoadingFinishJobPost] = useState(false);
   const [jobPositions, setJobPositions] = useState<JobPositionOption[]>([]);
   const [currentJobPosition, setCurrentJobPosition] = useState<string>("");
   const [loadingPositions, setLoadingPositions] = useState(false);
@@ -227,6 +232,38 @@ const JobPostDialog: React.FC<JobPostDialogProps> = ({
     setIsEditing(false);
   };
 
+  const handleToggleJobPostStatus = async () => {
+    if (isEditing) {
+      const confirmed = window.confirm("Bạn có chắc chắn muốn đóng? Mọi thay đổi chưa lưu sẽ bị mất.");
+      if (!confirmed) {
+        return;
+      }
+    }
+    setLoadingToggleStatus(true);
+    await jobPostApi.updateJobPostStatus(job.id.toString(), job.status === "Open" ? "Closed" : "Open");
+    resetFormData();
+    setIsEditing(false);
+    setIsOpen(false);
+    setLoadingToggleStatus(false);
+    
+    if (onJobStatusChanged) {
+      onJobStatusChanged();
+    }
+  };
+
+  const handleFinishJobPost = async () => {
+    setLoadingFinishJobPost(true);
+    await jobPostApi.updateJobPostStatus(job.id.toString(), "Finished");
+    resetFormData();
+    setIsEditing(false);
+    setIsOpen(false);
+    setLoadingFinishJobPost(false);
+    
+    if (onJobStatusChanged) {
+      onJobStatusChanged();
+    }
+  };
+
   const renderEditableField = (
     label: string,
     field: string,
@@ -320,6 +357,39 @@ const JobPostDialog: React.FC<JobPostDialogProps> = ({
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex justify-between items-center">
+            <div className="flex flex-col justify-between items-start gap-2">
+              <BtnAntd 
+                color={job.status === "Open" ? "red" : "green"}
+                variant="solid"
+                disabled={job.status === 'Expired' || job.status === 'Finished'}
+                onClick={handleToggleJobPostStatus} 
+                loading={loadingToggleStatus}
+              >
+                {job.status === "Open" ? (
+                  <div className="flex items-center gap-2">
+                    <X className="w-4 h-4" />
+                    Đóng tin tuyển dụng
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4" />
+                    Mở tin tuyển dụng
+                  </div>
+                )}
+
+              </BtnAntd>
+
+              <BtnAntd
+                color="blue"
+                variant="solid"
+                disabled={job.status === 'Expired' || job.status === 'Finished'}
+                onClick={handleFinishJobPost}
+                loading={loadingFinishJobPost}
+              >
+                <StopCircle className="w-4 h-4" />
+                Kết thúc tin tuyển dụng
+              </BtnAntd>
+            </div>
             <div>
               <DialogTitle className="text-2xl font-bold text-gray-900">
                 {isEditing ? "Chỉnh sửa tin tuyển dụng" : job.jobTitle}
@@ -327,9 +397,9 @@ const JobPostDialog: React.FC<JobPostDialogProps> = ({
               <DialogDescription className="text-lg text-gray-600">
                 <div className="items-center flex gap-2">
                   <Badge
-                    variant={job.status === "active" ? "default" : "secondary"}
+                    variant={job.status === 'Open' ? 'default' : job.status === 'Closed' ? 'destructive' : job.status === 'Expired' ? 'destructive' : 'secondary'}
                   >
-                    {job.status === "active" ? "Đang tuyển" : "Đã đóng"}
+                    {job.status === 'Open' ? 'Đang tuyển' : job.status === 'Closed' ? 'Đã đóng' : job.status === 'Expired' ? 'Đã hết hạn' : 'Đã kết thúc' }
                   </Badge>
                   {(formData.isOutstandingPost || job.isOutstandingPost) && (
                     <Badge variant="destructive">Tin nổi bật</Badge>

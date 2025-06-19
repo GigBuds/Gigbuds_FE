@@ -7,6 +7,7 @@ const getAuthHeaders = (): HeadersInit => {
 
   return {
     'Content-Type': 'application/json',
+    'ngrok-skip-browser-warning': 'true',
     ...(accessToken && { 'Authorization': `Bearer ${accessToken}` }),
   };
 };

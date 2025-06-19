@@ -6,28 +6,16 @@ import AdBanner from "@/components/AdBanner/AdBanner";
 import GeneralCard from "@/components/GeneralCard/GeneralCard";
 import { useRouter } from "next/navigation";
 
-async function GetAccessToken() {
-  try {
-    const response = await fetch("/api/auth/token", {
-      method: "GET",
-      credentials: "include",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-    const data = await response.json();
-    return data.token;
-  } catch {
-    return null;
-  }
-}
 const Page = () => {
+  const accessToken = document.cookie
+    .split("; ")
+    .find((row) => row.startsWith("access_token="))
+    ?.split("=")[1];
+
   const router = useRouter();
   useEffect(() => {
-    GetAccessToken().then((accessToken) => {
       if (!accessToken) router.push("/login");
-    });
-  }, [router]);
+  }, [router , accessToken]);
 
   return (
     <div className="  px-2  items-center w-full h-full flex flex-col gap-4">

@@ -15,6 +15,7 @@ import { Input } from "../../../ui/input";
 import { Textarea } from "../../../ui/textarea";
 import { Label } from "../../../ui/label";
 import { Button } from "../../../ui/button";
+import { Button as BtnAntd} from "antd";
 import {
   Select,
   SelectContent,
@@ -33,6 +34,7 @@ import {
   Save,
   X,
   User,
+
   MapPin,
   Star,
   Briefcase,
@@ -40,6 +42,9 @@ import {
   Gift,
   CheckCircle,
   Loader2,
+  StopCircle,
+  CheckCircle,
+
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { GoogleMapResponse } from "@/types/folder/googleMapResponse";
@@ -50,10 +55,13 @@ const JobPostDialog: React.FC<JobPostDialogProps> = ({
   MAP_ID,
   job,
   children,
+  onJobStatusChanged,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [loadingToggleStatus, setLoadingToggleStatus] = useState(false);
+  const [loadingFinishJobPost, setLoadingFinishJobPost] = useState(false);
   const [jobPositions, setJobPositions] = useState<JobPositionOption[]>([]);
   const [currentJobPosition, setCurrentJobPosition] = useState<string>("");
   const [loadingPositions, setLoadingPositions] = useState(false);
@@ -242,6 +250,38 @@ const JobPostDialog: React.FC<JobPostDialogProps> = ({
     setIsEditing(false);
   };
 
+  const handleToggleJobPostStatus = async () => {
+    if (isEditing) {
+      const confirmed = window.confirm("Bạn có chắc chắn muốn đóng? Mọi thay đổi chưa lưu sẽ bị mất.");
+      if (!confirmed) {
+        return;
+      }
+    }
+    setLoadingToggleStatus(true);
+    await jobPostApi.updateJobPostStatus(job.id.toString(), job.status === "Open" ? "Closed" : "Open");
+    resetFormData();
+    setIsEditing(false);
+    setIsOpen(false);
+    setLoadingToggleStatus(false);
+    
+    if (onJobStatusChanged) {
+      onJobStatusChanged();
+    }
+  };
+
+  const handleFinishJobPost = async () => {
+    setLoadingFinishJobPost(true);
+    await jobPostApi.updateJobPostStatus(job.id.toString(), "Finished");
+    resetFormData();
+    setIsEditing(false);
+    setIsOpen(false);
+    setLoadingFinishJobPost(false);
+    
+    if (onJobStatusChanged) {
+      onJobStatusChanged();
+    }
+  };
+
   const renderEditableField = (
     label: string,
     field: string,
@@ -370,6 +410,7 @@ const JobPostDialog: React.FC<JobPostDialogProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>{children}</DialogTrigger>
+
       <DialogContent fullScreen={true} className="max-h-[95vh] pt-14 overflow-y-auto bg-white">
         <DialogHeader className="pb-6 border-b border-gray-200">
           <div className="flex justify-between items-start">

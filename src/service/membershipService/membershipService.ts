@@ -31,4 +31,14 @@ export class MembershipService {
       throw error;
     }
   }
+
+  static async revokeMembership(userId: number, membershipId: number): Promise<void> {
+    try {
+     const response = await fetchApi.delete(`member-ships/revoke/${userId}/${membershipId}`);
+      return response;
+    } catch (error) {
+      console.error('Revoke Membership API error:', error);
+      throw error;
+    }
+  }
 }

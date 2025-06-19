@@ -12,11 +12,21 @@ import {
   Shield, 
   Users,
   Calendar,
-  Award
+  Award,
+  AlertTriangle,
+  X
 } from 'lucide-react'
 import { Badge } from '../../../ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '../../../ui/card'
 import { Button } from '../../../ui/button'
+import { 
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '../../../ui/dialog'
 import { Membership, UserMembership } from '@/types/membership.types'
 import { useLoading } from '@/contexts/LoadingContext'
 import { MembershipService } from '@/service/membershipService/membershipService'
@@ -28,6 +38,12 @@ const Memberships = () => {
   const [memberships, setMemberships] = useState<Membership[]>([])
   const [userMemberships, setUserMemberships] = useState<UserMembership[]>([])
   const [processingPayment, setProcessingPayment] = useState<number | null>(null)
+  const [showRevokeDialog, setShowRevokeDialog] = useState(false)
+  const [membershipToRevoke, setMembershipToRevoke] = useState<{
+    current: UserMembership,
+    new: Membership
+  } | null>(null)
+  const [isRevoking, setIsRevoking] = useState(false)
   const { setIsLoading } = useLoading()
   const [error, setError] = useState<string | null>(null)
   const user = useSelector(selectUser)
@@ -67,6 +83,26 @@ const Memberships = () => {
     } catch (error) {
       console.error('Error checking membership:', error)
       setUserMemberships([])
+    }
+  }
+
+  const revokeMembership = async (membershipId: number) => {
+    if (!user?.id) {
+      toast.error('Vui lòng đăng nhập để hủy gói thành viên')
+      return
+    }
+
+    try {
+      setIsRevoking(true)
+      await MembershipService.revokeMembership(user.id, membershipId)
+      toast.success('Gói thành viên đã được hủy thành công!')
+      setTimeout(() => checkMembership(), 1000)
+    } catch (error) {
+      console.error('Error revoking membership:', error)
+      toast.error('Không thể hủy gói thành viên. Vui lòng thử lại.')
+      throw error
+    } finally {
+      setIsRevoking(false)
     }
   }
 
@@ -154,7 +190,41 @@ const Memberships = () => {
     )
   }
 
-  const handlePurchase = async (membership: Membership) => {
+  const getCurrentActiveMembership = () => {
+    return userMemberships.find(
+      userMembership => userMembership.status.toLowerCase() === 'active'
+    )
+  }
+
+  const handleRevokeConfirm = async () => {
+    if (!membershipToRevoke) return
+
+    try {
+      await revokeMembership(membershipToRevoke.current.membershipId)
+      
+      // Close dialog
+      setShowRevokeDialog(false)
+      setMembershipToRevoke(null)
+      
+      // After successful revoke, proceed with new membership purchase
+      setTimeout(() => {
+        handlePurchase(membershipToRevoke.new, true)
+      }, 1500)
+      
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (error) {
+      // Error is already handled in revokeMembership function
+      setShowRevokeDialog(false)
+      setMembershipToRevoke(null)
+    }
+  }
+
+  const handleRevokeCancel = () => {
+    setShowRevokeDialog(false)
+    setMembershipToRevoke(null)
+  }
+
+  const handlePurchase = async (membership: Membership, skipRevokeCheck: boolean = false) => {
     if (!user?.id) {
       toast.error('Vui lòng đăng nhập để đăng ký gói thành viên')
       return
@@ -172,6 +242,21 @@ const Memberships = () => {
         style: { background: '#10b981', color: 'white' }
       })
       return
+    }
+
+    // Check if user has any active membership and wants to change
+    const currentActiveMembership = getCurrentActiveMembership()
+    if (currentActiveMembership && !skipRevokeCheck) {
+      const currentMembership = memberships.find(m => m.id === currentActiveMembership.membershipId)
+      
+      if (currentMembership) {
+        setMembershipToRevoke({
+          current: currentActiveMembership,
+          new: membership
+        })
+        setShowRevokeDialog(true)
+        return
+      }
     }
 
     if (membership.price === 0) {
@@ -243,16 +328,81 @@ const Memberships = () => {
 
   return (
     <div className="h-full ">
+      {/* Revoke Confirmation Dialog */}
+      <Dialog open={showRevokeDialog} onOpenChange={setShowRevokeDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-2 rounded-full bg-orange-100">
+                <AlertTriangle className="w-5 h-5 text-orange-600" />
+              </div>
+              <DialogTitle className="text-lg font-semibold">
+                Xác nhận thay đổi gói thành viên
+              </DialogTitle>
+            </div>
+            <DialogDescription className="text-gray-600">
+              {membershipToRevoke && (
+                <div className="space-y-3">
+                  <p>
+                    Bạn hiện đang sử dụng gói <span className="font-semibold text-gray-900">
+                      {memberships.find(m => m.id === membershipToRevoke.current.membershipId)?.title}
+                    </span> sẽ hết hạn vào <span className="font-semibold text-gray-900">
+                      {formatDate(membershipToRevoke.current.endDate)}
+                    </span>.
+                  </p>
+                  <p>
+                    Để chuyển sang gói <span className="font-semibold text-blue-600">
+                      {membershipToRevoke.new.title}
+                    </span>, chúng tôi cần hủy gói hiện tại trước.
+                  </p>
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mt-3">
+                    <p className="text-sm text-yellow-800">
+                      <strong>Lưu ý:</strong> Việc hủy gói sẽ có hiệu lực ngay lập tức và không thể hoàn tác.
+                    </p>
+                  </div>
+                </div>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex gap-2 ">
+            <Button
+              variant="outline"
+              onClick={handleRevokeCancel}
+              disabled={isRevoking}
+              className="flex items-center gap-2"
+            >
+              <X className="w-4 h-4" />
+              Hủy bỏ
+            </Button>
+            <Button
+              onClick={handleRevokeConfirm}
+              disabled={isRevoking}
+              className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white flex items-center gap-2"
+            >
+              {isRevoking ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  Đang xử lý...
+                </>
+              ) : (
+                <>
+                  <CheckCircle className="w-4 h-4" />
+                  Xác nhận thay đổi
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <div className="container py-5 px-3">
-        {/* Hero Section */}
+        {/* Hero Section - Same as before */}
         <motion.div 
           className="text-center mb-10"
           initial={{ opacity: 0, y: -30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
         >
-
-          
           <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-indigo-900 bg-clip-text text-transparent mb-2">
             Gói Thành Viên
           </h1>
@@ -278,7 +428,7 @@ const Memberships = () => {
           </div>
         </motion.div>
 
-        {/* Membership Cards */}
+        {/* Membership Cards - Same as before but with updated handlePurchase call */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl ">
           {employerMemberships.map((membership, index) => {
             const activeMembership = getActiveMembership(membership.id!)
@@ -431,7 +581,7 @@ const Memberships = () => {
           })}
         </div>
 
-        {/* Trust Section */}
+        {/* Trust Section - Same as before */}
         <motion.div 
           className="text-center mt-12  bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-8 max-w-3xl mx-auto"
           initial={{ opacity: 0, y: 30 }}

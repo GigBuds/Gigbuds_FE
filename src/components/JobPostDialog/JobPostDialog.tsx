@@ -34,8 +34,17 @@ import {
   Save,
   X,
   User,
+
+  MapPin,
+  Star,
+  Briefcase,
+  GraduationCap,
+  Gift,
+  CheckCircle,
+  Loader2,
   StopCircle,
   CheckCircle,
+
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { GoogleMapResponse } from "@/types/folder/googleMapResponse";
@@ -161,6 +170,17 @@ const JobPostDialog: React.FC<JobPostDialogProps> = ({
 
   const formatSalary = (salary?: number, unit?: string) => {
     if (!salary) return "Thỏa thuận";
+    
+    if (unit === "Hour") {
+      return `${salary.toLocaleString()}/ giờ`;
+    }
+    if (unit === "Shift") {
+      return `${salary.toLocaleString()}/ ca`;
+    }
+    if (unit === "Day") {
+      return `${salary.toLocaleString()}/ ngày`;
+    }
+    
     return `${salary.toLocaleString()} ${unit || "VND"}`;
   };
 
@@ -212,14 +232,12 @@ const JobPostDialog: React.FC<JobPostDialogProps> = ({
       );
 
       if (updatedJob.success) {
-     
-      toast.success("Cập nhật tin tuyển dụng thành công!");
-      setIsEditing(false);
-      window.location.reload();
+        toast.success("Cập nhật tin tuyển dụng thành công!");
+        setIsEditing(false);
+        window.location.reload();
       }
 
     } catch (error) {
-       
       console.error("Error updating job post:", error);
       toast.error("Có lỗi xảy ra khi cập nhật tin tuyển dụng!");
     } finally {
@@ -276,54 +294,69 @@ const JobPostDialog: React.FC<JobPostDialogProps> = ({
       if (type === "select" && options) {
         const selectedOption = options.find((opt) => opt.value === value);
         return (
-          <p className="text-gray-600">
+          <p className="text-gray-700 leading-relaxed">
             {selectedOption?.label || (typeof value === 'string' || typeof value === 'number' ? value : "Chưa có thông tin")}
           </p>
         );
       }
       if (type === "date") {
         return (
-          <p className="text-gray-600">
+          <p className="text-gray-700 leading-relaxed">
             {value ? formatDate(value as string) : "Chưa đặt"}
           </p>
         );
       }
       if (field === "jobPositionId") {
         return (
-          <p className="text-gray-600">
+          <p className="text-gray-700 leading-relaxed">
             {currentJobPosition || "Chưa có thông tin"}
           </p>
         );
       }
       return (
-        <p className="text-gray-600 whitespace-pre-wrap">
+        <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">
           {(typeof value === 'string' || typeof value === 'number') ? value : "Chưa có thông tin"}
         </p>
       );
     }
 
-    const commonProps = {
-      value: value as string,
-      onChange: (
-        e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-      ) => handleInputChange(field, e.target.value),
-      className: "w-full",
-    };
-
     switch (type) {
       case "textarea":
-        return <Textarea {...commonProps} rows={4} />;
+        return (
+          <Textarea
+            value={value as string}
+            onChange={(e) => handleInputChange(field, e.target.value)}
+            className="w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500 transition-colors resize-none"
+            rows={4}
+          />
+        );
       case "number":
-        return <Input {...commonProps} type="number" min="0" />;
+        return (
+          <Input
+            type="number"
+            min="0"
+            step="10000"
+            value={value as number}
+            onChange={(e) => handleInputChange(field, e.target.value === '' ? 0 : Number(e.target.value))}
+            className="w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500 transition-colors"
+          />
+        );
       case "date":
-        return <Input {...commonProps} type="date" />;
+        return (
+          <Input
+            type="date"
+            value={value as string}
+            onChange={(e) => handleInputChange(field, e.target.value)}
+            className="w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500 transition-colors"
+          />
+        );
       case "select":
         return (
           <Select
             value={value as string}
             onValueChange={(val: string) => handleInputChange(field, val)}
           >
-            <SelectTrigger>
+            <SelectTrigger className="border-gray-300 focus:border-blue-500">
               <SelectValue placeholder="Chọn..." />
             </SelectTrigger>
             <SelectContent>
@@ -336,7 +369,13 @@ const JobPostDialog: React.FC<JobPostDialogProps> = ({
           </Select>
         );
       default:
-        return <Input {...commonProps} />;
+        return (
+          <Input
+            value={value as string}
+            onChange={(e) => handleInputChange(field, e.target.value)}
+            className="w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500 transition-colors"
+          />
+        );
     }
   };
 
@@ -351,59 +390,59 @@ const JobPostDialog: React.FC<JobPostDialogProps> = ({
     { value: "Day", label: "Ngày" },
   ];
 
+  const InfoCard = ({ icon: Icon, title, children, highlight = false }: {
+    icon: any;
+    title: string;
+    children: React.ReactNode;
+    highlight?: boolean;
+  }) => (
+    <div className={`p-4 rounded-lg border ${highlight ? 'bg-blue-50 border-blue-200' : 'bg-gray-50 border-gray-200'} transition-colors`}>
+      <div className="flex items-center gap-3 mb-3">
+        <div className={`p-2 rounded-full ${highlight ? 'bg-blue-100' : 'bg-white'}`}>
+          <Icon className={`w-5 h-5 ${highlight ? 'text-blue-600' : 'text-gray-600'}`} />
+        </div>
+        <h4 className="font-semibold text-gray-900">{title}</h4>
+      </div>
+      <div className="ml-10">{children}</div>
+    </div>
+  );
+
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="max-w-10xl max-h-[90vh] ">
-        <DialogHeader>
-          <div className="flex justify-between items-center">
-            <div className="flex flex-col justify-between items-start gap-2">
-              <BtnAntd 
-                color={job.status === "Open" ? "red" : "green"}
-                variant="solid"
-                disabled={job.status === 'Expired' || job.status === 'Finished'}
-                onClick={handleToggleJobPostStatus} 
-                loading={loadingToggleStatus}
-              >
-                {job.status === "Open" ? (
-                  <div className="flex items-center gap-2">
-                    <X className="w-4 h-4" />
-                    Đóng tin tuyển dụng
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4" />
-                    Mở tin tuyển dụng
-                  </div>
-                )}
 
-              </BtnAntd>
-
-              <BtnAntd
-                color="blue"
-                variant="solid"
-                disabled={job.status === 'Expired' || job.status === 'Finished'}
-                onClick={handleFinishJobPost}
-                loading={loadingFinishJobPost}
-              >
-                <StopCircle className="w-4 h-4" />
-                Kết thúc tin tuyển dụng
-              </BtnAntd>
-            </div>
-            <div>
-              <DialogTitle className="text-2xl font-bold text-gray-900">
+      <DialogContent fullScreen={true} className="max-h-[95vh] pt-14 overflow-y-auto bg-white">
+        <DialogHeader className="pb-6 border-b border-gray-200">
+          <div className="flex justify-between items-start">
+            <div className="flex-1 pr-4">
+              <DialogTitle className="text-3xl font-bold text-gray-900 mb-3 leading-tight">
                 {isEditing ? "Chỉnh sửa tin tuyển dụng" : job.jobTitle}
               </DialogTitle>
-              <DialogDescription className="text-lg text-gray-600">
-                <div className="items-center flex gap-2">
+              <DialogDescription className="text-lg">
+                <div className="flex items-center gap-3 mb-2">
                   <Badge
-                    variant={job.status === 'Open' ? 'default' : job.status === 'Closed' ? 'destructive' : job.status === 'Expired' ? 'destructive' : 'secondary'}
+                    variant={job.status === "active" ? "default" : "secondary"}
+                    className="px-3 py-1 text-sm font-medium"
                   >
-                    {job.status === 'Open' ? 'Đang tuyển' : job.status === 'Closed' ? 'Đã đóng' : job.status === 'Expired' ? 'Đã hết hạn' : 'Đã kết thúc' }
+                    {job.status === "active" ? (
+                      <>
+                        <CheckCircle className="w-4 h-4 mr-1" />
+                        Đang tuyển
+                      </>
+                    ) : (
+                      "Đã đóng"
+                    )}
                   </Badge>
                   {(formData.isOutstandingPost || job.isOutstandingPost) && (
-                    <Badge variant="destructive">Tin nổi bật</Badge>
+                    <Badge variant="destructive" className="px-3 py-1 text-sm font-medium">
+                      <Star className="w-4 h-4 mr-1" />
+                      Tin nổi bật
+                    </Badge>
                   )}
+                </div>
+                <div className="flex items-center text-gray-600 text-base">
+                  <MapPin className="w-4 h-4 mr-2" />
+                  {job.jobLocation || "Chưa xác định địa điểm"}
                 </div>
               </DialogDescription>
             </div>
@@ -411,9 +450,9 @@ const JobPostDialog: React.FC<JobPostDialogProps> = ({
               {!isEditing ? (
                 <Button
                   variant="outline"
-                  size="sm"
+                  size="lg"
                   onClick={() => setIsEditing(true)}
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-2 border-blue-500 text-blue-600 hover:bg-blue-50"
                   disabled={loadingPositions}
                 >
                   <Edit2 className="w-4 h-4" />
@@ -423,7 +462,7 @@ const JobPostDialog: React.FC<JobPostDialogProps> = ({
                 <div className="flex gap-2">
                   <Button
                     variant="outline"
-                    size="sm"
+                    size="lg"
                     onClick={handleCancel}
                     className="flex items-center gap-2"
                   >
@@ -431,13 +470,22 @@ const JobPostDialog: React.FC<JobPostDialogProps> = ({
                     Hủy
                   </Button>
                   <Button
-                    size="sm"
+                    size="lg"
                     onClick={handleSave}
                     disabled={loading}
-                    className="flex items-center gap-2"
+                    className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
                   >
-                    <Save className="w-4 h-4" />
-                    {loading ? "Đang lưu..." : "Lưu"}
+                    {loading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Đang lưu...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="w-4 h-4" />
+                        Lưu thay đổi
+                      </>
+                    )}
                   </Button>
                 </div>
               )}
@@ -446,25 +494,32 @@ const JobPostDialog: React.FC<JobPostDialogProps> = ({
         </DialogHeader>
 
         {loadingPositions && !dataLoaded ? (
-          <div className="flex items-center justify-center py-8">
-            <div className="text-gray-500">Đang tải dữ liệu...</div>
+          <div className="flex items-center justify-center py-16">
+            <div className="text-center">
+              <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-600" />
+              <div className="text-gray-500">Đang tải dữ liệu...</div>
+            </div>
           </div>
         ) : (
-          <div className="space-y-6">
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="flex-1">
-                <Label htmlFor="jobTitle" className="text-sm font-medium">
+          <div className="space-y-8 pt-6">
+            {/* Basic Information */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <Label htmlFor="jobTitle" className="text-sm font-semibold text-gray-700">
                   Tiêu đề công việc *
                 </Label>
                 {renderEditableField("Tiêu đề công việc", "jobTitle")}
               </div>
-              <div className="flex-1">
-                <Label htmlFor="jobPositionId" className="text-sm font-medium">
+              <div className="space-y-2">
+                <Label htmlFor="jobPositionId" className="text-sm font-semibold text-gray-700">
                   Vị trí công việc *
                 </Label>
                 {isEditing ? (
                   loadingPositions ? (
-                    <p className="text-gray-500">Đang tải...</p>
+                    <p className="text-gray-500 flex items-center gap-2">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Đang tải...
+                    </p>
                   ) : (
                     renderEditableField(
                       "Vị trí công việc",
@@ -474,205 +529,177 @@ const JobPostDialog: React.FC<JobPostDialogProps> = ({
                     )
                   )
                 ) : (
-                  <p className="text-gray-600">
+                  <p className="text-gray-700 font-medium">
                     {currentJobPosition || "Đang tải..."}
                   </p>
                 )}
               </div>
             </div>
 
-            <div className="items-center gap-3">
-              <Label htmlFor="jobPositionId" className="text-sm font-medium">
-                Địa điểm làm việc *
-              </Label>
-              <span className="text-gray-600 text-sm mb-4">
+            {/* Location Section */}
+            <div className="bg-gradient-to-r  p-6 rounded-xl border border-blue-100">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-2  rounded-full">
+                  <MapPin className="w-5 h-5 text-blue-600" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900">Địa điểm làm việc</h3>
+              </div>
+              <p className="text-gray-700 mb-4 font-medium">
                 {job.jobLocation || "Chưa xác định"}
-              </span>
-
-              <GoogleMap
-                onChange={handleMapChange}
-                API_KEY={API_KEY}
-                MAP_ID={MAP_ID}
-                initialLocation={job.jobLocation || ""}
-                hideAutocomplete={!isEditing}
-              />
+              </p>
+              <div className="rounded-lg   ">
+                <GoogleMap
+                  onChange={handleMapChange}
+                  API_KEY={API_KEY}
+                  MAP_ID={MAP_ID}
+                  initialLocation={job.jobLocation || ""}
+                  hideAutocomplete={!isEditing}
+                />
+              </div>
             </div>
 
-            <Separator />
+            {/* Key Information Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+              <InfoCard icon={Users} title="Cần tuyển">
+                {isEditing ? (
+                  renderEditableField("Số lượng", "vacancyCount", "number")
+                ) : (
+                  <p className="text-2xl font-bold text-gray-900">{job.vacancyCount} người</p>
+                )}
+              </InfoCard>
 
-            <div className="flex flex-col space-y-6">
-              <div className="flex flex-col sm:flex-row justify-between gap-4 items-start">
-                <div className="flex flex-col items-center gap-2 text-sm text-gray-600 flex-1">
-                  <div className="flex items-center gap-2 text-sm font-medium">
-                    <Users className="w-4 h-4 flex-shrink-0" />
-                    <span className="whitespace-nowrap">Cần tuyển</span>
-                  </div>
-                  {isEditing ? (
-                    <div className="w-20">
-                      {renderEditableField("Số lượng", "vacancyCount", "number")}
-                    </div>
-                  ) : (
-                    <span className="text-center">{job.vacancyCount} người</span>
-                  )}
-                </div>
+              <InfoCard icon={User} title="Độ tuổi">
+                {isEditing ? (
+                  renderEditableField("Độ tuổi", "ageRequirement", "number")
+                ) : (
+                  <p className="text-2xl font-bold text-gray-900">
+                    {job.ageRequirement ? `${job.ageRequirement} tuổi` : "Không yêu cầu"}
+                  </p>
+                )}
+              </InfoCard>
 
-                <div className="flex flex-col items-center gap-2 text-sm text-gray-600 flex-1">
-                  <div className="flex items-center gap-2 text-sm font-medium">
-                    <User className="w-4 h-4 flex-shrink-0" />
-                    <h4 className="whitespace-nowrap">Độ tuổi</h4>
+              <InfoCard icon={DollarSign} title="Mức lương" highlight>
+                {isEditing ? (
+                  <div className="space-y-2">
+                    {renderEditableField("Lương", "salary", "number")}
+                    {renderEditableField("Đơn vị", "salaryUnit", "select", salaryUnitOptions)}
                   </div>
-                  <div className="w-full max-w-[80px]">
-                    {isEditing ? (
-                      renderEditableField("Độ tuổi", "ageRequirement", "number")
-                    ) : (
-                      <p className="text-gray-600 text-center">
-                        {job.ageRequirement
-                          ? `${job.ageRequirement} tuổi`
-                          : "Không yêu cầu"}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                <div className="flex flex-col items-center gap-2 text-sm text-gray-600 flex-1">
-                  <div className="flex items-center gap-2 text-sm font-medium">
-                    <DollarSign className="w-5 h-5" />
-                    <h4 className="font-semibold text-gray-900 whitespace-nowrap">Mức lương</h4>
-                  </div>
-                  {isEditing ? (
-                    <div className="flex flex-col sm:flex-row gap-2 items-center w-full max-w-[200px]">
-                      <div className="flex-1 min-w-[100px]">
-                        {renderEditableField("Lương", "salary", "number")}
-                      </div>
-                      <div className="flex-shrink-0 min-w-[80px]">
-                        {renderEditableField(
-                          "Đơn vị",
-                          "salaryUnit",
-                          "select",
-                          salaryUnitOptions
-                        )}
-                      </div>
-                    </div>
-                  ) : (
-                    <p className="text-gray-600 text-center">
-                      {formatSalary(job.salary, job.salaryUnit)}
+                ) : (
+                    <p className="text-2xl font-bold text-blue-600">
+                    {formatSalary(job.salary, job.salaryUnit)}
                     </p>
-                  )}
-                </div>
-              </div>
+                )}
+              </InfoCard>
 
-              <div className="flex flex-col sm:flex-row gap-6">
-                <div className="flex items-start gap-3 flex-1">
-                  <CalendarDays className="w-5 h-5 text-gray-500 mt-1 flex-shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-semibold text-gray-900">
-                      Hạn nộp hồ sơ
-                    </h4>
-                    {renderEditableField("Hạn nộp", "expireTime", "date")}
-                  </div>
-                </div>
+              <InfoCard icon={CalendarDays} title="Hạn nộp hồ sơ">
+                {isEditing ? (
+                  renderEditableField("Hạn nộp", "expireTime", "date")
+                ) : (
+                  <p className="text-lg font-semibold text-gray-900">
+                    {job.expireTime ? formatDate(job.expireTime) : "Chưa đặt"}
+                  </p>
+                )}
+              </InfoCard>
+            </div>
 
-                <div className="flex items-start gap-3 flex-1">
-                  <Users className="w-5 h-5 text-gray-500 mt-1 flex-shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-semibold text-gray-900">
-                      Số lượng ứng viên
-                    </h4>
-                    <p className="text-gray-600">
-                      {job.applicationsCount || 0} người đã ứng tuyển
-                    </p>
-                  </div>
+            {/* Applications Count */}
+            <div className="bg-green-50 border border-green-200 p-4 rounded-lg">
+              <div className="flex items-center gap-3">
+                <Users className="w-5 h-5 text-green-600" />
+                <div>
+                  <h4 className="font-semibold text-gray-900">Ứng viên quan tâm</h4>
+                  <p className="text-green-700 font-medium">
+                    {job.applicationsCount || 0} người đã ứng tuyển
+                  </p>
                 </div>
               </div>
             </div>
 
-            <Separator />
+            <Separator className="my-8" />
 
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                Mô tả công việc *
-              </h3>
-              {renderEditableField(
-                "Mô tả công việc",
-                "jobDescription",
-                "textarea"
-              )}
+            {/* Content Sections */}
+            <div className="space-y-8">
+              <div className="bg-white border border-gray-200 rounded-lg p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <Briefcase className="w-5 h-5 text-gray-600" />
+                  <h3 className="text-xl font-semibold text-gray-900">Mô tả công việc</h3>
+                </div>
+                {renderEditableField("Mô tả công việc", "jobDescription", "textarea")}
+              </div>
+
+              <div className="bg-white border border-gray-200 rounded-lg p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <CheckCircle className="w-5 h-5 text-gray-600" />
+                  <h3 className="text-xl font-semibold text-gray-900">Yêu cầu công việc</h3>
+                </div>
+                {renderEditableField("Yêu cầu công việc", "jobRequirement", "textarea")}
+              </div>
+
+              <div className="bg-white border border-gray-200 rounded-lg p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <GraduationCap className="w-5 h-5 text-gray-600" />
+                  <h3 className="text-xl font-semibold text-gray-900">Yêu cầu kinh nghiệm</h3>
+                </div>
+                {renderEditableField("Yêu cầu kinh nghiệm", "experienceRequirement", "textarea")}
+              </div>
+
+              <div className="bg-white border border-gray-200 rounded-lg p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <Gift className="w-5 h-5 text-gray-600" />
+                  <h3 className="text-xl font-semibold text-gray-900">Quyền lợi</h3>
+                </div>
+                {renderEditableField("Quyền lợi", "benefit", "textarea")}
+              </div>
             </div>
 
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                Yêu cầu công việc *
-              </h3>
-              {renderEditableField(
-                "Yêu cầu công việc",
-                "jobRequirement",
-                "textarea"
-              )}
-            </div>
-
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                Yêu cầu kinh nghiệm
-              </h3>
-              {renderEditableField(
-                "Yêu cầu kinh nghiệm",
-                "experienceRequirement",
-                "textarea"
-              )}
-            </div>
-
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                Quyền lợi
-              </h3>
-              {renderEditableField("Quyền lợi", "benefit", "textarea")}
-            </div>
-
-            <>
-              <Separator />
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                  Lịch làm việc
-                </h3>
-                <div className="space-y-3">
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <span className="font-medium">Số ca làm việc:</span>{" "}
-                      {job.jobSchedule?.shiftCount}
-                    </div>
-                    <div>
-                      <span className="font-medium">Ca tối thiểu:</span>{" "}
-                      {job.jobSchedule?.minimumShift}
-                    </div>
+            {/* Job Schedule */}
+            {job.jobSchedule && (
+              <div className="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-lg p-6">
+                <div className="flex items-center gap-3 mb-6">
+                  <Clock className="w-5 h-5 text-purple-600" />
+                  <h3 className="text-xl font-semibold text-gray-900">Lịch làm việc</h3>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                  <div className="bg-white p-4 rounded-lg border border-purple-100">
+                    <p className="text-sm text-gray-600 mb-1">Số ca làm việc</p>
+                    <p className="text-2xl font-bold text-purple-600">{job.jobSchedule.shiftCount}</p>
                   </div>
+                  <div className="bg-white p-4 rounded-lg border border-purple-100">
+                    <p className="text-sm text-gray-600 mb-1">Ca tối thiểu</p>
+                    <p className="text-2xl font-bold text-purple-600">{job.jobSchedule.minimumShift}</p>
+                  </div>
+                </div>
 
-                  {job.jobSchedule?.jobShifts &&
-                    job.jobSchedule?.jobShifts.length > 0 && (
-                      <div>
-                        <h4 className="font-medium mb-2">
-                          Chi tiết ca làm việc:
-                        </h4>
-                        <div className="space-y-2">
-                          {job.jobSchedule.jobShifts.map((shift, index) => (
-                            <div
-                              key={index}
-                              className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg"
-                            >
-                              <Clock className="w-4 h-4 text-gray-500" />
-                              <span className="font-medium">
-                                {shift.dayOfWeek === 0 ? "Chủ nhật" : `Thứ ${shift.dayOfWeek}`}
-                              </span>
-                              <span className="text-gray-600">
-                                {shift.startTime} - {shift.endTime}
-                              </span>
-                            </div>
-                          ))}
+                {job.jobSchedule.jobShifts && job.jobSchedule.jobShifts.length > 0 && (
+                  <div>
+                    <h4 className="font-semibold text-gray-900 mb-4">
+                      Chi tiết ca làm việc:
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {job.jobSchedule.jobShifts.map((shift, index) => (
+                        <div
+                          key={index}
+                          className="flex items-center gap-4 p-4 bg-white rounded-lg border border-purple-100 shadow-sm"
+                        >
+                          <div className="p-2 bg-purple-100 rounded-full">
+                            <Clock className="w-4 h-4 text-purple-600" />
+                          </div>
+                          <div>
+                            <p className="font-semibold text-gray-900">
+                              {shift.dayOfWeek === 0 ? "Chủ nhật" : `Thứ ${shift.dayOfWeek}`}
+                            </p>
+                            <p className="text-gray-600">
+                              {shift.startTime} - {shift.endTime}
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                    )}
-                </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
-            </>
+            )}
           </div>
         )}
       </DialogContent>

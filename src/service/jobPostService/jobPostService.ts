@@ -12,11 +12,15 @@ class JobPostApi {
   
   async getJobPosts(params: GetJobPostsParams = {}): Promise<JobPostsResponse> {
     try {
-      const { pageSize = 10, pageIndex = 1, employerId } = params;      
+      const { pageSize = 10, pageIndex = 1, employerId, status, search, sortBy, sortOrder  } = params;      
       const queryParams = new URLSearchParams({
         pageSize: pageSize.toString(),
         pageIndex: pageIndex.toString(),
         employerId: employerId ?? '',
+        status: status ?? '',
+        search: search ?? '',
+        sortBy: sortBy ?? 'createdAt',
+        sortOrder: sortOrder ?? 'desc',
       });
 
       const response = await fetchApi.get(`job-posts?${queryParams.toString()}`);
@@ -68,6 +72,20 @@ class JobPostApi {
       return result;
     } catch (error) {
       console.error('Update job post API error:', error);
+      throw error;
+    }
+  }
+
+  async updateJobPostStatus(id: string, status: string): Promise<{ success: boolean }> {
+    try {
+      const response = await fetchApi.put(`job-posts/${id}/status`, {
+        status: status,
+      });
+      console.log('Toggle job post status API response:', response);
+      
+      return { success: true };
+    } catch (error) {
+      console.error('Toggle job post status API error:', error);
       throw error;
     }
   }

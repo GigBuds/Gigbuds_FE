@@ -317,7 +317,7 @@ const JobPostDialog: React.FC<JobPostDialogProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-10xl max-h-[90vh] ">
         <DialogHeader>
           <div className="flex justify-between items-center">
             <div>

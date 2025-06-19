@@ -126,13 +126,6 @@ const Sidebar = () => {
     router.push('/employer/job-posts/create')
   }
 
-  // Redirect to login if user is not authenticated
-  useEffect(() => {
-    if (!user?.id) {
-      console.log('User not found, redirecting to login')
-      router.push('/login')
-    }
-  }, [user, router])
 
   // Update selected item based on current path
   useEffect(() => {

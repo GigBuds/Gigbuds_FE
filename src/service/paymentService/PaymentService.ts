@@ -13,6 +13,27 @@ export interface ProcessMobilePaymentResponse {
   status: string;
 }
 
+export interface PaymentReturnRequest {
+  orderCode: string;
+  status: string;
+}
+
+export interface PaymentReturnResponse {
+  success: boolean;
+  message: string;
+  orderCode?: string;
+  amount?: number;
+}
+
+export interface RenewTokenRequest {
+  userId: string | number;
+}
+
+export interface RenewTokenResponse {
+  token: string;
+  memberships?: any[];
+}
+
 export interface ApiResponse<T> {
   success: boolean;
   data?: T;
@@ -38,6 +59,97 @@ class PaymentService {
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error occurred',
+      };
+    }
+  }
+
+  /**
+   * Process payment return from payment gateway
+   * Called when user returns from payment gateway
+   */
+  async processPaymentReturn(request: PaymentReturnRequest): Promise<ApiResponse<PaymentReturnResponse>> {
+    try {
+      const { orderCode, status } = request;
+      
+      console.log('Making payment return API call with orderCode:', orderCode, 'status:', status);
+      
+      const response = await fetchApi.get(`payments/return?orderCode=${orderCode}&status=${status}`);
+      console.log('Payment return API response:', response);
+      
+      return {
+        success: true,
+        data: {
+          success: response.success,
+          message: response.message,
+          orderCode: orderCode,
+        },
+        message: 'Payment return processed successfully',
+      };
+    } catch (error) {
+      console.error('Payment return error:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to process payment return',
+      };
+    }
+  }
+
+  /**
+   * Renew ID token after successful payment
+   * Updates user token with new membership information
+   */
+  async renewIdToken(request: RenewTokenRequest): Promise<ApiResponse<RenewTokenResponse>> {
+    try {
+      console.log('🔄 Renewing ID token after successful payment...');
+      
+      const response = await fetchApi.post('Identities/renew-id-token', { userId: request.userId });
+      console.log('🔄 Token renewal response:', response);
+      
+      if (response && typeof response === 'string') {
+        // Decode the new ID token to extract memberships
+        try {
+          const base64Url = response.split('.')[1];
+          const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+          const jsonPayload = decodeURIComponent(
+            atob(base64)
+              .split('')
+              .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+              .join('')
+          );
+          const decoded = JSON.parse(jsonPayload);
+          console.log('🔍 Decoded renewed token:', decoded);
+          
+          const memberships = decoded.memberships ? JSON.parse(decoded.memberships) : undefined;
+          
+          return {
+            success: true,
+            data: {
+              token: response,
+              memberships: memberships,
+            },
+            message: 'ID token renewed successfully',
+          };
+        } catch (decodeError) {
+          console.error('Error decoding renewed token:', decodeError);
+          return {
+            success: true,
+            data: {
+              token: response,
+            },
+            message: 'ID token renewed successfully but could not decode memberships',
+          };
+        }
+      }
+      
+      return {
+        success: false,
+        error: 'Invalid token response format',
+      };
+    } catch (error) {
+      console.error('❌ Error renewing ID token after payment:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to renew ID token',
       };
     }
   }

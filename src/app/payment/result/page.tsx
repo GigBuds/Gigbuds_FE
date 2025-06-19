@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { CheckCircle, XCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { useAppSelector, useAppDispatch } from '@/lib/redux/hooks';
 import { selectUserId, setMemberships } from '@/lib/redux/features/userSlice';
-import fetchApi from '@/api/api';
+import paymentService, { PaymentReturnRequest, RenewTokenRequest } from '@/service/paymentService/PaymentService';
 
 interface PaymentResult {
   success: boolean;
@@ -64,42 +64,20 @@ export default function PaymentResultPage() {
 
   // Function to renew ID token after successful payment
   const renewIdTokenAfterPayment = useCallback(async () => {
+    if (!userId) {
+      console.warn('⚠️ Could not get user ID from Redux, skipping token renewal');
+      return;
+    }
+
     try {
       setRenewingToken(true);
-      console.log('🔄 Renewing ID token after successful payment...');
       
-      if (!userId) {
-        console.warn('⚠️ Could not get user ID from Redux, skipping token renewal');
-        return;
-      }
-
-      // Call renew token API using fetchApi (cookies handled automatically)
-      const response = await fetchApi.post('Identities/renew-id-token', { userId });
-      console.log('🔄 Renewing ID token after successful payment...', response);
+      const request: RenewTokenRequest = { userId };
+      const response = await paymentService.renewIdToken(request);
       
-      // Extract memberships from the new ID token and update Redux
-      if (response && typeof response === 'string') {
-        try {
-          // Decode the new ID token to extract memberships
-          const base64Url = response.split('.')[1];
-          const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-          const jsonPayload = decodeURIComponent(
-            atob(base64)
-              .split('')
-              .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-              .join('')
-          );
-          const decoded = JSON.parse(jsonPayload);
-          console.log('🔍 Decoded renewed token:', decoded);
-          
-          if (decoded.memberships) {
-            const memberships = JSON.parse(decoded.memberships);
-            dispatch(setMemberships(memberships));
-            console.log('✅ Memberships updated in Redux:', memberships);
-          }
-        } catch (decodeError) {
-          console.error('Error decoding renewed token:', decodeError);
-        }
+      if (response.success && response.data?.memberships) {
+        dispatch(setMemberships(response.data.memberships));
+        console.log('✅ Memberships updated in Redux:', response.data.memberships);
       }
       
       console.log('✅ ID token renewed successfully after payment');
@@ -153,25 +131,14 @@ export default function PaymentResultPage() {
       try {
         setLoading(true);
         
-        const apiUrl = `${process.env.NEXT_PUBLIC_BASE_URL}payments/return?orderCode=${orderCode}&status=${status}`;
-        console.log('Making API call to:', apiUrl);
-        console.log('Environment API URL:', process.env.NEXT_PUBLIC_BASE_URL);
+        // Use PaymentService to process payment return
+        const request: PaymentReturnRequest = { orderCode, status };
+        const response = await paymentService.processPaymentReturn(request);
         
-        // Call the backend payment return API
-        const response = await fetch(apiUrl, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-
-        const data = await response.json();
-        console.log('API Response:', { status: response.status, data });
-        
-        if (response.ok) {
+        if (response.success && response.data) {
           const paymentResult = {
-            success: data.success,
-            message: data.message,
+            success: response.data.success,
+            message: response.data.message,
             orderCode: orderCode,
             amount: amount ? parseFloat(amount) : undefined,
           };
@@ -192,7 +159,7 @@ export default function PaymentResultPage() {
         } else {
           const paymentResult = {
             success: false,
-            message: data.message || 'Payment processing failed',
+            message: response.error || 'Payment processing failed',
             orderCode: orderCode,
           };
           
@@ -213,7 +180,7 @@ export default function PaymentResultPage() {
     };
 
     handlePaymentReturn();
-  }, [orderCode, status, amount, cleanupOldPaymentResults, setResult, setLoading, setError, renewIdTokenAfterPayment]);
+  }, [orderCode, status, amount, cleanupOldPaymentResults, renewIdTokenAfterPayment]);
 
   const getStatusInfo = () => {
     if (error) {

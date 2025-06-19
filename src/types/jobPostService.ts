@@ -39,14 +39,13 @@ export interface JobPost {
   vacancyCount: number;
   jobSchedule?: JobSchedule;
   employerId?: string;
-  status?: 'active' | 'inactive' | 'expired';
+  status?: 'Open' | 'Closed' | 'Finished' | 'Expired';
   applicationsCount?: number;
   districtCode?: string;
   provinceCode?: string;
   jobPositionId?: number;
 
 }
-
 
 export interface JobPositionOption {
   id: number;
@@ -60,6 +59,7 @@ export interface JobPostDialogProps {
   MAP_ID: string;
   job: JobPost;
   children: React.ReactNode;
+  onJobStatusChanged?: () => void;
 }
 
 export interface JobPostsResponse {
@@ -80,6 +80,7 @@ export interface GetJobPostsParams {
   search?: string;
   location?: string;
   employmentType?: string;
+  status?: 'Open' | 'Closed' | 'Finished' | 'Expired';
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
 }
@@ -106,7 +107,7 @@ export interface CreateJobPostRequest {
 }
 
 export interface UpdateJobPostRequest extends Partial<CreateJobPostRequest> {
-  status?: 'active' | 'inactive' | 'expired';
+  status?: 'Open' | 'Closed' | 'Finished' | 'Expired';
   isOutstandingPost?: boolean;
 }
 

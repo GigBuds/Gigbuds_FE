@@ -70,41 +70,21 @@ class PaymentService {
   async processPaymentReturn(request: PaymentReturnRequest): Promise<ApiResponse<PaymentReturnResponse>> {
     try {
       const { orderCode, status } = request;
-      const apiUrl = `${process.env.NEXT_PUBLIC_BASE_URL}payments/return?orderCode=${orderCode}&status=${status}`;
       
-      console.log('Making payment return API call to:', apiUrl);
+      console.log('Making payment return API call with orderCode:', orderCode, 'status:', status);
       
-      const response = await fetch(apiUrl, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
+      const response = await fetchApi.get(`payments/return?orderCode=${orderCode}&status=${status}`);
+      console.log('Payment return API response:', response);
+      
+      return {
+        success: true,
+        data: {
+          success: response.success,
+          message: response.message,
+          orderCode: orderCode,
         },
-      });
-
-      const data = await response.json();
-      console.log('Payment return API response:', { status: response.status, data });
-      
-      if (response.ok) {
-        return {
-          success: true,
-          data: {
-            success: data.success,
-            message: data.message,
-            orderCode: orderCode,
-          },
-          message: 'Payment return processed successfully',
-        };
-      } else {
-        return {
-          success: false,
-          data: {
-            success: false,
-            message: data.message || 'Payment processing failed',
-            orderCode: orderCode,
-          },
-          error: data.message || 'Payment processing failed',
-        };
-      }
+        message: 'Payment return processed successfully',
+      };
     } catch (error) {
       console.error('Payment return error:', error);
       return {

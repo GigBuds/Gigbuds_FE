@@ -69,7 +69,7 @@ const ManageApplication = ({ selectedJob }: ManageApplicationProps) => {
     approved: { label: 'Đã duyệt', icon: CheckCircle, color: 'bg-green-100 text-green-800', count: 0 },
     pending: { label: 'Chờ duyệt', icon: Clock, color: 'bg-yellow-100 text-yellow-800', count: 0 },
     rejected: { label: 'Từ chối', icon: XCircle, color: 'bg-red-100 text-red-800', count: 0 },
-    removed: { label: 'Đã xóa', icon: Trash2, color: 'bg-gray-100 text-gray-600', count: 0 }
+    removed: { label: 'Đã Loại', icon: Trash2, color: 'bg-red-500 text-white', count: 0 }
   };
 
   // Helper function to safely render skill tags
@@ -513,21 +513,61 @@ const ManageApplication = ({ selectedJob }: ManageApplicationProps) => {
                                 Tải CV
                               </DropdownMenuItem>
                             )}
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              onClick={() => handleStatusUpdate(applicant.id, 'Approved')} // Changed from applicant.accountId to applicant.id
-                              disabled={isUpdatingStatus}
-                            >
-                              <CheckCircle className="w-4 h-4 mr-2 text-green-600" />
-                              Duyệt
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => handleStatusUpdate(applicant.id, 'Rejected')} // Changed from applicant.accountId to applicant.id
-                              disabled={isUpdatingStatus}
-                            >
-                              <XCircle className="w-4 h-4 mr-2 text-red-600" />
-                              Từ chối
-                            </DropdownMenuItem>
+                            
+                            {/* Conditional status update options */}
+                            {applicant.applicationStatus?.toLowerCase() === 'approved' ? (
+                              // Only show Remove option when approved
+                              <>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  onClick={() => handleStatusUpdate(applicant.id, 'Removed')}
+                                  disabled={isUpdatingStatus}
+                                  className="text-red-600 focus:text-red-600"
+                                >
+                                  <Trash2 className="w-4 h-4 mr-2" />
+                                  Xóa
+                                </DropdownMenuItem>
+                              </>
+                            ) : (
+                              applicant.applicationStatus?.toLowerCase() === 'removed' ? (
+                                <>
+                                </>
+                              ) : (
+                              // Show all status options when not approved
+                              <>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  onClick={() => handleStatusUpdate(applicant.id, 'Approved')}
+                                  disabled={isUpdatingStatus}
+                                >
+                                  <CheckCircle className="w-4 h-4 mr-2 text-green-600" />
+                                  Duyệt
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => handleStatusUpdate(applicant.id, 'Rejected')}
+                                  disabled={isUpdatingStatus}
+                                >
+                                  <XCircle className="w-4 h-4 mr-2 text-red-600" />
+                                  Từ chối
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => handleStatusUpdate(applicant.id, 'Pending')}
+                                  disabled={isUpdatingStatus}
+                                >
+                                  <RotateCcw className="w-4 h-4 mr-2 text-yellow-600" />
+                                  Chờ duyệt
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  onClick={() => handleStatusUpdate(applicant.id, 'Removed')}
+                                  disabled={isUpdatingStatus}
+                                  className="text-red-600 focus:text-red-600"
+                                >
+                                  <Trash2 className="w-4 h-4 mr-2" />
+                                  Xóa
+                                </DropdownMenuItem>
+                              </>
+                            ))}
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </div>
@@ -590,38 +630,40 @@ const ManageApplication = ({ selectedJob }: ManageApplicationProps) => {
                       {applicant.cvUrl ? "Xem CV đính kèm" : "Không có CV đính kèm"}
                     </Button>
 
-                    {/* Quick Actions */}
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        onClick={() => handleStatusUpdate(applicant.id, 'Approved')} // Changed from applicant.accountId to applicant.id
-                        disabled={isUpdatingStatus || applicant.applicationStatus === 'Approved'}
-                        className="flex-1 bg-green-600 hover:bg-green-700 text-white"
-                      >
-                        <Check className="w-4 h-4 mr-1" />
-                        Duyệt
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleStatusUpdate(applicant.id, 'Rejected')} // Changed from applicant.accountId to applicant.id
-                        disabled={isUpdatingStatus || applicant.applicationStatus === 'Rejected'}
-                        className="flex-1 border-red-200 text-red-700 hover:bg-red-50"
-                      >
-                        <X className="w-4 h-4 mr-1" />
-                        Từ chối
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleStatusUpdate(applicant.id, 'Pending')} // Changed from applicant.accountId to applicant.id
-                        disabled={isUpdatingStatus || applicant.applicationStatus === 'Pending'}
-                        className="flex-1 border-yellow-200 text-yellow-700 hover:bg-yellow-50"
-                      >
-                        <RotateCcw className="w-4 h-4 mr-1" />
-                        Chờ
-                      </Button>
-                    </div>
+                    {/* Quick Actions - Only show if status is not approved */}
+                    {applicant.applicationStatus?.toLowerCase() !== 'approved'&& applicant.applicationStatus?.toLowerCase() !== 'removed' && (
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          onClick={() => handleStatusUpdate(applicant.id, 'Approved')}
+                          disabled={isUpdatingStatus || applicant.applicationStatus === 'Approved'}
+                          className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                        >
+                          <Check className="w-4 h-4 mr-1" />
+                          Duyệt
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleStatusUpdate(applicant.id, 'Rejected')}
+                          disabled={isUpdatingStatus || applicant.applicationStatus === 'Rejected'}
+                          className="flex-1 border-red-200 text-red-700 hover:bg-red-50"
+                        >
+                          <X className="w-4 h-4 mr-1" />
+                          Từ chối
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleStatusUpdate(applicant.id, 'Pending')}
+                          disabled={isUpdatingStatus || applicant.applicationStatus === 'Pending'}
+                          className="flex-1 border-yellow-200 text-yellow-700 hover:bg-yellow-50"
+                        >
+                          <RotateCcw className="w-4 h-4 mr-1" />
+                          Chờ
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}

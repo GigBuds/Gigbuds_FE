@@ -5,19 +5,72 @@ import { applicationApi } from "@/service/applicationService/applicationService"
 import { Application } from "@/types/applicationService";
 import { Job } from "@/types/jobPost.types";
 import { useRouter } from "next/navigation";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
+import { 
+  Search, 
+  Filter, 
+  Users, 
+  CheckCircle, 
+  Clock, 
+  XCircle, 
+  Trash2,
+  Eye,
+  FileText,
+  Calendar,
+  Tag,
+  ArrowLeft,
+  MoreVertical,
+  Check,
+  X,
+  RotateCcw,
+  Download
+} from "lucide-react";
+import { Badge } from "../../../../ui/badge";
+import { Button } from "../../../../ui/button";
+import { Input } from "../../../../ui/input";
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../../../../ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "../../../../ui/dropdown-menu";
+import { Checkbox } from "../../../../ui/checkbox";
+import toast from "react-hot-toast";
 
 interface ManageApplicationProps {
   selectedJob: Job | null;
 }
 
-const ManageApplication = ({
-  selectedJob,
-}: ManageApplicationProps) => {
+type ApplicationStatus = 'all' | 'approved' | 'pending' | 'rejected' | 'removed';
+type SortOption = 'newest' | 'oldest' | 'name-asc' | 'name-desc';
+
+const ManageApplication = ({ selectedJob }: ManageApplicationProps) => {
   const [applications, setApplications] = useState<Application[]>([]);
+  const [selectedStatus, setSelectedStatus] = useState<ApplicationStatus>('all');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortBy, setSortBy] = useState<SortOption>('newest');
+  const [selectedApplications, setSelectedApplications] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const { setIsLoading } = useLoading();
   const router = useRouter();
+
+  // Status configuration
+  const statusConfig = {
+    all: { label: 'Tất cả', icon: Users, color: 'bg-gray-100 text-gray-800', count: 0 },
+    approved: { label: 'Đã duyệt', icon: CheckCircle, color: 'bg-green-100 text-green-800', count: 0 },
+    pending: { label: 'Chờ duyệt', icon: Clock, color: 'bg-yellow-100 text-yellow-800', count: 0 },
+    rejected: { label: 'Từ chối', icon: XCircle, color: 'bg-red-100 text-red-800', count: 0 },
+    removed: { label: 'Đã xóa', icon: Trash2, color: 'bg-gray-100 text-gray-600', count: 0 }
+  };
 
   // Helper function to safely render skill tags
   const renderSkillTag = (tag: unknown): string => {
@@ -27,7 +80,7 @@ const ManageApplication = ({
     return 'Skill';
   };
 
-  // Fetch applications when component mounts or selectedJob changes
+  // Fetch applications
   useEffect(() => {
     const fetchApplications = async () => {
       if (!selectedJob?.id) {
@@ -42,201 +95,538 @@ const ManageApplication = ({
         const response = await applicationApi.getApplicationsByJobPostId(
           selectedJob.id.toString()
         );
-        console.log("Applications API response:", response);
-        // Handle the response - it seems to be an array directly
+        
+        let applicationsData: Application[] = [];
         if (Array.isArray(response)) {
-          setApplications(response);
+          applicationsData = response;
         } else if (response.data && Array.isArray(response.data)) {
-          setApplications(response.data);
+          applicationsData = response.data;
         } else {
           console.warn("Unexpected response format:", response);
-          setApplications([]);
+          applicationsData = [];
         }
+
+        setApplications(applicationsData);
       } catch (err) {
         console.error("Error fetching applications:", err);
         setError(err instanceof Error ? err.message : "An error occurred");
+        setApplications([]);
       } finally {
         setTimeout(() => {
-          setIsLoading(false); // Stop loading after a delay
-        }
-          , 2000); // Adjust the delay as needed
+          setIsLoading(false);
+        }, 1000);
       }
     };
 
     fetchApplications();
   }, [selectedJob?.id, setIsLoading]);
 
-  console.log("Applications:", applications);
+  // Filter and sort applications
+  const processedApplications = useMemo(() => {
+    let filtered = applications;
 
-  // Handle status update
-  const handleStatusUpdate = async (
-    applicationId: string,
-    newStatus: string
-  ) => {
+    // Filter by status
+    if (selectedStatus !== 'all') {
+      filtered = filtered.filter(app => {
+        const status = app.applicationStatus?.toLowerCase() || 'pending';
+        return status === selectedStatus;
+      });
+    }
+
+    // Filter by search term
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      filtered = filtered.filter(app => {
+        // Create multiple name combinations to search
+        const fullName1 = `${app.firstName || ''} ${app.lastName || ''}`.toLowerCase();
+        const fullName2 = `${app.lastName || ''} ${app.firstName || ''}`.toLowerCase();
+        const firstName = (app.firstName || '').toLowerCase();
+        const lastName = (app.lastName || '').toLowerCase();
+        
+        return fullName1.includes(term) ||
+               fullName2.includes(term) ||
+               firstName.includes(term) ||
+               lastName.includes(term) ||
+               app.accountId?.toString().includes(term) ||
+               app.jobPosition?.toLowerCase().includes(term) ||
+               app.skillTags?.some(tag => renderSkillTag(tag).toLowerCase().includes(term));
+      });
+    }
+
+    // Sort applications
+    filtered = [...filtered].sort((a, b) => {
+      switch (sortBy) {
+        case 'newest':
+          return new Date(b.appliedAt).getTime() - new Date(a.appliedAt).getTime();
+        case 'oldest':
+          return new Date(a.appliedAt).getTime() - new Date(b.appliedAt).getTime();
+        case 'name-asc':
+          return `${a.firstName} ${a.lastName}`.localeCompare(`${b.firstName} ${b.lastName}`);
+        case 'name-desc':
+          return `${b.firstName} ${b.lastName}`.localeCompare(`${a.firstName} ${a.lastName}`);
+        default:
+          return 0;
+      }
+    });
+
+    return filtered;
+  }, [applications, selectedStatus, searchTerm, sortBy]);
+
+  // Update status counts
+  const statusCounts = useMemo(() => {
+    const counts = { ...statusConfig };
+    counts.all.count = applications.length;
+    
+    applications.forEach(app => {
+      const status = (app.applicationStatus?.toLowerCase() || 'pending') as ApplicationStatus;
+      if (counts[status]) {
+        counts[status].count++;
+      }
+    });
+
+    return counts;
+  }, [applications]);
+
+  // Handle individual status update
+  const handleStatusUpdate = async (applicationId: string, newStatus: string) => {
     try {
-      await applicationApi.updateApplicationStatus(applicationId, newStatus);
+      console.log(`Updating status for application ${applicationId} to ${newStatus}`);
+      setIsUpdatingStatus(true);
+      await applicationApi.updateStatusForApplications(applicationId, newStatus);
 
-      // Update local state
-      setApplications((prev) =>
-        prev.map((app) =>
-          app.id === applicationId
-            ? { ...app, status: newStatus }
+      setApplications(prev =>
+        prev.map(app =>
+          app.id === applicationId // Changed from app.accountId to app.id
+            ? { ...app, applicationStatus: newStatus }
             : app
         )
       );
 
-      console.log(
-        `Application ${applicationId} status updated to ${newStatus}`
-      );
+      toast.success(`Cập nhật trạng thái thành công`);
     } catch (error) {
       console.error("Error updating application status:", error);
+      toast.error("Có lỗi xảy ra khi cập nhật trạng thái");
+    } finally {
+      setIsUpdatingStatus(false);
     }
   };
 
+  // Handle bulk status update
+  const handleBulkStatusUpdate = async (newStatus: string) => {
+    if (selectedApplications.length === 0) {
+      toast.error("Vui lòng chọn ít nhất một ứng viên");
+      return;
+    }
+
+    try {
+      setIsUpdatingStatus(true);
+      
+      // Update each application individually
+      const updatePromises = selectedApplications.map(applicationId => 
+        applicationApi.updateStatusForApplications(applicationId, newStatus)
+      );
+      
+      // Wait for all updates to complete
+      await Promise.all(updatePromises);
+
+      // Update local state after all API calls succeed
+      setApplications(prev =>
+        prev.map(app =>
+          selectedApplications.includes(app.id)
+            ? { ...app, applicationStatus: newStatus }
+            : app
+        )
+      );
+
+      setSelectedApplications([]);
+      toast.success(`Cập nhật trạng thái cho ${selectedApplications.length} ứng viên thành công`);
+    } catch (error) {
+      console.error("Error updating bulk status:", error);
+      toast.error("Có lỗi xảy ra khi cập nhật trạng thái");
+    } finally {
+      setIsUpdatingStatus(false);
+    }
+  };
+
+  // Handle select all
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedApplications(processedApplications.map(app => app.id)); // Changed from app.accountId to app.id
+    } else {
+      setSelectedApplications([]);
+    }
+  };
+
+  // Handle individual selection
+  const handleSelectApplication = (applicationId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedApplications(prev => [...prev, applicationId]);
+    } else {
+      setSelectedApplications(prev => prev.filter(id => id !== applicationId));
+    }
+  };
+
+  const getStatusBadge = (status: string) => {
+    const normalizedStatus = status?.toLowerCase() || 'pending';
+    const config = statusConfig[normalizedStatus as ApplicationStatus] || statusConfig.pending;
+    
+    return (
+      <Badge className={`${config.color} border-0 font-medium`}>
+        <config.icon className="w-3 h-3 mr-1" />
+        {config.label}
+      </Badge>
+    );
+  };
+
+  const formatDate = (dateString: string) => {
+    if (!dateString) return "Chưa rõ thời gian";
+    const appliedDate = new Date(dateString);
+    const today = new Date();
+    const diffTime = Math.abs(today.getTime() - appliedDate.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) return "Hôm nay";
+    if (diffDays === 1) return "Hôm qua";
+    return `${diffDays} ngày trước`;
+  };
 
   return (
-    <div className="w-full flex flex-col">
-      <div className="flex-row flex justify-between">
-        <div className="text-lg text-black px-4 w-fit py-2 rounded">
-          Tin tuyển dụng / Xem hồ sơ ứng viên / Job ID: {selectedJob?.id}
-        </div>
-        <div
-          onClick={() => window.history.back()}
-          className="bg-orange-500 text-lg justify-center flex text-center items-center text-white px-8 w-fit  rounded">
-          Back
-
+    <div className="w-full flex flex-col h-full bg-gray-50">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-200 p-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => window.history.back()}
+              className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Quay lại
+            </Button>
+            <div className="flex flex-col">
+              <h1 className="text-2xl font-bold text-gray-900">
+                Quản lý ứng viên
+              </h1>
+              <p className="text-gray-600">
+                Job ID: {selectedJob?.id} • {applications.length} ứng viên
+              </p>
+            </div>
+          </div>
         </div>
       </div>
 
+      {/* Status Tabs */}
+      <div className="bg-white border-b border-gray-200 px-6 py-4">
+        <div className="flex items-center gap-1 overflow-x-auto">
+          {Object.entries(statusCounts).map(([status, config]) => {
+            const isActive = selectedStatus === status;
+            return (
+              <button
+                key={status}
+                onClick={() => setSelectedStatus(status as ApplicationStatus)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors whitespace-nowrap ${
+                  isActive
+                    ? 'bg-blue-100 text-blue-700 border-2 border-blue-200'
+                    : 'text-gray-600 hover:bg-gray-100'
+                }`}
+              >
+                <config.icon className="w-4 h-4" />
+                <span className="font-medium">{config.label}</span>
+                <Badge variant="secondary" className="ml-1 bg-gray-200 text-gray-700">
+                  {config.count}
+                </Badge>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Filters and Actions */}
+      <div className="bg-white border-b border-gray-200 px-6 py-4">
+        <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
+          <div className="flex flex-col sm:flex-row gap-3 flex-1 w-full lg:w-auto">
+            {/* Search */}
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Input
+                placeholder="Tìm kiếm theo tên, ID, vị trí..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 pr-4"
+              />
+            </div>
+
+            {/* Sort */}
+            <Select value={sortBy} onValueChange={(value: SortOption) => setSortBy(value)}>
+              <SelectTrigger className="w-full sm:w-48">
+                <Filter className="w-4 h-4 mr-2" />
+                <SelectValue placeholder="Sắp xếp" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="newest">Mới nhất</SelectItem>
+                <SelectItem value="oldest">Cũ nhất</SelectItem>
+                <SelectItem value="name-asc">Tên A-Z</SelectItem>
+                <SelectItem value="name-desc">Tên Z-A</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Bulk Actions */}
+          {selectedApplications.length > 0 && (
+            <div className="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-lg p-2">
+              <span className="text-sm text-blue-700">
+                Đã chọn {selectedApplications.length} ứng viên
+              </span>
+              <div className="flex gap-1">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleBulkStatusUpdate('approved')}
+                  disabled={isUpdatingStatus}
+                  className="bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
+                >
+                  <Check className="w-3 h-3 mr-1" />
+                  Duyệt
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleBulkStatusUpdate('rejected')}
+                  disabled={isUpdatingStatus}
+                  className="bg-red-50 border-red-200 text-red-700 hover:bg-red-100"
+                >
+                  <X className="w-3 h-3 mr-1" />
+                  Từ chối
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleBulkStatusUpdate('pending')}
+                  disabled={isUpdatingStatus}
+                  className="bg-yellow-50 border-yellow-200 text-yellow-700 hover:bg-yellow-100"
+                >
+                  <RotateCcw className="w-3 h-3 mr-1" />
+                  Chờ duyệt
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Error Display */}
       {error && (
-        <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mt-4">
-          Lỗi: {error}
+        <div className="mx-6 mt-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+          <div className="flex items-center gap-2">
+            <XCircle className="w-4 h-4" />
+            Lỗi: {error}
+          </div>
         </div>
       )}
 
-      <div className="w-full flex flex-wrap gap-6 mt-[2%] overflow-y-auto pb-4 px-3 overflow-hidden h-[81vh]">
-        {applications.length === 0 ? (
-          <div className="w-full text-center text-gray-500 mt-8">
-            Chưa có ứng viên nào ứng tuyển cho vị trí này.
+      {/* Applications List */}
+      <div className="flex-1 p-6 overflow-auto">
+        {processedApplications.length === 0 ? (
+          <div className="text-center py-16">
+            <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              {searchTerm || selectedStatus !== 'all' 
+                ? 'Không tìm thấy ứng viên phù hợp' 
+                : 'Chưa có ứng viên nào ứng tuyển'}
+            </h3>
+            <p className="text-gray-500">
+              {searchTerm || selectedStatus !== 'all'
+                ? 'Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm'
+                : 'Hãy chia sẻ tin tuyển dụng để thu hút ứng viên'}
+            </p>
           </div>
         ) : (
-          applications.map((applicant) => (
-            <div
-              key={applicant.id}
-              className="bg-white border-l-2 border-blue-500 col-span-1 w-[40%] p-[2%] rounded-lg h-fit shadow-xl"
-            >
-              <div className="flex flex-row items-center gap-[5%]">
-                <div className="w-[70px] bg-gray-300 py-[4%] rounded-full h-[60px] flex items-center justify-center">
-                  <span className="text-white font-bold">
-                    {(applicant.firstName && applicant.firstName.charAt(0).toUpperCase()) ||
-                      (applicant.lastName && applicant.lastName.charAt(0).toUpperCase()) ||
-                      'U'}
-                  </span>
-                </div>
-                <div className="flex flex-col w-[60%]">
-                  <h2 className="text-md font-semibold truncate w-[100%]">
-                    {applicant.lastName || ''} {applicant.firstName || ''}
-                  </h2>
-                  <div className="flex flex-row gap-1">
-                    <p className="text-xs text-gray-600">ID: {applicant.accountId}</p>
-                    <span className="text-xs text-gray-600">-</span>
-                    <p className="text-xs text-gray-600">
-                      {(() => {
-                        if (!applicant.appliedAt) return "Chưa rõ thời gian";
-                        const appliedDate = new Date(applicant.appliedAt);
-                        const today = new Date();
-                        const diffTime = Math.abs(
-                          today.getTime() - appliedDate.getTime()
-                        );
-                        const diffDays = Math.ceil(
-                          diffTime / (1000 * 60 * 60 * 24)
-                        );
+          <div className="space-y-4">
+            {/* Select All Header */}
+            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+              <Checkbox
+                checked={selectedApplications.length === processedApplications.length && processedApplications.length > 0}
+                onCheckedChange={handleSelectAll}
+              />
+              <span className="text-sm font-medium text-gray-700">
+                Chọn tất cả ({processedApplications.length})
+              </span>
+            </div>
 
-                        if (diffDays === 0) return "Hôm nay";
-                        return `${diffDays} ngày trước`;
-                      })()}
-                    </p>
+            {/* Applications Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {processedApplications.map((applicant) => (
+                <div
+                  key={applicant.id} // Changed from applicant.accountId to applicant.id
+                  className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-lg transition-shadow duration-200"
+                >
+                  {/* Header with checkbox and avatar */}
+                  <div className="flex items-start gap-4 mb-4">
+                    <Checkbox
+                      checked={selectedApplications.includes(applicant.id)} // Changed from applicant.accountId to applicant.id
+                      onCheckedChange={(checked) => 
+                        handleSelectApplication(applicant.id, checked as boolean) // Changed from applicant.accountId to applicant.id
+                      }
+                      className="mt-1"
+                    />
+                    
+                    <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                      {(applicant.firstName?.charAt(0) || applicant.lastName?.charAt(0) || 'U').toUpperCase()}
+                    </div>
+                    
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h3 className="font-semibold text-gray-900 text-lg truncate">
+                            {applicant.lastName} {applicant.firstName}
+                          </h3>
+                          <div className="flex items-center gap-2 text-sm text-gray-500 mt-1">
+                            <span>ID: {applicant.accountId}</span>
+                            <span>•</span>
+                            <div className="flex items-center gap-1">
+                              <Calendar className="w-3 h-3" />
+                              {formatDate(applicant.appliedAt)}
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                              <MoreVertical className="w-4 h-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              onClick={() => router.push(`/manage-job-post/${selectedJob?.id}/user-profile/${applicant.accountId}`)}
+                            >
+                              <Eye className="w-4 h-4 mr-2" />
+                              Xem hồ sơ
+                            </DropdownMenuItem>
+                            {applicant.cvUrl && (
+                              <DropdownMenuItem
+                                onClick={() => window.open(applicant.cvUrl, "_blank")}
+                              >
+                                <Download className="w-4 h-4 mr-2" />
+                                Tải CV
+                              </DropdownMenuItem>
+                            )}
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onClick={() => handleStatusUpdate(applicant.id, 'Approved')} // Changed from applicant.accountId to applicant.id
+                              disabled={isUpdatingStatus}
+                            >
+                              <CheckCircle className="w-4 h-4 mr-2 text-green-600" />
+                              Duyệt
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleStatusUpdate(applicant.id, 'Rejected')} // Changed from applicant.accountId to applicant.id
+                              disabled={isUpdatingStatus}
+                            >
+                              <XCircle className="w-4 h-4 mr-2 text-red-600" />
+                              Từ chối
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Status and Job Position */}
+                  <div className="flex items-center justify-between mb-4">
+                    {getStatusBadge(applicant.applicationStatus || 'Pending')}
+                    <span className="text-sm text-gray-600">
+                      {applicant.jobPosition || 'N/A'}
+                    </span>
+                  </div>
+
+                  {/* Skills */}
+                  <div className="mb-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Tag className="w-4 h-4 text-gray-400" />
+                      <span className="text-sm font-medium text-gray-700">Kỹ năng:</span>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {applicant.skillTags && applicant.skillTags.length > 0 ? (
+                        <>
+                          {applicant.skillTags.slice(0, 3).map((tag, index) => (
+                            <Badge
+                              key={index}
+                              variant="secondary"
+                              className="text-xs bg-gray-100 text-gray-700"
+                            >
+                              {renderSkillTag(tag)}
+                            </Badge>
+                          ))}
+                          {applicant.skillTags.length > 3 && (
+                            <Badge
+                              variant="secondary"
+                              className="text-xs bg-gray-100 text-gray-700"
+                            >
+                              +{applicant.skillTags.length - 3}
+                            </Badge>
+                          )}
+                        </>
+                      ) : (
+                        <Badge variant="secondary" className="text-xs text-gray-500">
+                          Chưa có kỹ năng
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* CV and Actions */}
+                  <div className="space-y-3">
+                    <Button
+                      variant={applicant.cvUrl ? "outline" : "secondary"}
+                      size="sm"
+                      onClick={() => applicant.cvUrl && window.open(applicant.cvUrl, "_blank")}
+                      disabled={!applicant.cvUrl}
+                      className="w-full justify-center"
+                    >
+                      <FileText className="w-4 h-4 mr-2" />
+                      {applicant.cvUrl ? "Xem CV đính kèm" : "Không có CV đính kèm"}
+                    </Button>
+
+                    {/* Quick Actions */}
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        onClick={() => handleStatusUpdate(applicant.id, 'Approved')} // Changed from applicant.accountId to applicant.id
+                        disabled={isUpdatingStatus || applicant.applicationStatus === 'Approved'}
+                        className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                      >
+                        <Check className="w-4 h-4 mr-1" />
+                        Duyệt
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleStatusUpdate(applicant.id, 'Rejected')} // Changed from applicant.accountId to applicant.id
+                        disabled={isUpdatingStatus || applicant.applicationStatus === 'Rejected'}
+                        className="flex-1 border-red-200 text-red-700 hover:bg-red-50"
+                      >
+                        <X className="w-4 h-4 mr-1" />
+                        Từ chối
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleStatusUpdate(applicant.id, 'Pending')} // Changed from applicant.accountId to applicant.id
+                        disabled={isUpdatingStatus || applicant.applicationStatus === 'Pending'}
+                        className="flex-1 border-yellow-200 text-yellow-700 hover:bg-yellow-50"
+                      >
+                        <RotateCcw className="w-4 h-4 mr-1" />
+                        Chờ
+                      </Button>
+                    </div>
                   </div>
                 </div>
-                <div onClick={() => {
-                  router.push(`/manage-job-post/${selectedJob?.id}/user-profile/${applicant.accountId}`);
-                }} className="justify-end w-[25%] text-xs text-orange-400 flex flex-row items-center cursor-pointer hover:text-orange-600">
-                  Xem hồ sơ {">"}
-                </div>
-              </div>
-
-              <div className="flex flex-row items-center gap-2 py-[2%]">
-                <p className="text-sm items-center text-white bg-orange-500 px-2 py-1 rounded-full inline-block">
-                  Ứng viên mới
-                </p>
-                <div className="gap-2 flex">
-                  {applicant.skillTags && applicant.skillTags.length > 0 ? (
-                    <>
-                      {applicant.skillTags.slice(0, 2).map((tag, index) => (
-                        <div
-                          key={index}
-                          className="text-[70%] font-semibold items-center text-gray-500 border-gray-500 border-1 bg-white px-2 py-1 rounded-full inline-block"
-                        >
-                          {renderSkillTag(tag)}
-                        </div>
-                      ))}
-                      {applicant.skillTags.length > 2 && (
-                        <div className="text-sm text-gray-500 border-gray-500 border-1 bg-white px-2 py-1 rounded-full inline-block">
-                          +{applicant.skillTags.length - 2}
-                        </div>
-                      )}
-                    </>
-                  ) : (
-                    <div className="text-sm text-gray-500 border-gray-500 border-1 bg-white px-2 py-1 rounded-full inline-block">
-                      Chưa có kỹ năng
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <p className="text-lg text-gray-600 pb-[2%]">
-                Vị trí ứng tuyển: {applicant.jobPosition || 'N/A'}
-              </p>
-
-              <div
-                onClick={() => {
-                  if (applicant.cvUrl) {
-                    window.open(applicant.cvUrl, "_blank");
-                  }
-                }}
-                className={`flex flex-row items-center cursor-pointer transition-colors duration-200 ${applicant.cvUrl
-                    ? "bg-blue-600 hover:bg-blue-700"
-                    : "bg-gray-400 cursor-not-allowed"
-                  } w-full justify-center py-[2%] rounded-lg`}
-              >
-                <p className="text-lg text-white">
-                  {applicant.cvUrl ? "Xem CV đính kèm" : "Không có CV đính kèm"}
-                </p>
-              </div>
-
-              {/* Status update buttons */}
-              <div className="flex flex-row gap-2 mt-[2%]">
-                <button
-                  onClick={() => handleStatusUpdate(applicant.id.toString(), 'approved')}
-                  className="flex-1 bg-green-500 hover:bg-green-600 text-white text-sm py-1 rounded transition-colors"
-                >
-                  Duyệt
-                </button>
-                <button
-                  onClick={() => handleStatusUpdate(applicant.id.toString(), 'rejected')}
-                  className="flex-1 bg-red-500 hover:bg-red-600 text-white text-sm py-1 rounded transition-colors"
-                >
-                  Từ chối
-                </button>
-                <button
-                  onClick={() => handleStatusUpdate(applicant.id.toString(), 'reviewed')}
-                  className="flex-1 bg-blue-500 hover:bg-blue-600 text-white text-sm py-1 rounded transition-colors"
-                >
-                  Đã xem
-                </button>
-              </div>
+              ))}
             </div>
-          ))
+          </div>
         )}
       </div>
     </div>

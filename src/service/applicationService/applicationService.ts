@@ -28,15 +28,19 @@ class ApplicationApi {
         }
     }
 
-    async updateApplicationStatus(applicationId: string, status: string): Promise<SingleApplicationResponse> {
+
+    async updateStatusForApplications(
+        jobApplicationId: string,
+        status: string
+    ): Promise<ApplicationsResponse> {
         try {
-            const response = await fetchApi.put(`job-applications/${applicationId}/status`, { status });
+            const response = await fetchApi.put('job-applications/update-status', { jobApplicationId, status });
             const data = await response.json();
-            console.log('Update application status API response:', data);
+            console.log('Update status for applications API response:', data);
             
             return data;
         } catch (error) {
-            console.error('Update application status API error:', error);
+            console.error('Update status for applications API error:', error);
             throw error;
         }
     }

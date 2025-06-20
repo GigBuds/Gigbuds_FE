@@ -22,6 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../../../ui/select";
+import { Button as BtnAntd} from "antd";
 import { JobPositionOption, JobPostDialogProps } from "@/types/jobPostService";
 import { jobPostApi } from "@/service/jobPostService/jobPostService";
 import {
@@ -41,6 +42,7 @@ import {
   Gift,
   CheckCircle,
   Loader2,
+  StopCircle,
 
 } from "lucide-react";
 import toast from "react-hot-toast";
@@ -52,14 +54,22 @@ const JobPostDialog: React.FC<JobPostDialogProps> = ({
   MAP_ID,
   job,
   children,
+  onJobStatusChanged,
+  open: externalOpen,
+  onOpenChange: externalOnOpenChange,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [loadingToggleStatus, setLoadingToggleStatus] = useState(false);
+  const [loadingFinishJobPost, setLoadingFinishJobPost] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [jobPositions, setJobPositions] = useState<JobPositionOption[]>([]);
   const [currentJobPosition, setCurrentJobPosition] = useState<string>("");
   const [loadingPositions, setLoadingPositions] = useState(false);
   const [dataLoaded, setDataLoaded] = useState(false);
+
+  // Use external open state if provided, otherwise use internal state
+  const dialogOpen = externalOpen !== undefined ? externalOpen : isOpen;
 
   const [formData, setFormData] = useState({
     jobTitle: job.jobTitle || "",
@@ -82,10 +92,10 @@ const JobPostDialog: React.FC<JobPostDialogProps> = ({
   });
 
   useEffect(() => {
-    if (isOpen && !dataLoaded) {
+    if (dialogOpen && !dataLoaded) {
       fetchData();
     }
-  }, [isOpen, dataLoaded, job.jobPositionId]);
+  }, [dialogOpen, dataLoaded, job.jobPositionId]);
 
   const fetchData = async () => {
     try {
@@ -147,7 +157,11 @@ const JobPostDialog: React.FC<JobPostDialogProps> = ({
   };
 
   const handleOpenChange = (open: boolean) => {
-    setIsOpen(open);
+    if (externalOnOpenChange) {
+      externalOnOpenChange(open);
+    } else {
+      setIsOpen(open);
+    }
     if (!open) {
       setIsEditing(false);
       resetFormData();
@@ -244,7 +258,37 @@ const JobPostDialog: React.FC<JobPostDialogProps> = ({
     setIsEditing(false);
   };
 
+  const handleToggleJobPostStatus = async () => {
+    if (isEditing) {
+      const confirmed = window.confirm("Bạn có chắc chắn muốn đóng? Mọi thay đổi chưa lưu sẽ bị mất.");
+      if (!confirmed) {
+        return;
+      }
+    }
+    setLoadingToggleStatus(true);
+    await jobPostApi.updateJobPostStatus(job.id.toString(), job.status === "Open" ? "Closed" : "Open");
+    resetFormData();
+    setIsEditing(false);
+    handleOpenChange(false);
+    setLoadingToggleStatus(false);
+    
+    if (onJobStatusChanged) {
+      onJobStatusChanged();
+    }
+  };
 
+  const handleFinishJobPost = async () => {
+    setLoadingFinishJobPost(true);
+    await jobPostApi.updateJobPostStatus(job.id.toString(), "Finished");
+    resetFormData();
+    setIsEditing(false);
+    handleOpenChange(false);
+    setLoadingFinishJobPost(false);
+    
+    if (onJobStatusChanged) {
+      onJobStatusChanged();
+    }
+  };
 
 
   const renderEditableField = (
@@ -373,87 +417,129 @@ const JobPostDialog: React.FC<JobPostDialogProps> = ({
   );
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+    <Dialog open={dialogOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>{children}</DialogTrigger>
 
       <DialogContent fullScreen={true} className="max-h-[95vh] pt-14 overflow-y-auto bg-white">
         <DialogHeader className="pb-6 border-b border-gray-200">
-          <div className="flex justify-between items-start">
-            <div className="flex-1 pr-4">
-              <DialogTitle className="text-3xl font-bold text-gray-900 mb-3 leading-tight">
-                {isEditing ? "Chỉnh sửa tin tuyển dụng" : job.jobTitle}
-              </DialogTitle>
-              <DialogDescription className="text-lg">
-                <div className="flex items-center gap-3 mb-2">
-                  <Badge
-                    variant={job.status === "Open" ? "default" : "secondary"}
-                    className="px-3 py-1 text-sm font-medium"
-                  >
-                    {job.status === "Open" ? (
-                      <>
-                        <CheckCircle className="w-4 h-4 mr-1" />
-                        Đang tuyển
-                      </>
-                    ) : (
-                      "Đã đóng"
-                    )}
-                  </Badge>
-                  {(formData.isOutstandingPost || job.isOutstandingPost) && (
-                    <Badge variant="destructive" className="px-3 py-1 text-sm font-medium">
-                      <Star className="w-4 h-4 mr-1" />
-                      Tin nổi bật
-                    </Badge>
-                  )}
+          <div className="space-y-4">
+            {/* Action Buttons at Top Left */}
+            <div className="flex gap-3">
+              <BtnAntd 
+                color={job.status === "Open" ? "red" : "green"}
+                variant="solid"
+                disabled={job.status === 'Expired' || job.status === 'Finished'}
+                onClick={handleToggleJobPostStatus} 
+                loading={loadingToggleStatus}
+              >
+                {job.status === "Open" ? (
+                  <div className="flex items-center gap-2">
+                    <X className="w-4 h-4" />
+                    Đóng tin
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4" />
+                    Mở tin
+                  </div>
+                )}
+              </BtnAntd>
+
+              <BtnAntd
+                color="blue"
+                variant="solid"
+                disabled={job.status === 'Expired' || job.status === 'Finished'}
+                onClick={handleFinishJobPost}
+                loading={loadingFinishJobPost}
+              >
+                <div className="flex items-center gap-2">
+                  <StopCircle className="w-4 h-4" />
+                  Kết thúc tin
                 </div>
-                <div className="flex items-center text-gray-600 text-base">
-                  <MapPin className="w-4 h-4 mr-2" />
-                  {job.jobLocation || "Chưa xác định địa điểm"}
-                </div>
-              </DialogDescription>
+              </BtnAntd>
             </div>
-            <div className="flex gap-2">
-              {!isEditing ? (
-                <Button
-                  variant="outline"
-                  size="lg"
-                  onClick={() => setIsEditing(true)}
-                  className="flex items-center gap-2 border-blue-500 text-blue-600 hover:bg-blue-50"
-                  disabled={loadingPositions}
-                >
-                  <Edit2 className="w-4 h-4" />
-                  Chỉnh sửa
-                </Button>
-              ) : (
-                <div className="flex gap-2">
+
+            {/* Title and Edit Controls Row */}
+            <div className="flex justify-between items-start">
+              {/* Title and Description Section */}
+              <div className="flex-1">
+                <DialogTitle className="text-3xl font-bold text-gray-900 mb-3 leading-tight">
+                  {isEditing ? "Chỉnh sửa tin tuyển dụng" : job.jobTitle}
+                </DialogTitle>
+                <DialogDescription className="text-lg">
+                  <div className="flex items-center gap-3 mb-2">
+                    <Badge
+                      variant={job.status === "Open" ? "default" : "secondary"}
+                      className="px-3 py-1 text-sm font-medium"
+                    >
+                      {job.status === "Open" ? (
+                        <>
+                          <CheckCircle className="w-4 h-4 mr-1" />
+                          Đang tuyển
+                        </>
+                      ) : (
+                        "Đã đóng"
+                      )}
+                    </Badge>
+                    {(formData.isOutstandingPost || job.isOutstandingPost) && (
+                      <Badge variant="destructive" className="px-3 py-1 text-sm font-medium">
+                        <Star className="w-4 h-4 mr-1" />
+                        Tin nổi bật
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="flex items-center text-gray-600 text-base">
+                    <MapPin className="w-4 h-4 mr-2" />
+                    {job.jobLocation || "Chưa xác định địa điểm"}
+                  </div>
+                </DialogDescription>
+              </div>
+              
+              {/* Edit Controls */}
+              <div className="flex gap-2 ml-6">
+                {!isEditing ? (
                   <Button
                     variant="outline"
                     size="lg"
-                    onClick={handleCancel}
-                    className="flex items-center gap-2"
+                    onClick={() => setIsEditing(true)}
+                    className="flex items-center gap-2 border-blue-500 text-blue-600 hover:bg-blue-50"
+                    disabled={loadingPositions}
                   >
-                    <X className="w-4 h-4" />
-                    Hủy
+                    <Edit2 className="w-4 h-4" />
+                    Chỉnh sửa
                   </Button>
-                  <Button
-                    size="lg"
-                    onClick={handleSave}
-                    disabled={loading}
-                    className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
-                  >
-                    {loading ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        Đang lưu...
-                      </>
-                    ) : (
-                      <>
-                        <Save className="w-4 h-4" />
-                        Lưu thay đổi
-                      </>
-                    )}
-                  </Button>
-                </div>
-              )}
+                ) : (
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      onClick={handleCancel}
+                      className="flex items-center gap-2"
+                    >
+                      <X className="w-4 h-4" />
+                      Hủy
+                    </Button>
+                    <Button
+                      size="lg"
+                      onClick={handleSave}
+                      disabled={loading}
+                      className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
+                    >
+                      {loading ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Đang lưu...
+                        </>
+                      ) : (
+                        <>
+                          <Save className="w-4 h-4" />
+                          Lưu thay đổi
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </DialogHeader>
@@ -574,7 +660,7 @@ const JobPostDialog: React.FC<JobPostDialogProps> = ({
                 <div>
                   <h4 className="font-semibold text-gray-900">Ứng viên quan tâm</h4>
                   <p className="text-green-700 font-medium">
-                    {job.applicationsCount || 0} người đã ứng tuyển
+                    {job.totalApplicants || 0} người đã ứng tuyển
                   </p>
                 </div>
               </div>

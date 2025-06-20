@@ -2,11 +2,10 @@ import * as signalR from "@microsoft/signalr";
 import { handleConnectionCycleCallbacks } from "./handleConnectionCycleCallbacks";
 import { HubConnection } from "@microsoft/signalr";
 import { handleNotificationCallbacks } from "./handleNotificationCallbacks";
+import Cookies from "js-cookie";
 
-const HUB_URL = process.env.HUB_URL ?? 'https://gigbuds-c3fagtfwe2brewha.eastasia-01.azurewebsites.net/hub/notifications';
+const HUB_URL = process.env.NEXT_PUBLIC_HUB_URL ?? 'https://gigbuds-c3fagtfwe2brewha.eastasia-01.azurewebsites.net/hub/notifications';
 console.log("SignalR: HUB_URL", HUB_URL);
-
-
 
 export class SignalRService {
   private hubConnection: signalR.HubConnection | null;
@@ -47,21 +46,13 @@ export class SignalRService {
     try {
       console.log("SignalR: Starting connection");
       this.isConnecting = true;
-
-      const accessToken = document.cookie
-        .split('; ')
-        .find(row => row.startsWith('access_token='))
-        ?.split('=')[1];
-
+      const accessToken = Cookies.get('access_token');
       console.log("SignalR: Access token", accessToken);
       this.hubConnection = new signalR.HubConnectionBuilder()
           .withUrl(HUB_URL, {
-            accessTokenFactory: () => accessToken ?? "",
+            accessTokenFactory: () => Promise.resolve(accessToken ?? ''),
             skipNegotiation: true,
             transport: signalR.HttpTransportType.WebSockets,
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-            }
           })
           .withAutomaticReconnect({
             nextRetryDelayInMilliseconds: (retryContext) => {

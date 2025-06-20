@@ -17,6 +17,7 @@ const Page = () => {
       if (!accessToken) router.push("/login");
   }, [router , accessToken]);
 
+
   return (
     <div className="  px-2  items-center w-full h-full flex flex-col gap-4">
       <AdBanner/>

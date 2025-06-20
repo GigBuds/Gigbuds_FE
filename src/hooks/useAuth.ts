@@ -1,11 +1,11 @@
-import { useState } from 'react';
+import { clearUserState, Membership, setUserWithMemberships } from '@/lib/redux/features/userSlice';
 import { useAppDispatch } from '@/lib/redux/hooks';
-import { setUserWithMemberships, clearUserState, Membership } from '@/lib/redux/features/userSlice';
+import { LoginApi } from '@/service/loginService/loginService';
 import { LoginResponse } from '@/types/loginService';
 import { User } from '@/types/sidebar.types';
-import { LoginApi } from '@/service/loginService/loginService';
-import { jwtDecode } from 'jwt-decode';
 import Cookies from 'js-cookie';
+import { jwtDecode } from 'jwt-decode';
+import { useState } from 'react';
 
 /**
  * Custom hook for authentication management

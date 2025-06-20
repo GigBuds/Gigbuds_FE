@@ -40,11 +40,10 @@ export interface JobPost {
   jobSchedule?: JobSchedule;
   employerId?: string;
   status?: 'Open' | 'Closed' | 'Finished' | 'Expired';
-  applicationsCount?: number;
+  totalApplicants?: number;
   districtCode?: string;
   provinceCode?: string;
   jobPositionId?: number;
-
 }
 
 export interface JobPositionOption {
@@ -60,6 +59,8 @@ export interface JobPostDialogProps {
   job: JobPost;
   children: React.ReactNode;
   onJobStatusChanged?: () => void;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 export interface JobPostsResponse {

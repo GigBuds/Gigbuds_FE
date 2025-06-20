@@ -6,7 +6,7 @@ import signalRService from "@/service/signalrService/signalrService";
 import { Notification } from "@/types/notification.types";
 import { useEffect } from "react";
 
-export default function SignalRProvider({ children }: Readonly<{ children: React.ReactNode }>) {
+export function SignalRProvider({ children }: Readonly<{ children: React.ReactNode }>) {
     const user = useAppSelector(selectUser);
     const dispatch = useAppDispatch();
 

@@ -35,6 +35,7 @@ interface ManageJobPostProps {
 
 const ManageJobPost: React.FC<ManageJobPostProps> = ({ API_KEY, MAP_ID }) => {
   const [jobPostings, setJobPostings] = useState<JobPost[]>([]);
+  const [allJobPostings, setAllJobPostings] = useState<JobPost[]>([]);
   const [pageIndex, setPageIndex] = useState<number>(1);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState<string>("");
@@ -111,6 +112,23 @@ const ManageJobPost: React.FC<ManageJobPostProps> = ({ API_KEY, MAP_ID }) => {
     }
   }, [setIsLoading, pageSize, user.id, activeTab, sortBy, sortOrder, debouncedSearchTerm]);
 
+  const fetchAllJobPostsForCounting = useCallback(async (): Promise<void> => {
+    try {
+      const params: FetchJobPostsParams = {
+        pageSize: 1000, // Large number to get all posts
+        pageIndex: 1,
+        employerId: user.id?.toString() ?? '',
+      };
+
+      const response: JobPostApiResponse = await jobPostApi.getJobPosts(params);
+      if (response) {
+        setAllJobPostings(response.items || []);
+      }
+    } catch (error: unknown) {
+      console.error('Failed to fetch all job posts for counting:', error);
+    }
+  }, [user.id]);
+
   const handlePageChange = (newPage: number) => {
     if (newPage >= 1) {
       setPageIndex(newPage);
@@ -149,9 +167,9 @@ const ManageJobPost: React.FC<ManageJobPostProps> = ({ API_KEY, MAP_ID }) => {
   // Calculate status counts
   const statusCounts = React.useMemo(() => {
     const counts = { ...statusConfig };
-    counts.all.count = jobPostings.length;
+    counts.all.count = allJobPostings.length;
     
-    jobPostings.forEach(job => {
+    allJobPostings.forEach(job => {
       const status = job.status;
       if (counts[status as keyof typeof statusConfig]) {
         counts[status as keyof typeof statusConfig].count++;
@@ -159,7 +177,7 @@ const ManageJobPost: React.FC<ManageJobPostProps> = ({ API_KEY, MAP_ID }) => {
     });
 
     return counts;
-  }, [jobPostings]);
+  }, [allJobPostings, statusConfig]);
 
   // Debounce search term effect
   useEffect(() => {
@@ -181,7 +199,8 @@ const ManageJobPost: React.FC<ManageJobPostProps> = ({ API_KEY, MAP_ID }) => {
       return;
     }
     fetchJobPosts(pageIndex);
-  }, [fetchJobPosts, router, pageIndex, user.id]);
+    fetchAllJobPostsForCounting();
+  }, [fetchJobPosts, fetchAllJobPostsForCounting, router, pageIndex, user.id]);
 
   // Trigger search when debounced search term or filters change
   useEffect(() => {
@@ -428,11 +447,9 @@ const ManageJobPost: React.FC<ManageJobPostProps> = ({ API_KEY, MAP_ID }) => {
                 <div className="mb-4 p-3 bg-gray-50 rounded-lg">
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-gray-600">Hết hạn:</span>
-                    <div className="text-right">
                       <CountdownTimer expireTime={job.expireTime} />
                       <div className="text-xs text-gray-500 mt-1">
                         {job.expireTime ? formatDate(job.expireTime) : "N/A"}
-                      </div>
                     </div>
                   </div>
                 </div>
@@ -456,7 +473,9 @@ const ManageJobPost: React.FC<ManageJobPostProps> = ({ API_KEY, MAP_ID }) => {
                     onJobStatusChanged={() => fetchJobPosts(pageIndex)}
                     open={openJobId === job.id}
                     onOpenChange={(open) => {
-                      if (!open && openJobId === job.id) {
+                      if (open) {
+                        setOpenJobId(job.id);
+                      } else {
                         setOpenJobId(null);
                       }
                     }}
@@ -464,6 +483,7 @@ const ManageJobPost: React.FC<ManageJobPostProps> = ({ API_KEY, MAP_ID }) => {
                     <Button
                       size="sm"
                       className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                      onClick={() => setOpenJobId(job.id)}
                     >
                       <Eye className="w-4 h-4 mr-1" />
                       Xem

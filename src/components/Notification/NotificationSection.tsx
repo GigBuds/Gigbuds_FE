@@ -158,12 +158,6 @@ const NotificationSection = ({ notifications }: { notifications: Notification[] 
                                             <h3 className="font-semibold text-foreground line-clamp-2 group-hover:text-primary transition-colors">
                                                 {notification.title}
                                             </h3>
-                                            <Badge 
-                                                variant={getNotificationBadgeVariant(notification.type)}
-                                                className="flex-shrink-0"
-                                            >
-                                                {notification.type}
-                                            </Badge>
                                         </div>
                                         
                                         <p className="text-sm text-muted-foreground line-clamp-2 mb-3 leading-relaxed">

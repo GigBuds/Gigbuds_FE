@@ -43,6 +43,7 @@ import {
   CheckCircle,
   Loader2,
   StopCircle,
+  Pause,
 
 } from "lucide-react";
 import toast from "react-hot-toast";
@@ -434,7 +435,7 @@ const JobPostDialog: React.FC<JobPostDialogProps> = ({
               >
                 {job.status === "Open" ? (
                   <div className="flex items-center gap-2">
-                    <X className="w-4 h-4" />
+                    <Pause className="w-4 h-4" />
                     Đóng tin
                   </div>
                 ) : (

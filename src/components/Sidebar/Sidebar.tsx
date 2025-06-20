@@ -1,5 +1,5 @@
 "use client"
-
+import Cookies from 'js-cookie'
 import React, { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import Image from 'next/image'
@@ -126,6 +126,14 @@ const Sidebar = () => {
     router.push('/employer/job-posts/create')
   }
 
+  // Redirect to login if user is not authenticated
+  useEffect(() => {
+    const accessToken = Cookies.get("access_token");
+    if (!user?.id || !accessToken) {
+      console.log('User or access token not found, redirecting to login')
+      router.push('/login')
+    }
+  }, [user, router])
 
   // Update selected item based on current path
   useEffect(() => {

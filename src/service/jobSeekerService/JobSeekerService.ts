@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import fetchApi from '@/api/api';
+  import fetchApi from '@/api/api';
 
 export interface JobSeeker {
   id: string;

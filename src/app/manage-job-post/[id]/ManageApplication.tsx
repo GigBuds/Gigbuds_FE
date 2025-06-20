@@ -54,7 +54,6 @@ type SortOption = 'newest' | 'oldest' | 'name-asc' | 'name-desc';
 
 const ManageApplication = ({ selectedJob }: ManageApplicationProps) => {
   const [applications, setApplications] = useState<Application[]>([]);
-  const [filteredApplications, setFilteredApplications] = useState<Application[]>([]);
   const [selectedStatus, setSelectedStatus] = useState<ApplicationStatus>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('newest');

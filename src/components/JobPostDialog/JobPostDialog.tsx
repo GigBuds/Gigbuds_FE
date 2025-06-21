@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
+  DialogDescriptionContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -467,7 +467,7 @@ const JobPostDialog: React.FC<JobPostDialogProps> = ({
                 <DialogTitle className="text-3xl font-bold text-gray-900 mb-3 leading-tight">
                   {isEditing ? "Chỉnh sửa tin tuyển dụng" : job.jobTitle}
                 </DialogTitle>
-                <DialogDescription className="text-lg">
+                <DialogDescriptionContent className="text-lg">
                   <div className="flex items-center gap-3 mb-2">
                     <Badge
                       variant={job.status === "Open" ? "default" : "secondary"}
@@ -493,7 +493,7 @@ const JobPostDialog: React.FC<JobPostDialogProps> = ({
                     <MapPin className="w-4 h-4 mr-2" />
                     {job.jobLocation || "Chưa xác định địa điểm"}
                   </div>
-                </DialogDescription>
+                </DialogDescriptionContent>
               </div>
               
               {/* Edit Controls */}

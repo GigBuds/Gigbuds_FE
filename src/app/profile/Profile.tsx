@@ -16,7 +16,6 @@ import {
   FileText, 
   Hash, 
   Edit3, 
-  Upload,
   X,
   CheckCircle,
   AlertCircle
@@ -69,7 +68,7 @@ const ProfilePage = () => {
     }
 
     fetchProfile()
-  }, [])
+  }, [user?.id])
 
   // Handle file uploads
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -127,7 +126,7 @@ const ProfilePage = () => {
           formData.append('companyLogo', companyLogo)
         }
 
-        const response = await profileService.updateEmployerProfileWithFiles(user.id, formData)
+        const response = await profileService.updateEmployerProfile(user.id, formData)
         
         if (response.success && response.data) {
           setProfile(response.data)

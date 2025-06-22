@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { 
   Check, 
@@ -37,8 +37,8 @@ import toast from 'react-hot-toast'
 const Memberships = () => {
   const [memberships, setMemberships] = useState<Membership[]>([])
   const [userMemberships, setUserMemberships] = useState<UserMembership[]>([])
-  const [processingPayment, setProcessingPayment] = useState<number | null>(null)
   const [showRevokeDialog, setShowRevokeDialog] = useState(false)
+  const [processingPayment, setProcessingPayment] = useState<number | null>(null)
   const [membershipToRevoke, setMembershipToRevoke] = useState<{
     current: UserMembership,
     new: Membership
@@ -49,7 +49,7 @@ const Memberships = () => {
   const user = useSelector(selectUser)
 
   // Data fetching functions remain the same
-  const fetchMemberships = async () => {
+  const fetchMemberships = useCallback(async () => {
     try {
       setIsLoading(true)
       const response = await MembershipService.getMemberships()
@@ -67,9 +67,9 @@ const Memberships = () => {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [setIsLoading])
 
-  const checkMembership = async () => {
+  const checkMembership = useCallback(async () => {
     try {
       if (!user?.id) return
 
@@ -84,9 +84,9 @@ const Memberships = () => {
       console.error('Error checking membership:', error)
       setUserMemberships([])
     }
-  }
+  }, [user?.id])
 
-  const revokeMembership = async (membershipId: number) => {
+  const revokeMembership = useCallback(async (membershipId: number) => {
     if (!user?.id) {
       toast.error('Vui lòng đăng nhập để hủy gói thành viên')
       return
@@ -104,14 +104,14 @@ const Memberships = () => {
     } finally {
       setIsRevoking(false)
     }
-  }
+  }, [user?.id, checkMembership])
 
   useEffect(() => {
     fetchMemberships()
     if (user?.id) {
       checkMembership()
     }
-  }, [user?.id])
+  }, [user?.id, fetchMemberships, checkMembership])
 
   const formatPrice = (price: number) => {
     if (price === 0) return 'MIỄN PHÍ'

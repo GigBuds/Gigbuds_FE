@@ -47,7 +47,7 @@ import {
 
 } from "lucide-react";
 import toast from "react-hot-toast";
-import { GoogleMapResponse } from "@/types/folder/googleMapResponse";
+import { GoogleMapResponse } from "@/types/googleMapResponse";
 import GoogleMap from "../map/GoogleMap";
 
 const JobPostDialog: React.FC<JobPostDialogProps> = ({

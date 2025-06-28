@@ -2,7 +2,7 @@
 import { addNotification } from "@/lib/redux/features/notificationSlice";
 import { selectUser } from "@/lib/redux/features/userSlice";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
-import signalRService from "@/service/signalrService/signalrService";
+import notificationSignalRService from "@/service/signalrService/notifications/notificationSignalrService";
 import { Notification } from "@/types/notification.types";
 import { useEffect } from "react";
 
@@ -13,16 +13,16 @@ export function SignalRProvider({ children }: Readonly<{ children: React.ReactNo
     useEffect(() => {
         const startConnection = async () => {
         if (user.id !== null) {
-            await signalRService.StartConnection();
+            await notificationSignalRService.StartConnection();
             if (user.roles?.includes("Employer")) {
                 console.log("SignalR: Add to employer group", user);
-                signalRService.AddToGroup("employer");
+                notificationSignalRService.AddToGroup("employer");
             } else {
                 console.log("SignalR: Add to staff group", user);
-                signalRService.AddToGroup("staff");
+                notificationSignalRService.AddToGroup("staff");
             }
 
-            signalRService.registerCallback("onNotificationReceived", (data) => {
+            notificationSignalRService.registerCallback("onNotificationReceived", (data) => {
                 const notification = data as Notification;
                 dispatch(addNotification([notification]));
             });
@@ -34,7 +34,7 @@ export function SignalRProvider({ children }: Readonly<{ children: React.ReactNo
 
     useEffect(() => {
         return () => {
-            signalRService.StopConnection();
+            notificationSignalRService.StopConnection();
         };
     }, []);
 

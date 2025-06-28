@@ -114,6 +114,9 @@ const Sidebar = () => {
       case 'logout':
         handleLogout()
         break
+      case 'messages':
+        router.push('/messages')
+        break
       default:
         router.push(item.link)
         break

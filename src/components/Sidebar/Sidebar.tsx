@@ -185,7 +185,7 @@ const Sidebar = () => {
           >
             <p className='text-sm whitespace-nowrap'>{Texts.GREETING}</p>
             <p className='text-sm font-bold whitespace-nowrap'>{user?.name}</p>
-            <p className='text-xs text-gray-600 whitespace-nowrap hover:underline cursor-pointer' onClick={() => router.push(`/profile/${user?.id}`)}>
+            <p className='text-xs text-gray-600 whitespace-nowrap hover:underline cursor-pointer' onClick={() => router.push('/profile')}>
               {Texts.VIEW_PROFILE}
             </p>
           </motion.div>

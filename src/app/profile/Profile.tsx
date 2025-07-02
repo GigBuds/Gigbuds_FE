@@ -1,5 +1,6 @@
 'use client'
 import React, { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { Button } from '../../../ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '../../../ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../../../ui/dialog'
@@ -25,8 +26,12 @@ import profileService, { Profile } from '@/service/profileService/profileService
 import { useSelector } from 'react-redux'
 import { selectUser } from '@/lib/redux/features/userSlice'
 import { Image } from 'antd'
+import EmployerFeedbackSection from '@/components/Profile/EmployerFeedbackSection'
 
 const ProfilePage = () => {
+  const searchParams = useSearchParams()
+  const profileId = searchParams.get('id')
+  
   const [profile, setProfile] = useState<Profile | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -39,37 +44,63 @@ const ProfilePage = () => {
   const [companyLogo, setCompanyLogo] = useState<File | null>(null)
   const [logoPreview, setLogoPreview] = useState<string>('')
   const user = useSelector(selectUser)
-    console.log("User from Redux:", user)
+  
+  // Determine if we're viewing our own profile or someone else's
+  const isOwnProfile = !profileId || (user?.id && profileId === user.id.toString())
+  const targetUserId = profileId ? parseInt(profileId) : user?.id
+  
+  console.log("User from Redux:", user)
+  console.log("Profile ID from URL:", profileId)
+  console.log("Is own profile:", isOwnProfile)
   // Fetch profile data
   useEffect(() => {
     const fetchProfile = async () => {
       try {
         setIsLoading(true)
-        // Replace 'user-id' with actual user ID from auth context
-        if (!user?.id) {
-          toast.error('Không tìm thấy thông tin người dùng')
+        
+        if (!targetUserId) {
+          if (isOwnProfile) {
+            toast.error('Không tìm thấy thông tin người dùng')
+          } else {
+            toast.error('Không tìm thấy ID nhà tuyển dụng')
+          }
           return
         }
-        const response = await profileService.getEmployerProfileById(user.id)
+
+        if (profileId && isNaN(parseInt(profileId))) {
+          toast.error('ID nhà tuyển dụng không hợp lệ')
+          return
+        }
+        
+        const response = await profileService.getEmployerProfileById(targetUserId)
         
         if (response.success && response.data) {
           setProfile(response.data)
-          setCompanyAddress(response.data.companyAddress)
-          setTaxNumber(response.data.taxNumber)
-          setLogoPreview(response.data.companyLogo)
+          // Only set form states for own profile (editable)
+          if (isOwnProfile) {
+            setCompanyAddress(response.data.companyAddress)
+            setTaxNumber(response.data.taxNumber)
+            setLogoPreview(response.data.companyLogo)
+          }
         } else {
-          toast.error('Không thể tải thông tin hồ sơ')
+          const errorMessage = isOwnProfile 
+            ? 'Không thể tải thông tin hồ sơ của bạn'
+            : 'Không thể tải thông tin hồ sơ công ty'
+          toast.error(errorMessage)
         }
       } catch (error) {
         console.error('Error fetching profile:', error)
-        toast.error('Có lỗi xảy ra khi tải thông tin')
+        const errorMessage = isOwnProfile 
+          ? 'Có lỗi xảy ra khi tải thông tin của bạn'
+          : 'Có lỗi xảy ra khi tải thông tin công ty'
+        toast.error(errorMessage)
       } finally {
         setIsLoading(false)
       }
     }
 
     fetchProfile()
-  }, [])
+  }, [targetUserId, profileId, isOwnProfile])
 
   // Handle file uploads
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -127,7 +158,7 @@ const ProfilePage = () => {
           formData.append('companyLogo', companyLogo)
         }
 
-        const response = await profileService.updateEmployerProfileWithFiles(user.id, formData)
+        const response = await profileService.updateEmployerProfile(user.id, formData)
         
         if (response.success && response.data) {
           setProfile(response.data)
@@ -201,8 +232,15 @@ const ProfilePage = () => {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Hồ sơ công ty</h1>
-          <p className="text-gray-600 mt-2">Quản lý thông tin công ty của bạn</p>
+          <h1 className="text-3xl font-bold text-gray-900">
+            {isOwnProfile ? 'Hồ sơ công ty' : 'Thông tin công ty'}
+          </h1>
+          <p className="text-gray-600 mt-2">
+            {isOwnProfile 
+              ? 'Quản lý thông tin công ty của bạn' 
+              : 'Xem thông tin và đánh giá của công ty'
+            }
+          </p>
         </div>
 
         {/* Profile Card */}
@@ -225,7 +263,9 @@ const ProfilePage = () => {
                 </div>
               </div>
               
-              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              {/* Only show edit button for own profile */}
+              {isOwnProfile && (
+                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                 <DialogTrigger asChild>
                   <Button className="flex items-center gap-2">
                     <Edit3 className="h-4 w-4" />
@@ -336,6 +376,7 @@ const ProfilePage = () => {
                   </div>
                 </DialogContent>
               </Dialog>
+              )}
             </div>
           </CardHeader>
 
@@ -404,6 +445,11 @@ const ProfilePage = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Feedback Section */}
+        {targetUserId && (
+          <EmployerFeedbackSection employerId={targetUserId.toString()} />
+        )}
       </div>
     </div>
   )

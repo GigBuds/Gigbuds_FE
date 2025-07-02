@@ -13,6 +13,7 @@ interface FeedbackSectionProps {
 const FeedbackSection: React.FC<FeedbackSectionProps> = ({ jobSeekerId }) => {
   const [feedbacks, setFeedbacks] = useState<FeedbackDto[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
   const { setIsLoading } = useLoading();
 
   useEffect(() => {
@@ -79,6 +80,31 @@ const FeedbackSection: React.FC<FeedbackSectionProps> = ({ jobSeekerId }) => {
 
   const handleRetry = () => {
     window.location.reload();
+  };
+
+  const renderCompanyAvatar = (feedback: FeedbackDto) => {
+    const imageKey = `company-${feedback.id}`;
+    const hasImageFailed = failedImages.has(imageKey);
+    // Always prioritize companyLogo for EmployerToJobSeeker feedback
+    const hasValidLogo = feedback.companyLogo && !hasImageFailed;
+
+    return (
+      <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center overflow-hidden">
+        {hasValidLogo ? (
+          <img 
+            src={feedback.companyLogo} 
+            alt={feedback.companyName}
+            className="w-full h-full object-cover"
+            onError={() => {
+              console.log('Company logo failed to load for:', feedback.companyName);
+              setFailedImages(prev => new Set(prev).add(imageKey));
+            }}
+          />
+        ) : (
+          <Building2 className="w-5 h-5 text-blue-600" />
+        )}
+      </div>
+    );
   };
 
   if (error) {
@@ -154,17 +180,7 @@ const FeedbackSection: React.FC<FeedbackSectionProps> = ({ jobSeekerId }) => {
                 <div key={feedback.id} className="border rounded-lg p-4">
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center overflow-hidden">
-                        {feedback.companyLogo ? (
-                          <img 
-                            src={feedback.companyLogo} 
-                            alt={feedback.companyName}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <Building2 className="w-5 h-5 text-blue-600" />
-                        )}
-                      </div>
+                      {renderCompanyAvatar(feedback)}
                       <div>
                         <h4 className="font-semibold text-gray-900">
                           {feedback.employerName || feedback.companyName}

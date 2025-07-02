@@ -13,6 +13,7 @@ interface EmployerFeedbackSectionProps {
 const EmployerFeedbackSection: React.FC<EmployerFeedbackSectionProps> = ({ employerId }) => {
   const [feedbacks, setFeedbacks] = useState<FeedbackDto[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
   const { setIsLoading } = useLoading();
 
   useEffect(() => {
@@ -79,6 +80,30 @@ const EmployerFeedbackSection: React.FC<EmployerFeedbackSectionProps> = ({ emplo
 
   const handleRetry = () => {
     window.location.reload();
+  };
+
+  const renderJobSeekerAvatar = (feedback: FeedbackDto) => {
+    const imageKey = `jobseeker-${feedback.id}`;
+    const hasImageFailed = failedImages.has(imageKey);
+    const hasValidAvatar = feedback.accountAvatar && !hasImageFailed;
+
+    return (
+      <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center overflow-hidden">
+        {hasValidAvatar ? (
+          <img 
+            src={feedback.accountAvatar} 
+            alt={feedback.accountName}
+            className="w-full h-full object-cover"
+            onError={() => {
+              console.log('Job seeker avatar failed to load for:', feedback.accountName);
+              setFailedImages(prev => new Set(prev).add(imageKey));
+            }}
+          />
+        ) : (
+          <User className="w-5 h-5 text-green-600" />
+        )}
+      </div>
+    );
   };
 
   if (error) {
@@ -154,17 +179,7 @@ const EmployerFeedbackSection: React.FC<EmployerFeedbackSectionProps> = ({ emplo
                 <div key={feedback.id} className="border rounded-lg p-4">
                   <div className="flex items-start justify-between mb-3">
                                          <div className="flex items-center gap-3">
-                       <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center overflow-hidden">
-                         {feedback.accountAvatar ? (
-                           <img 
-                             src={feedback.accountAvatar} 
-                             alt={feedback.accountName}
-                             className="w-full h-full object-cover"
-                           />
-                         ) : (
-                           <User className="w-5 h-5 text-green-600" />
-                         )}
-                       </div>
+                       {renderJobSeekerAvatar(feedback)}
                        <div>
                          <h4 className="font-semibold text-gray-900">
                            {feedback.accountName || 'Ứng viên'}

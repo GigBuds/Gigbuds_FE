@@ -44,7 +44,13 @@ export interface FeedbacksResponse {
 class FeedbackApi {
     async createFeedback(feedback: CreateFeedbackDto): Promise<FeedbackResponse> {
         try {
-            const response = await fetchApi.post('feedbacks', feedback);
+            // Convert feedbackType enum to string
+            const feedbackData = {
+                ...feedback,
+                feedbackType: FeedbackType[feedback.feedbackType]
+            };
+            
+            const response = await fetchApi.post('feedbacks', feedbackData);
             console.log('Create feedback API response:', response);
             
             return {

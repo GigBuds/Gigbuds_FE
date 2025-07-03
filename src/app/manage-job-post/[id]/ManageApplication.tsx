@@ -65,9 +65,8 @@ const ManageApplication = ({ selectedJob }: ManageApplicationProps) => {
   const { setIsLoading } = useLoading();
   const router = useRouter();
 
-  // Handle feedback submission callback
-  const handleFeedbackSubmitted = async () => {
-    // Refresh applications list to update isFeedback status
+  // Helper function to refetch applications
+  const refetchApplications = async () => {
     if (selectedJob?.id) {
       try {
         const response = await applicationApi.getApplicationsByJobPostId(
@@ -86,6 +85,12 @@ const ManageApplication = ({ selectedJob }: ManageApplicationProps) => {
         console.error("Error refreshing applications:", err);
       }
     }
+  };
+
+  // Handle feedback submission callback
+  const handleFeedbackSubmitted = async () => {
+    // Refresh applications list to update isFeedback status
+    await refetchApplications();
   };
 
   // Status configuration
@@ -219,13 +224,8 @@ const ManageApplication = ({ selectedJob }: ManageApplicationProps) => {
       setIsUpdatingStatus(true);
       await applicationApi.updateStatusForApplications(applicationId, newStatus);
 
-      setApplications(prev =>
-        prev.map(app =>
-          app.id === applicationId // Changed from app.accountId to app.id
-            ? { ...app, applicationStatus: newStatus }
-            : app
-        )
-      );
+      // Refetch applications to get updated data including job history
+      await refetchApplications();
 
       toast.success(`Cập nhật trạng thái thành công`);
     } catch (error) {
@@ -254,14 +254,8 @@ const ManageApplication = ({ selectedJob }: ManageApplicationProps) => {
       // Wait for all updates to complete
       await Promise.all(updatePromises);
 
-      // Update local state after all API calls succeed
-      setApplications(prev =>
-        prev.map(app =>
-          selectedApplications.includes(app.id)
-            ? { ...app, applicationStatus: newStatus }
-            : app
-        )
-      );
+      // Refetch applications to get updated data including job history
+      await refetchApplications();
 
       setSelectedApplications([]);
       toast.success(`Cập nhật trạng thái cho ${selectedApplications.length} ứng viên thành công`);

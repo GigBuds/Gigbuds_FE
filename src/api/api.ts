@@ -1,6 +1,6 @@
 // const baseUrl = process.env.BASE_URL ?? "https://localhost:50876/api/v1/";
 // const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "https://gigbuds-c3fagtfwe2brewha.eastasia-01.azurewebsites.net/api/v1/";
-const baseUrl = "https://sharing-ultimately-crappie.ngrok-free.app/api/v1/";
+const baseUrl = "https://srv840734.hstgr.cloud/api/v1/";
 
 
 const getAuthHeaders = (): HeadersInit => {

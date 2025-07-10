@@ -17,7 +17,6 @@ import {
   FileText, 
   Hash, 
   Edit3, 
-  Upload,
   X,
   CheckCircle,
   AlertCircle

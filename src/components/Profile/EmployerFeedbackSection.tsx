@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
+import Image from 'next/image';
 import { Star, MessageSquare, Calendar, User } from 'lucide-react';
 import { feedbackApi, FeedbackDto, FeedbackType } from '@/service/feedbackService/feedbackService';
 import { useLoading } from '@/contexts/LoadingContext';
@@ -85,14 +86,14 @@ const EmployerFeedbackSection: React.FC<EmployerFeedbackSectionProps> = ({ emplo
   const renderJobSeekerAvatar = (feedback: FeedbackDto) => {
     const imageKey = `jobseeker-${feedback.id}`;
     const hasImageFailed = failedImages.has(imageKey);
-    const hasValidAvatar = feedback.accountAvatar && !hasImageFailed;
-
-    return (
+    const hasValidAvatar = feedback.accountAvatar && !hasImageFailed;    return (
       <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center overflow-hidden">
         {hasValidAvatar ? (
-          <img 
+          <Image 
             src={feedback.accountAvatar} 
             alt={feedback.accountName}
+            width={40}
+            height={40}
             className="w-full h-full object-cover"
             onError={() => {
               console.log('Job seeker avatar failed to load for:', feedback.accountName);

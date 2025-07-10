@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
+import Image from 'next/image';
 import { Star, MessageSquare, Calendar, Building2 } from 'lucide-react';
 import { feedbackApi, FeedbackDto, FeedbackType } from '@/service/feedbackService/feedbackService';
 import { useLoading } from '@/contexts/LoadingContext';
@@ -86,14 +87,14 @@ const FeedbackSection: React.FC<FeedbackSectionProps> = ({ jobSeekerId }) => {
     const imageKey = `company-${feedback.id}`;
     const hasImageFailed = failedImages.has(imageKey);
     // Always prioritize companyLogo for EmployerToJobSeeker feedback
-    const hasValidLogo = feedback.companyLogo && !hasImageFailed;
-
-    return (
+    const hasValidLogo = feedback.companyLogo && !hasImageFailed;    return (
       <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center overflow-hidden">
         {hasValidLogo ? (
-          <img 
+          <Image 
             src={feedback.companyLogo} 
             alt={feedback.companyName}
+            width={40}
+            height={40}
             className="w-full h-full object-cover"
             onError={() => {
               console.log('Company logo failed to load for:', feedback.companyName);

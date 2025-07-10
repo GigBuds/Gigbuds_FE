@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Smartphone, Loader2, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import paymentService, { ProcessMobilePaymentRequest, ApiResponse, ProcessMobilePaymentResponse } from '@/service/paymentService';
@@ -17,7 +17,7 @@ export default function MobileIntermediatePage() {
   const status = searchParams.get('status');
 
   // Call backend API to register membership and update transaction
-  const processPaymentResult = async () => {
+  const processPaymentResult = useCallback(async () => {
     if (!orderCode || !status) {
       setApiStatus('error');
       setApiMessage('Missing payment parameters');
@@ -38,11 +38,11 @@ export default function MobileIntermediatePage() {
 
       if (result.success) {
         setApiStatus('success');
-        setApiMessage(result.message || result.data?.message || 'Payment processed successfully');
+        setApiMessage((result.message ?? result.data?.message) ?? 'Payment processed successfully');
         return true;
       } else {
         setApiStatus('error');
-        setApiMessage(result.error || result.message || 'Failed to process payment');
+        setApiMessage((result.error ?? result.message) ?? 'Failed to process payment');
         return false;
       }
     } catch (error) {
@@ -51,10 +51,10 @@ export default function MobileIntermediatePage() {
       setApiMessage('Network error occurred');
       return false;
     }
-  };
+  }, [orderCode, status, setApiStatus, setApiMessage]);
 
   // Redirect to mobile app
-  const redirectToMobileApp = () => {
+  const redirectToMobileApp = useCallback(() => {
     if (!orderCode || !status) {
       console.error('Missing PayOS parameters');
       return;
@@ -63,7 +63,7 @@ export default function MobileIntermediatePage() {
     setIsRedirecting(true);
     
     // Use development deep link for now - change to gigbuds:// for production APK
-    const deepLinkUrl = `exp://172.16.16.7:8082/--/payment-result?status=${status}&orderCode=${orderCode}`;
+    const deepLinkUrl = `exp://192.168.0.105:8081/--/payment-result?status=${status}&orderCode=${orderCode}`;
     // For production APK: const deepLinkUrl = `gigbuds://payment-result?status=${status}&orderCode=${orderCode}`;
     
     console.log('Redirecting to mobile app:', deepLinkUrl);
@@ -74,7 +74,7 @@ export default function MobileIntermediatePage() {
     } catch (error) {
       console.error('Failed to redirect to mobile app:', error);
     }
-  };
+  }, [orderCode, status]);
 
   // Process payment and then redirect
   useEffect(() => {
@@ -98,7 +98,7 @@ export default function MobileIntermediatePage() {
       
       handlePaymentFlow();
     }
-  }, [orderCode, status]);
+  }, [orderCode, status, processPaymentResult, redirectToMobileApp]);
 
   // Prevent page navigation and back button
   useEffect(() => {

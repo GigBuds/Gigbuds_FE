@@ -1,5 +1,5 @@
+import { JobShift } from "@/types/jobPostService";
 import { EventApi } from "@fullcalendar/core/index.js";
-import { JobShift } from "@/types/jobPost/jobShift";
 
 export default function ConvertEventApiToShift(event: EventApi): JobShift {
     return {

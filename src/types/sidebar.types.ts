@@ -7,6 +7,16 @@ export interface MenuItem {
   link: string;
 }
 
+export interface Membership {
+  Id: number;
+  Title: string;
+  Type: string;
+  StartDate: string;
+  EndDate: string;
+  Status: string;
+  MembershipId: number;
+}
+
 export interface User {
   id: number;
   firstName: string;
@@ -16,7 +26,8 @@ export interface User {
   isMale: boolean;
   name: string;
   email: string;
-  roles?: string[];
+  roles: string[];
+  memberships: Membership[]; // Add this line
 }
 
 export interface SidebarVariants {

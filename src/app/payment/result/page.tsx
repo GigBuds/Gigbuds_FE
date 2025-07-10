@@ -1,8 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { CheckCircle, XCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { useAppSelector, useAppDispatch } from '@/lib/redux/hooks';
+import { selectUserId, setMemberships } from '@/lib/redux/features/userSlice';
+import paymentService, { PaymentReturnRequest, RenewTokenRequest } from '@/service/paymentService/PaymentService';
 
 interface PaymentResult {
   success: boolean;
@@ -17,11 +20,74 @@ export default function PaymentResultPage() {
   const [result, setResult] = useState<PaymentResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [renewingToken, setRenewingToken] = useState(false);
+  
+  // Redux hooks
+  const dispatch = useAppDispatch();
+  const userId = useAppSelector(selectUserId);
+
+  // Clean up old payment results from localStorage (older than 24 hours)
+  const cleanupOldPaymentResults = useCallback(() => {
+    try {
+      const processedPaymentsKey = 'processedPayments';
+      const processedPayments = JSON.parse(localStorage.getItem(processedPaymentsKey) || '[]');
+      const cleanupTimestamp = Date.now() - (24 * 60 * 60 * 1000); // 24 hours ago
+      
+      processedPayments.forEach((paymentKey: string) => {
+        const resultKey = `paymentResult-${paymentKey}`;
+        const timestampKey = `paymentTimestamp-${paymentKey}`;
+        const timestamp = localStorage.getItem(timestampKey);
+        
+        if (timestamp && parseInt(timestamp) < cleanupTimestamp) {
+          localStorage.removeItem(resultKey);
+          localStorage.removeItem(timestampKey);
+        }
+      });
+      
+      // Clean up the processed payments array
+      const recentPayments = processedPayments.filter((paymentKey: string) => {
+        const timestampKey = `paymentTimestamp-${paymentKey}`;
+        const timestamp = localStorage.getItem(timestampKey);
+        return timestamp && parseInt(timestamp) >= cleanupTimestamp;
+      });
+      
+      localStorage.setItem(processedPaymentsKey, JSON.stringify(recentPayments));
+    } catch (error) {
+      console.error('Error cleaning up old payment results:', error);
+    }
+  }, []);
 
   // Extract parameters from URL
   const orderCode = searchParams.get('orderCode');
   const status = searchParams.get('status');
   const amount = searchParams.get('amount');
+
+  // Function to renew ID token after successful payment
+  const renewIdTokenAfterPayment = useCallback(async () => {
+    if (!userId) {
+      console.warn('⚠️ Could not get user ID from Redux, skipping token renewal');
+      return;
+    }
+
+    try {
+      setRenewingToken(true);
+      
+      const request: RenewTokenRequest = { userId };
+      const response = await paymentService.renewIdToken(request);
+      
+      if (response.success && response.data?.memberships) {
+        dispatch(setMemberships(response.data.memberships));
+        console.log('✅ Memberships updated in Redux:', response.data.memberships);
+      }
+      
+      console.log('✅ ID token renewed successfully after payment');
+    } catch (error) {
+      console.error('❌ Error renewing ID token after payment:', error);
+      // Don't throw error here as payment was successful, just log the issue
+    } finally {
+      setRenewingToken(false);
+    }
+  }, [userId, dispatch]);
 
   useEffect(() => {
     const handlePaymentReturn = async () => {
@@ -31,37 +97,79 @@ export default function PaymentResultPage() {
         return;
       }
 
-      try {
-        setLoading(true);
-        
-        const apiUrl = `${process.env.NEXT_PUBLIC_BASE_URL}payments/return?orderCode=${orderCode}&status=${status}`;
-        console.log('Making API call to:', apiUrl);
-        console.log('Environment API URL:', process.env.NEXT_PUBLIC_BASE_URL);
-        
-        // Call the backend payment return API
-        const response = await fetch(apiUrl, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
+      // Clean up old payment results first
+      cleanupOldPaymentResults();
 
-        const data = await response.json();
-        console.log('API Response:', { status: response.status, data });
+      // Check if this payment has already been processed
+      const processedPaymentsKey = 'processedPayments';
+      const processedPayments = JSON.parse(localStorage.getItem(processedPaymentsKey) || '[]');
+      const paymentKey = `${orderCode}-${status}`;
+      
+      if (processedPayments.includes(paymentKey)) {
+        console.log('🔄 Payment already processed, loading from cache...');
+        // Load cached result if available
+        const cachedResultKey = `paymentResult-${paymentKey}`;
+        const cachedResult = localStorage.getItem(cachedResultKey);
         
-        if (response.ok) {
+        if (cachedResult) {
+          setResult(JSON.parse(cachedResult));
+        } else {
+          // Fallback: show success message for already processed payments
           setResult({
-            success: data.success,
-            message: data.message,
+            success: status?.toUpperCase() === 'PAID',
+            message: status?.toUpperCase() === 'PAID' 
+              ? 'Payment has been processed successfully' 
+              : 'Payment was not completed',
             orderCode: orderCode,
             amount: amount ? parseFloat(amount) : undefined,
           });
-        } else {
-          setResult({
-            success: false,
-            message: data.message || 'Payment processing failed',
+        }
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        
+        // Use PaymentService to process payment return
+        const request: PaymentReturnRequest = { orderCode, status };
+        const response = await paymentService.processPaymentReturn(request);
+        
+        if (response.success && response.data) {
+          const paymentResult = {
+            success: response.data.success,
+            message: response.data.message,
             orderCode: orderCode,
-          });
+            amount: amount ? parseFloat(amount) : undefined,
+          };
+          
+          setResult(paymentResult);
+          
+          // Cache the result and mark as processed
+          localStorage.setItem(`paymentResult-${paymentKey}`, JSON.stringify(paymentResult));
+          localStorage.setItem(`paymentTimestamp-${paymentKey}`, Date.now().toString());
+          processedPayments.push(paymentKey);
+          localStorage.setItem(processedPaymentsKey, JSON.stringify(processedPayments));
+          
+          // If payment is successful, renew the ID token to include new membership info
+          if (paymentResult.success && status?.toUpperCase() === 'PAID') {
+            console.log('✅ Payment successful! Renewing ID token...');
+            await renewIdTokenAfterPayment();
+          }
+        } else {
+          const paymentResult = {
+            success: false,
+            message: response.error || 'Payment processing failed',
+            orderCode: orderCode,
+          };
+          
+          setResult(paymentResult);
+          
+          // Cache the failed result and mark as processed
+          localStorage.setItem(`paymentResult-${paymentKey}`, JSON.stringify(paymentResult));
+          localStorage.setItem(`paymentTimestamp-${paymentKey}`, Date.now().toString());
+          processedPayments.push(paymentKey);
+          localStorage.setItem(processedPaymentsKey, JSON.stringify(processedPayments));
         }
       } catch (err) {
         console.error('Payment return error:', err);
@@ -72,7 +180,7 @@ export default function PaymentResultPage() {
     };
 
     handlePaymentReturn();
-  }, [orderCode, status, amount]);
+  }, [orderCode, status, amount, cleanupOldPaymentResults, renewIdTokenAfterPayment]);
 
   const getStatusInfo = () => {
     if (error) {
@@ -152,6 +260,14 @@ export default function PaymentResultPage() {
           <p className="text-gray-600 mb-6">
             {statusInfo?.message}
           </p>
+
+          {/* Token Renewal Indicator */}
+          {renewingToken && (
+            <div className="flex items-center justify-center bg-blue-50 border border-blue-200 rounded-lg p-3 mb-6">
+              <Loader2 className="w-4 h-4 text-blue-600 animate-spin mr-2" />
+              <span className="text-blue-800 text-sm font-medium">Updating your membership...</span>
+            </div>
+          )}
 
           {/* Order Details */}
           {result && (

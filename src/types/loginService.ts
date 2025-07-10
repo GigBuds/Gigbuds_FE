@@ -1,3 +1,5 @@
+import { Membership } from "./sidebar.types";
+
 export interface LoginRequest {
   identifier: string;
   password: string;
@@ -5,15 +7,9 @@ export interface LoginRequest {
 
 export interface LoginResponse {
   refresh_token: string;
-  success: boolean;
   access_token?: string;
   id_token?: string;
-  user?: {
-    id: string;
-    email: string;
-    name?: string;
-  };
-  message?: string;
+
 }
 
 export interface JWTPayload {
@@ -24,7 +20,7 @@ export interface JWTPayload {
   phone?: string;
   birthDate?: Date;
   isMale?: boolean;
-  roles?: string[];
+  role?: string[];
   exp: number;
-  [key: string]: unknown;
+  memberships?: Membership;
 }

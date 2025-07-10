@@ -5,7 +5,7 @@ import { Briefcase } from "lucide-react";
 import SectionHeader from "./SectionHeader";
 import ProfileCard from "./ProfileCard";
 
-interface Experience {
+export interface Experience {
   id: string;
   jobPosition: string;
   company: string;
@@ -18,7 +18,7 @@ interface ExperienceSectionProps {
   experiences: Experience[];
 }
 
-const ExperienceSection: React.FC<ExperienceSectionProps> = ({ experiences }) => {
+const ExperienceSection: React.FC<ExperienceSectionProps> = ({ experiences } ) => {
   if (!experiences || experiences.length === 0) {
     return (
       <div className="bg-white shadow-sm rounded-lg overflow-hidden">

@@ -8,35 +8,40 @@ import { FormValues } from "@/types/login.types";
 import { useRouter } from "next/navigation";
 import { useLoading } from "@/contexts/LoadingContext";
 import { useAuth } from "@/hooks/useAuth";
-
+import { useAppSelector } from "@/lib/redux/hooks";
+import { selectUser } from "@/lib/redux/features/userSlice";
 
 const LoginInput = () => {
   const router = useRouter();
   const googleClientId = process.env.GOOGLE_CLIENT_ID ?? "";
   const {setIsLoading, isLoading} = useLoading();
   const {login} = useAuth();
+  const user = useAppSelector(selectUser);
+  if (user.id !== null) router.push("/");
 
   const onFinish = async (values: FormValues) => {
+
     setIsLoading(true);
     try {
-      console.log('Calling API with:', values.identifier, values.password);
       const response = await login(values.identifier, values.password);
       
-      // Handle successful login
-      toast.success("Login successful!");
-      console.log("Login response:", response);
+      if (response?.id_token) {
+        // Handle successful login
+        toast.success("Login successful!");
+        setTimeout(() => {
+        setIsLoading(false); 
+        console.log('redirecting to home page');
+        router.push("/"); // Redirect to home page after login
+      }, 2000);
+      } else {
+        toast.error("Login failed. Please check your credentials.");
+        setIsLoading(false);
+      }
     } catch (error) {
       console.error("Login error:", error);
       toast.error("Login failed. Please check your credentials.");
     } finally {
-      setTimeout(() => {
-        setIsLoading(false); 
-        console.log('redirecting to home page');
-        router.push("/"); // Redirect to home page after login
-      }
-      , 2000); // Adjust the delay as needed
-
-
+      setIsLoading(false);
     }
   };
 

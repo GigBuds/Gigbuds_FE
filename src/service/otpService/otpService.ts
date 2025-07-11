@@ -35,7 +35,7 @@ export interface ApiError {
 class OtpService {
   async verifyOtp(otpData: OtpVerificationRequest): Promise<OtpVerificationResponse> {
     try {
-      const response = await fetchApi.post('/verify-phone', otpData);
+      const response = await fetchApi.post('verify-phone', otpData);
       return response;
     } catch (error) {
       if (error instanceof Error) {
@@ -50,7 +50,7 @@ class OtpService {
 
   async resendOtp(phoneData: ResendOtpRequest): Promise<ResendOtpResponse> {
     try {
-      const response = await fetchApi.post('/send-verification-code', phoneData);
+      const response = await fetchApi.post('send-verification-code', phoneData);
       if (response && response.success) {
         toast.success('OTP has been resent successfully');
       }

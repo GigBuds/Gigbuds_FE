@@ -33,7 +33,7 @@ export interface ApiError {
 class RegisterService {
   async register(userData: RegisterRequest): Promise<RegisterResponse> {
     try {
-      const response = await fetchApi.post('register-employer', userData);
+      const response = await fetchApi.post('identities/register-employer', userData);
       return response as RegisterResponse;
     } catch (error) {
       console.error('Registration error:', error);

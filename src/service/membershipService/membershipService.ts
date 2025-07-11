@@ -1,6 +1,19 @@
 import fetchApi from "@/api/api";
 import { MembershipResponse, RegisterMemberShip, PaymentResponse, UserMembership } from "@/types/membership.types";
 
+export interface EditMembershipData {
+  title: string;
+  description: string;
+  price: number;
+  duration: number;
+}
+
+export interface EditMembershipResponse {
+  success: boolean;
+  message?: string;
+  data?: EditMembershipData;
+}
+
 export class MembershipService {
   static async getMemberships(): Promise<MembershipResponse> {
     try {
@@ -38,6 +51,30 @@ export class MembershipService {
       return response;
     } catch (error) {
       console.error('Revoke Membership API error:', error);
+      throw error;
+    }
+  }  static async editMembership(membershipId: number, membership: EditMembershipData): Promise<EditMembershipResponse> {
+    try {
+      const response = await fetchApi.put(`member-ships/update/${membershipId}`, membership);
+      
+      // If fetchApi.put returns a Response object, we need to handle it properly
+      if (response instanceof Response) {
+        const responseText = await response.text();
+        if (responseText) {
+          try {
+            return JSON.parse(responseText);
+          } catch {
+            return { success: true, message: 'Membership updated successfully' };
+          }
+        } else {
+          return { success: true, message: 'Membership updated successfully' };
+        }
+      }
+      
+      // If it's already a parsed object, return it
+      return response;
+    } catch (error) {
+      console.error('Edit Membership API error:', error);
       throw error;
     }
   }

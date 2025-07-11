@@ -1,6 +1,6 @@
 "use client"
 import Cookies from 'js-cookie'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
@@ -41,6 +41,17 @@ const menuItems: MenuItem[] = [
   { id: 'logout', label: Texts.LOGOUT, icon: <IoLogOutOutline/>, link: '/login' },
 ]
 
+// Admin menu items configuration
+const adminMenuItems: MenuItem[] = [
+
+  { id: 'admin-dashboard', label: 'Dashboard', icon: <IoHomeOutline/>, link: '/admin/dashboard' },
+  { id: 'admin-transactions', label: 'Transactions', icon: <IoDocumentTextOutline/>, link: '/admin/transactions' },
+  { id: 'admin-memberships', label: 'Memberships', icon: <BsShieldLock />, link: '/admin/memberships' },
+  { id: 'admin-accounts', label: 'All Accounts', icon: <MdOutlineSupervisorAccount/>, link: '/admin/accounts' },
+  { id: 'admin-job-posts', label: 'Job Posts', icon: <IoDocumentTextOutline/>, link: '/admin/job-posts' },
+  { id: 'logout', label: Texts.LOGOUT, icon: <IoLogOutOutline/>, link: '/login' },
+]
+
 // Animation variants
 const sidebarVariants = {
   open: { width: '250px' },
@@ -67,20 +78,26 @@ const Sidebar = () => {
   const pathname = usePathname()
   const dispatch = useAppDispatch()
   const user = useAppSelector(selectUser)
+  console.log('Current user:', user)
   const { logout } = useAuth()
   
   const [isOpen, setIsOpen] = useState(false)
   const [selectedItem, setSelectedItem] = useState('homepage')
-  const notifications = useAppSelector(selectNotifications)
+  const notifications = useAppSelector(selectNotifications)  // Check if user has admin role
+  const isAdmin = user?.roles?.some((role: string) => 
+    role.toLowerCase() === 'admin'
+  ) || false
 
+  // Get the appropriate menu items based on user role
+  const currentMenuItems = isAdmin ? adminMenuItems : menuItems
   // Helper function to determine selected item from current path
-  const getSelectedItemFromPath = (currentPath: string): string => {
+  const getSelectedItemFromPath = useCallback((currentPath: string): string => {
     // Direct match first
-    const directMatch = menuItems.find(item => item.link === currentPath)
+    const directMatch = currentMenuItems.find(item => item.link === currentPath)
     if (directMatch) return directMatch.id
 
     // Handle dynamic routes
-    for (const item of menuItems) {
+    for (const item of currentMenuItems) {
       if (currentPath.startsWith(item.link) && item.link !== '/') {
         if (currentPath.startsWith(item.link + '/')) {
           return item.id
@@ -89,10 +106,10 @@ const Sidebar = () => {
     }
 
     // Handle root path
-    if (currentPath === '/') return 'homepage'
+    if (currentPath === '/') return isAdmin ? 'admin-dashboard' : 'homepage'
     
-    return 'homepage' // Default fallback
-  }
+    return isAdmin ? 'admin-dashboard' : 'homepage' // Default fallback
+  }, [currentMenuItems, isAdmin])
 
   // Handle logout functionality
   const handleLogout = async () => {
@@ -133,13 +150,11 @@ const Sidebar = () => {
       console.log('User or access token not found, redirecting to login')
       router.push('/login')
     }
-  }, [user, router])
-
-  // Update selected item based on current path
+  }, [user, router])  // Update selected item based on current path
   useEffect(() => {
     const selectedId = getSelectedItemFromPath(pathname)
     setSelectedItem(selectedId)
-  }, [pathname])
+  }, [pathname, getSelectedItemFromPath])
 
   // Don't render if user is not authenticated
   if (!user?.id) {
@@ -189,35 +204,33 @@ const Sidebar = () => {
               {Texts.VIEW_PROFILE}
             </p>
           </motion.div>
-        </motion.div>
-
-        {/* Write Post Button */}
-        <motion.div 
-          className='flex flex-row rounded-xl bg-gradient-to-r from-[#FF7345] to-[#FFDC95] items-center mb-2 shadow-md cursor-pointer'
-          initial={{ scale: 1 }}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          transition={{ type: "spring", stiffness: 300, damping: 20 }}
-          onClick={handleWritePost}
-        >
-          <div className='flex items-center py-2'>
-            <TbEdit className='text-xl w-12 h-7 text-white flex items-center justify-center flex-shrink-0' />
-            <motion.div 
-              className='overflow-hidden text-sm font-medium whitespace-nowrap'
-              initial="closed"
-              animate={isOpen ? "open" : "closed"}
-              variants={textVariants}
-              transition={profileTextTransition}
-            >
-              <p className='text-sm text-white whitespace-nowrap'>{Texts.WRITE_POST}</p>
-            </motion.div>
-          </div>
-        </motion.div>
-
-        {/* Navigation Menu */}
+        </motion.div>        {/* Write Post Button - Only for non-admin users */}
+        {!isAdmin && (
+          <motion.div 
+            className='flex flex-row rounded-xl bg-gradient-to-r from-[#FF7345] to-[#FFDC95] items-center mb-2 shadow-md cursor-pointer'
+            initial={{ scale: 1 }}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            transition={{ type: "spring", stiffness: 300, damping: 20 }}
+            onClick={handleWritePost}
+          >
+            <div className='flex items-center py-2'>
+              <TbEdit className='text-xl w-12 h-7 text-white flex items-center justify-center flex-shrink-0' />
+              <motion.div 
+                className='overflow-hidden text-sm font-medium whitespace-nowrap'
+                initial="closed"
+                animate={isOpen ? "open" : "closed"}
+                variants={textVariants}
+                transition={profileTextTransition}
+              >
+                <p className='text-sm text-white whitespace-nowrap'>{Texts.WRITE_POST}</p>
+              </motion.div>
+            </div>
+          </motion.div>
+        )}{/* Navigation Menu */}
         <nav className='rounded-2xl py-1 bg-white'>
           <ul className='justify-between flex flex-col'>
-            {menuItems.map((item) => (
+            {currentMenuItems.map((item) => (
               <React.Fragment key={item.id}>
                 <li className='my-1'>
                   <motion.div 

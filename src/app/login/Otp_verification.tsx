@@ -65,8 +65,7 @@ const Otp_verification = ({
 
       // Call the verify OTP API
       const response = await otpService.verifyOtp(otpData);
-      
-      if (response.success) {
+      if (response.message === 'Phone number verified successfully') {
         toast.success(response.message || 'Xác thực OTP thành công!');
         setIsVerified(true);
         setTimeout(() => {
@@ -128,7 +127,7 @@ const Otp_verification = ({
         phoneNumber: otpService.formatPhoneNumber(phoneNumber)
       });
       
-      if (response.success) {
+      if (response.message === 'Verification code sent successfully') {
         toast.success(response.message || 'Mã OTP đã được gửi lại!');
         setOtpValue(""); // Clear current OTP
         setCountdown(60); // Start 60-second countdown

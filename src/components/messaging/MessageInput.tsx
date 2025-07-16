@@ -1,31 +1,114 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Send, Paperclip, Smile, Image, Mic } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useDispatch } from 'react-redux'
+import { selectDraft, upsertDraft } from '@/lib/redux/features/draftSlice'
+import { useAppSelector } from '@/lib/redux/hooks'
+import { ConversationMetadata } from '@/types/messaging.types'
+import messagingSignalRService from '@/service/signalrService/messaging/messagingSignalRService'
+import { SEND_TYPING_INDICATOR } from '@/service/signalrService/messaging/messagingInvokeMethods'
+import { selectUser } from '@/lib/redux/features/userSlice'
+interface MessageInputProps {
+  handleSend: (content: string) => void
+  selectedConversation: ConversationMetadata
+}
 
-const MessageInput = () => {
+const MessageInput = ({ handleSend, selectedConversation } : MessageInputProps) => {
+  const selector = useAppSelector(selectDraft);
+  const user = useAppSelector(selectUser);
   const [message, setMessage] = useState('')
   const [isRecording, setIsRecording] = useState(false)
+  const dispatch = useDispatch()
+  const dispatchRef = useRef(dispatch)
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const currentMessageRef = useRef(message)
+  const currentConversationRef = useRef(selectedConversation.id)
+  const [isTyping, setIsTyping] = useState(false)
 
-  const handleSend = () => {
-    if (message.trim()) {
-      // TODO: Implement send functionality
-      console.log('Sending message:', message)
-      setMessage('')
+  useEffect(() => {
+    dispatchRef.current = dispatch;
+  }, [dispatch]);
+
+  // Debounce save draft when message or selectedConversation changes
+  useEffect(() => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current)
     }
-  }
+    timeoutRef.current = setTimeout(() => {
+      if (
+        currentMessageRef.current !== message ||
+        currentConversationRef.current !== selectedConversation.id
+      ) {
+        dispatchRef.current(
+          upsertDraft({
+            conversationId: selectedConversation.id,
+            content: message,
+          })
+        )
+        currentMessageRef.current = message
+        currentConversationRef.current = selectedConversation.id
+      }
+    }, 500) 
+
+    // Cleanup on unmount or before next effect
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current)
+      }
+    }
+  }, [message, selectedConversation, dispatchRef])
+
+  useEffect(() => {
+    const storedDraft = selector.find(x => x.conversationId === selectedConversation.id);
+    setMessage(storedDraft?.content ?? '')
+  }, [selectedConversation.id, selector])
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      handleSend()
+    if (e.key === 'Enter' && !e.shiftKey && message.trim() !== '') {
+      e.preventDefault();
+      setMessage('');
+      handleSend(message);
+      setIsTyping(false)
+      messagingSignalRService.SendHubMethod(
+        SEND_TYPING_INDICATOR, 
+        Number(selectedConversation.id), 
+        false, 
+        user.name).catch(error => {
+        console.error("Error sending typing indicator", error);
+      });
     }
   }
 
   const handleVoiceRecord = () => {
     setIsRecording(!isRecording)
     // TODO: Implement voice recording
+  }
+
+  const handleOnChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const conversationId = Number(selectedConversation.id)
+    if (e.target.value.length > 0 && !isTyping) {
+      console.log("Sending typing indicator", isTyping, user.name)
+      setIsTyping(true)
+      messagingSignalRService.SendHubMethod(
+        SEND_TYPING_INDICATOR, 
+        conversationId,
+        true, 
+        user.name).catch(error => {
+        console.error("Error sending typing indicator", error);
+      });
+    } else if (e.target.value.length === 0 && isTyping) {
+      setIsTyping(false)
+      messagingSignalRService.SendHubMethod(
+        SEND_TYPING_INDICATOR, 
+        conversationId, 
+        false, 
+        user.name).catch(error => {
+        console.error("Error sending typing indicator", error);
+      });
+    }
+    setMessage(e.target.value)
   }
 
   return (
@@ -47,8 +130,8 @@ const MessageInput = () => {
             <div className="flex-1 relative">
               <textarea
                 value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                onKeyPress={handleKeyPress}
+                onChange={handleOnChange}
+                onKeyDown={handleKeyPress}
                 placeholder="Type a message..."
                 className="w-full px-4 py-3 bg-transparent text-gray-900 placeholder-gray-500 resize-none focus:outline-none max-h-32 min-h-[48px]"
                 rows={1}
@@ -74,7 +157,18 @@ const MessageInput = () => {
         {/* Voice/Send Button */}
         {message.trim() ? (
           <button
-            onClick={handleSend}
+            onClick={() => {
+              handleSend(message)
+              setMessage('')
+              setIsTyping(false)
+              messagingSignalRService.SendHubMethod(
+                SEND_TYPING_INDICATOR, 
+                Number(selectedConversation.id), 
+                false, 
+                user.name).catch(error => {
+                console.error("Error sending typing indicator", error);
+              });
+            }}
             className="p-3 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 rounded-full transition-all duration-200 transform hover:scale-105 active:scale-95 shadow-md"
           >
             <Send className="w-5 h-5 text-white" />

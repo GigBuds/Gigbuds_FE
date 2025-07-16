@@ -15,15 +15,15 @@ export class NotificationSignalRService extends BaseSignalRService {
 
   async StartConnection() {
     if (this.isConnected || this.isConnecting) {
-      console.log("SignalR: Already connected or connecting");
+      console.log("NotificationSignalRService: Already connected or connecting");
       return;
     }
 
     try {
-      console.log("SignalR: Starting connection");
+      console.log("NotificationSignalRService: Starting connection");
       this.isConnecting = true;
       const accessToken = Cookies.get('access_token');
-      console.log("SignalR: Access token", accessToken);
+      console.log("NotificationSignalRService: Access token", accessToken);
       this.hubConnection = new signalR.HubConnectionBuilder()
           .withUrl(HUB_URL, {
             accessTokenFactory: () => Promise.resolve(accessToken ?? ''),
@@ -59,10 +59,10 @@ export class NotificationSignalRService extends BaseSignalRService {
       this.isConnecting = false;
       this.reconnectAttempts = 0;
 
-      console.log("SignalR: Connected successfully");
+      console.log("NotificationSignalRService: Connected successfully");
       this.triggerCallback("onConnected");
     } catch (error) {
-      console.error("SignalR: Connection failed", error);
+      console.error("NotificationSignalRService: Connection failed", error);
       this.triggerCallback("onConnectionFailed", error);
       this.isConnected = false;
 

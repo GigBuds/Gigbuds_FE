@@ -76,6 +76,7 @@ export abstract class BaseSignalRService {
   }
 
   async StopConnection() {
+    console.log("StopConnection", this.hubConnection);
     if (this.hubConnection) {
       try {
         await this.hubConnection.stop();
@@ -137,6 +138,7 @@ export abstract class BaseSignalRService {
     if (!this.connectionCallbacks.has(eventName)) {
       this.connectionCallbacks.set(eventName, []);
     }
+    
     this.connectionCallbacks.get(eventName)!.push(callback);
   }
 
@@ -158,6 +160,32 @@ export abstract class BaseSignalRService {
     };
   }
 
+  InvokeHubMethod(methodName: string, ...args: unknown[]): Promise<unknown> {
+    console.log("InvokeHubMethod", methodName, args)
+    if (!this.hubConnection) {
+      return Promise.reject(new Error("Hub connection is not initialized."));
+    }
+
+    if (this.hubConnection.state !== signalR.HubConnectionState.Connected) {
+      return Promise.reject(new Error(`Hub connection is not connected. Current state: ${this.hubConnection.state}`));
+    }
+
+    return this.hubConnection.invoke(methodName, ...args);
+  }
+
+  SendHubMethod(methodName: string, ...args: unknown[]): Promise<void> {
+    console.log("SendHubMethod", methodName, args)
+    if (!this.hubConnection) {
+      return Promise.reject(new Error("Hub connection is not initialized."));
+    }
+
+    if (this.hubConnection.state !== signalR.HubConnectionState.Connected) {
+    return Promise.reject(new Error(`Hub connection is not connected. Current state: ${this.hubConnection.state}`));
+    }
+
+    return this.hubConnection.send(methodName, ...args);
+  }
+
   // -------------------------- GETTERS -------------------------------------------
 
   get HubConnection(): HubConnection | null {
@@ -175,6 +203,8 @@ export abstract class BaseSignalRService {
   get ReconnectAttempts(): number {
     return this.reconnectAttempts;
   }
+
+
 
   // -------------------------- SETTERS -------------------------------------------
 

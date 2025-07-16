@@ -2,40 +2,25 @@
 export { databaseInitializer, STORE_NAMES } from './databaseInitializer';
 
 // Service exports
-export { draftsService } from './draftsService';
 export { chatHistoryService } from './chatHistoryService';
-export { chatHistoryCacheService } from './chatHistoryCacheService';
-export { conversationsService } from './conversationsService';
-
-// Seed data exports
-export { seedChatHistory, reseedChatHistory, addRecentMessages, SAMPLE_USERS, seedConversations, seedAllData } from './seedData';
+export { conversationMetaDatasService } from './conversationsService';
 
 // Type exports for convenience
-export type { Drafts, ChatHistory, ChatHistoryCache, Conversation } from '@/types/messaging.types';
+export type { Drafts, ChatHistory, ConversationMetadata } from '@/types/messaging.types';
 
+import { ConversationMetadata } from '@/types/messaging.types';
 // Import services for utility functions
-import { chatHistoryCacheService } from './chatHistoryCacheService';
+import { conversationMetaDatasService } from './conversationsService';
+import { chatHistoryService } from './chatHistoryService';
 
-// Utility function for tab unload cleanup
-export const cleanupOnTabUnload = async () => {
-    try {
-        await chatHistoryCacheService.clearCache();
-        console.log('Cleanup completed on tab unload');
-    } catch (error) {
-        console.error('Failed to cleanup on tab unload:', error);
-    }
-};
 
-// Utility function for logout cleanup
-export const cleanupOnLogout = async () => {
+export const refreshConversationHistory = async (conversations: ConversationMetadata[]) => {
     try {
-        await Promise.all([
-            chatHistoryCacheService.clearCache(),
-            // Note: We keep drafts and chat history on logout
-            // They persist until next login/page refresh
-        ]);
-        console.log('Cleanup completed on logout');
+        // reset conversation meta data
+        await chatHistoryService.clearAllHistory();
+        await conversationMetaDatasService.clearAllConversationMetaDatas();
+        await conversationMetaDatasService.updateConversationMetaData(conversations);
     } catch (error) {
-        console.error('Failed to cleanup on logout:', error);
+        console.error('Failed to refresh conversation history:', error);
     }
-}; 
+}

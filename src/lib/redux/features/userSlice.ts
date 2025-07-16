@@ -23,6 +23,7 @@ export interface UserState {
     email: string | null;
     roles: string[] | null;
     memberships: Membership[] | null; // Add this line
+    avatar: string | null;
 }
 
 const initialState: UserState = {
@@ -36,6 +37,7 @@ const initialState: UserState = {
     email: null,
     roles: null,
     memberships: null, // Add this line
+    avatar: null,
 }
 
 const userSlice = createSlice({
@@ -52,6 +54,7 @@ const userSlice = createSlice({
             state.name = action.payload.name;
             state.email = action.payload.email;
             state.roles = action.payload.roles || [];
+            state.avatar = action.payload.avatar;
         },
         setMemberships: (state, action: PayloadAction<Membership[]>) => {
             const memberships = action.payload;
@@ -72,6 +75,7 @@ const userSlice = createSlice({
             state.name = user.name;
             state.email = user.email;
             state.roles = user.roles || [];
+            state.avatar = user.avatar;
             
             // Set membership info
             state.memberships = memberships;
@@ -88,6 +92,7 @@ const userSlice = createSlice({
             state.email = null;
             state.roles = null;
             state.memberships = [];
+            state.avatar = null;
         }
     },
 })

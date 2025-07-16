@@ -12,24 +12,31 @@ export function SignalRProvider({ children }: Readonly<{ children: React.ReactNo
 
     useEffect(() => {
         const startConnection = async () => {
-        if (user.id !== null) {
-            await notificationSignalRService.StartConnection();
-            if (user.roles?.includes("Employer")) {
-                console.log("SignalR: Add to employer group", user);
-                notificationSignalRService.AddToGroup("employer");
-            } else {
-                console.log("SignalR: Add to staff group", user);
-                notificationSignalRService.AddToGroup("staff");
-            }
+            if (user.id !== null) {
+                await notificationSignalRService.StartConnection();
+                if (user.roles?.includes("Employer")) {
+                    console.log("SignalR: Add to employer group", user);
+                    notificationSignalRService.AddToGroup("employer");
+                } else {
+                    console.log("SignalR: Add to staff group", user);
+                    notificationSignalRService.AddToGroup("staff");
+                }
 
-            notificationSignalRService.registerCallback("onNotificationReceived", (data) => {
+                notificationSignalRService.registerCallback("onNotificationReceived", (data) => {
+                    const notification = data as Notification;
+                    dispatch(addNotification([notification]));
+                });
+            }
+        }
+
+        startConnection();
+
+        return () => {
+            notificationSignalRService.removeCallback("onNotificationReceived", (data) => {
                 const notification = data as Notification;
                 dispatch(addNotification([notification]));
             });
         }
-        }
-
-        startConnection();
     }, [user, dispatch]);
 
     useEffect(() => {

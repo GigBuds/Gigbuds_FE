@@ -38,6 +38,7 @@ export interface UserData {
     email?: string;
     birthdate?: string | Date;
     birthDate?: string | Date;
+    avatar?: string;
     [key: string]: unknown; // Allow additional properties
 }
 
@@ -164,6 +165,7 @@ const mapJWTToUser = (userData: UserData): User => {
     const firstName = userData.name || userData.given_name || '';
     const lastName = userData.family_name || userData.familyName || '';
     const phone = userData.phone_number || userData.phone || '';
+    const avatar = userData.avatar ?? 'https://i1.rgstatic.net/ii/profile.image/1042631316496386-1625594085528_Q512/Nathan_Fackler.jpg';
 
     return {
         id: parseInt(userData.sub) || 0, // 'sub' is the user ID in JWT
@@ -175,6 +177,7 @@ const mapJWTToUser = (userData: UserData): User => {
         name: `${firstName} ${lastName}`.trim(),
         email: userData.email || '',
         roles,
-        memberships
+        memberships,
+        avatar
     };
 };

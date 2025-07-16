@@ -2,27 +2,23 @@
 
 import { Phone, Video, MoreVertical, ArrowLeft } from 'lucide-react'
 import UserAvatar from './UserAvatar'
-import OnlineStatus from './OnlineStatus'
 import { cn } from '@/lib/utils'
-
-interface User {
-  id: string
-  name: string
-  avatar: string
-  isOnline: boolean
-  lastSeen: string
-}
+import { ConversationMetadata } from '@/types/messaging.types'
+import { useAppSelector } from '@/lib/redux/hooks'
+import { selectUser } from '@/lib/redux/features/userSlice'
 
 interface ChatHeaderProps {
-  user: User
+  metadata: ConversationMetadata 
   onBack?: () => void
 }
 
-const ChatHeader = ({ user, onBack }: ChatHeaderProps) => {
+const ChatHeader = ({ metadata, onBack }: ChatHeaderProps) => {
+  
+  const user = useAppSelector(selectUser)
   return (
     <div className="p-4 bg-white border-b border-gray-200">
       <div className="flex items-center justify-between">
-        {/* User Info */}
+        {/* Conversation Info */}
         <div className="flex items-center gap-3">
           {onBack && (
             <button 
@@ -35,24 +31,18 @@ const ChatHeader = ({ user, onBack }: ChatHeaderProps) => {
           
           <div className="relative">
             <UserAvatar 
-              src={user.avatar}
-              alt={user.name}
+              src={metadata.creatorId === user.id ? metadata.avatarTwo : metadata.avatarOne}
+              alt={(metadata.creatorId === user.id ? metadata.nameTwo : metadata.nameOne) || "User avatar"}
               size="lg"
-            />
-            <OnlineStatus 
-              status={user.isOnline ? 'online' : 'offline'} 
-              size="md" 
-              className="absolute -bottom-1 -right-1" 
             />
           </div>
 
           <div>
-            <h2 className="text-lg font-semibold text-gray-900">{user.name}</h2>
+            <h2 className="text-lg font-semibold text-gray-900">{metadata.creatorId === user.id ? metadata.nameTwo : metadata.nameOne}</h2>
             <p className={cn(
               "text-sm",
-              user.isOnline ? "text-green-500" : "text-gray-500"
+              metadata.isOnline ? "text-green-500" : "text-gray-500"
             )}>
-              {user.isOnline ? 'Active now' : user.lastSeen}
             </p>
           </div>
         </div>

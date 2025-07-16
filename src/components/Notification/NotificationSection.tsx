@@ -74,7 +74,8 @@ const NotificationSection = ({ notifications }: { notifications: Notification[] 
                 // TODO: Add profile navigation when profile page is available
                 console.log("Profile notification clicked", notification);
                 break;
-            case "application":
+            case "application": 
+            {
                 const jobId = notification.additionalPayload?.jobPostId;
                 if (jobId) {
                     router.push(`/manage-job-post?openJob=${jobId}`);
@@ -82,6 +83,7 @@ const NotificationSection = ({ notifications }: { notifications: Notification[] 
                     router.push(`/manage-job-post`);
                 }
                 break;
+            }
             case "feedback":
                 router.push(`/feedback/${notification.additionalPayload?.jobId}`);
                 break;

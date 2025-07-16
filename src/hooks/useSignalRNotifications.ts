@@ -1,18 +1,18 @@
 import { useCallback, useEffect, useState } from "react";
-import signalRService from "../service/signalrService/signalrService";
+import notificationSignalrService from "../service/signalrService/notifications/notificationSignalrService";
 import { addNotification, selectNotifications } from "@/lib/redux/features/notificationSlice";
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks";
 import { Notification } from "@/types/notification.types";
-import { handleNotificationCallbacks } from "@/service/signalrService/handleNotificationCallbacks";
+import { handleNotificationCallbacks } from "@/service/signalrService/notifications/handleNotificationCallbacks";
 
 export const useSignalRNotification = (options = { groups: [], eventHandlers: {} } as { groups: string[], eventHandlers: Record<string, (data: unknown) => void> }) => {
   const notifications = useAppSelector(selectNotifications);
   const dispatch = useAppDispatch();
   const { groups = [], eventHandlers = {} } = options;
-  const [connectionStatus, setConnectionStatus] = useState(signalRService.getConnectionStatus());
+  const [connectionStatus, setConnectionStatus] = useState(notificationSignalrService.getConnectionStatus());
   
   const updateConnectionStatus = () => {
-    setConnectionStatus(signalRService.getConnectionStatus());
+    setConnectionStatus(notificationSignalrService.getConnectionStatus());
   };
 
   const handleNotification = useCallback((notification: Notification) => {
@@ -24,36 +24,36 @@ export const useSignalRNotification = (options = { groups: [], eventHandlers: {}
   useEffect(() => {
     const setupEventHandlers = () => {
       // Connection events
-      signalRService.registerCallback("onConnected", async () => {
+      notificationSignalrService.registerCallback("onConnected", async () => {
         console.log("onConnected");
         updateConnectionStatus();
       });
 
-      signalRService.registerCallback("onDisconnected", () => {
+      notificationSignalrService.registerCallback("onDisconnected", () => {
         console.log("onDisconnected");
         updateConnectionStatus();
       });
-      signalRService.registerCallback("onReconnected", () => {
+      notificationSignalrService.registerCallback("onReconnected", () => {
         console.log("onReconnected");
         // Re-join groups after reconnection
         groups.forEach((group) => {
-          signalRService.AddToGroup(group);
+          notificationSignalrService.AddToGroup(group);
         });
         updateConnectionStatus();
       });
 
-      signalRService.registerCallback("onReconnecting", updateConnectionStatus);
-      signalRService.registerCallback("onConnectionFailed", updateConnectionStatus);
-      signalRService.registerCallback("onMaxReconnectAttemptsReached", updateConnectionStatus);
+      notificationSignalrService.registerCallback("onReconnecting", updateConnectionStatus);
+      notificationSignalrService.registerCallback("onConnectionFailed", updateConnectionStatus);
+      notificationSignalrService.registerCallback("onMaxReconnectAttemptsReached", updateConnectionStatus);
 
       // Notification events
-      signalRService.registerCallback("onNotificationReceived", (data: unknown) => {
+      notificationSignalrService.registerCallback("onNotificationReceived", (data: unknown) => {
         handleNotification(data as Notification);
       });
 
       // Custom event handlers
       Object.entries(eventHandlers).forEach(([eventName, handler]) => {
-        signalRService.registerCallback(eventName, handler);
+        notificationSignalrService.registerCallback(eventName, handler);
       });
     };
     
@@ -61,21 +61,21 @@ export const useSignalRNotification = (options = { groups: [], eventHandlers: {}
     setupEventHandlers();
 
     return () => {
-      signalRService.removeCallback("onConnected", updateConnectionStatus);
-      signalRService.removeCallback("onDisconnected", updateConnectionStatus);
-      signalRService.removeCallback("onReconnected", updateConnectionStatus);
-      signalRService.removeCallback("onReconnecting", updateConnectionStatus);
-      signalRService.removeCallback("onConnectionFailed", updateConnectionStatus);
-      signalRService.removeCallback(
+      notificationSignalrService.removeCallback("onConnected", updateConnectionStatus);
+      notificationSignalrService.removeCallback("onDisconnected", updateConnectionStatus);
+      notificationSignalrService.removeCallback("onReconnected", updateConnectionStatus);
+      notificationSignalrService.removeCallback("onReconnecting", updateConnectionStatus);
+      notificationSignalrService.removeCallback("onConnectionFailed", updateConnectionStatus);
+      notificationSignalrService.removeCallback(
         "onMaxReconnectAttemptsReached",
         updateConnectionStatus
       );
-      signalRService.removeCallback("onNotificationReceived", (data: unknown) => {
+      notificationSignalrService.removeCallback("onNotificationReceived", (data: unknown) => {
         handleNotification(data as Notification);
       });
 
       Object.entries(eventHandlers).forEach(([eventName, handler]) => {
-        signalRService.removeCallback(eventName, handler);
+        notificationSignalrService.removeCallback(eventName, handler);
       });
 
     }
@@ -83,21 +83,21 @@ export const useSignalRNotification = (options = { groups: [], eventHandlers: {}
 
   // Connection control methods
   const connect = useCallback(async () => {
-    await signalRService.StartConnection();
+    await notificationSignalrService.StartConnection();
   }, []);
 
   const disconnect = useCallback(async () => {
-    await signalRService.StopConnection();
+    await notificationSignalrService.StopConnection();
   }, []);
 
   const joinGroup = useCallback(async (groupName: string) => {
     console.log("Joining group", groupName);
-    return await signalRService.AddToGroup(groupName);
+    return await notificationSignalrService.AddToGroup(groupName);
   }, []);
 
   const leaveGroup = useCallback(async (groupName: string) => {
     console.log("Leaving group", groupName);
-    return await signalRService.RemoveFromGroup(groupName);
+    return await notificationSignalrService.RemoveFromGroup(groupName);
   }, []);
 
   return { 
@@ -108,6 +108,6 @@ export const useSignalRNotification = (options = { groups: [], eventHandlers: {}
     joinGroup,
     leaveGroup,
 
-    signalRService
+    notificationSignalrService
   };
 };

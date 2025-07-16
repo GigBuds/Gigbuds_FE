@@ -24,7 +24,10 @@ import { useAuth } from '@/hooks/useAuth'
 import { clearUserState, selectUser } from '@/lib/redux/features/userSlice'
 import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks'
 import { selectNotifications } from '@/lib/redux/features/notificationSlice'
+import { selectMessagingMetadata } from '@/lib/redux/features/messagingMetadataSlice'
 import { BsShieldLock } from "react-icons/bs";
+import messagingSignalRService from '@/service/signalrService/messaging/messagingSignalRService'
+import notificationSignalRService from '@/service/signalrService/notifications/notificationSignalrService'
 
 
 // Menu items configuration
@@ -68,10 +71,14 @@ const Sidebar = () => {
   const dispatch = useAppDispatch()
   const user = useAppSelector(selectUser)
   const { logout } = useAuth()
+  const notifications = useAppSelector(selectNotifications)
+  const messagingMetadata = useAppSelector(selectMessagingMetadata)
   
   const [isOpen, setIsOpen] = useState(false)
   const [selectedItem, setSelectedItem] = useState('homepage')
-  const notifications = useAppSelector(selectNotifications)
+
+  // Calculate total unread messages
+  const unreadMessagesCount = messagingMetadata.unreadMessages.length
 
   // Helper function to determine selected item from current path
   const getSelectedItemFromPath = (currentPath: string): string => {
@@ -97,6 +104,11 @@ const Sidebar = () => {
   // Handle logout functionality
   const handleLogout = async () => {
     try {
+      console.log("Stopping connections");
+      await Promise.all([
+        notificationSignalRService.StopConnection(),
+        messagingSignalRService.StopConnection()
+      ]);
       await logout()
       setSelectedItem('homepage')
       dispatch(clearUserState())
@@ -113,6 +125,9 @@ const Sidebar = () => {
     switch (item.id) {
       case 'logout':
         handleLogout()
+        break
+      case 'messages':
+        router.push('/messages')
         break
       default:
         router.push(item.link)
@@ -221,7 +236,7 @@ const Sidebar = () => {
               <React.Fragment key={item.id}>
                 <li className='my-1'>
                   <motion.div 
-                    className='flex py-2 items-center rounded-lg cursor-pointer'
+                    className='flex py-2 items-center rounded-lg cursor-pointer relative'
                     initial={{ scale: 1 }}
                     whileHover={{ scale: 1.05, boxShadow: "0 4px 20px rgba(0, 0, 0, 0.1)" }}
                     whileTap={{ scale: 0.95 }}
@@ -244,6 +259,18 @@ const Sidebar = () => {
                     >
                       {item.label}
                     </motion.span>
+                    
+                    {/* Unread message count badge */}
+                    {item.id === 'messages' && unreadMessagesCount > 0 && (
+                      <motion.div
+                        className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full min-w-[20px] h-5 flex items-center justify-center px-1"
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                      >
+                        {unreadMessagesCount > 99 ? '99+' : unreadMessagesCount}
+                      </motion.div>
+                    )}
                   </motion.div>
                 </li>
                 {item.id === 'messages' && (

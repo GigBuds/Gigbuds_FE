@@ -6,7 +6,7 @@ import { InfoCircleOutlined, CheckCircleOutlined, PlusOutlined } from '@ant-desi
 import GoogleMap from "@/components/map/GoogleMap";
 import { CreateJobPostRequest, JobPosition, JobSchedule } from "@/types/jobPostService";
 import EmployerShiftCalendar from "@/components/EmployerShiftCalendar";
-import { GoogleMapResponse } from "@/types/folder/googleMapResponse";
+import { GoogleMapResponse } from "@/types/googleMapResponse";
 import toast from "react-hot-toast";
 import { useState, useEffect } from "react";
 import { useAppSelector } from "@/lib/redux/hooks";

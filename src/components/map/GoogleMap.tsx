@@ -8,7 +8,7 @@ import {
 import { PlaceAutocomplete } from "./PlaceAutoComplete";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { MapHandler } from "./MapHandler";
-import { GoogleMapResponse } from "@/types/folder/googleMapResponse";
+import { GoogleMapResponse } from "@/types/googleMapResponse";
 
 /**
  * GoogleMap component that integrates Google Maps with Place Autocomplete functionality.

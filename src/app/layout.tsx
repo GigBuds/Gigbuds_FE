@@ -7,6 +7,7 @@ import LayoutClientShell from "./LayoutClientShell";
 import StoreProvider from "@/components/providers/StoreProvider";
 import { LoadingProvider } from "@/contexts/LoadingContext";
 import { SignalRProvider } from "@/contexts/SignalRProvider";
+import { MessagingSignalRProvider } from "@/contexts/MessagingSignalRProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -37,11 +38,13 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
           <StoreProvider>
-            <SignalRProvider>
-              <LoadingProvider>
-                <LayoutClientShell>{children}</LayoutClientShell>
-              </LoadingProvider>
-            </SignalRProvider>
+            <MessagingSignalRProvider>
+              <SignalRProvider>
+                <LoadingProvider>
+                  <LayoutClientShell>{children}</LayoutClientShell>
+                </LoadingProvider>
+              </SignalRProvider>
+            </MessagingSignalRProvider>
           </StoreProvider>
       </body>
     </html>

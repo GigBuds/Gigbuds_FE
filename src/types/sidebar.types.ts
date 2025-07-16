@@ -28,6 +28,7 @@ export interface User {
   email: string;
   roles: string[];
   memberships: Membership[]; // Add this line
+  avatar: string;
 }
 
 export interface SidebarVariants {

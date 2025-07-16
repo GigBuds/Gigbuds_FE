@@ -1,21 +1,15 @@
 import * as signalR from "@microsoft/signalr";
-import { handleConnectionCycleCallbacks } from "./handleConnectionCycleCallbacks";
 import { HubConnection } from "@microsoft/signalr";
-import { handleNotificationCallbacks } from "./handleNotificationCallbacks";
-import Cookies from "js-cookie";
 
-const HUB_URL = process.env.NEXT_PUBLIC_HUB_URL ?? 'https://gigbuds-c3fagtfwe2brewha.eastasia-01.azurewebsites.net/hub/notifications';
-console.log("SignalR: HUB_URL", HUB_URL);
-
-export class SignalRService {
-  private hubConnection: signalR.HubConnection | null;
-  private isConnected: boolean;
-  private isConnecting: boolean;
-  private reconnectAttempts: number;
-  private readonly maxReconnectAttempts: number;
-  private readonly reconnectDelay: number;
-  private readonly notificationCallbacks: Map<string, ((data: unknown) => void)[]>;
-  private readonly connectionCallbacks: Map<string, ((data: unknown) => void)[]>;
+export abstract class BaseSignalRService {
+  protected hubConnection: signalR.HubConnection | null;
+  protected isConnected: boolean;
+  protected isConnecting: boolean;
+  protected reconnectAttempts: number;
+  protected readonly maxReconnectAttempts: number;
+  protected readonly reconnectDelay: number;
+  protected readonly notificationCallbacks: Map<string, ((data: unknown) => void)[]>;
+  protected readonly connectionCallbacks: Map<string, ((data: unknown) => void)[]>;
 
   constructor() {
     // Connection object for SignalR when connected to the server
@@ -35,61 +29,35 @@ export class SignalRService {
     this.connectionCallbacks = new Map();
   }
 
-  // -------------------------- MAIN CONNECTION FUNCTIONS -------------------------------------------
+  // Abstract method to be implemented by specific services
+  abstract StartConnection(): Promise<void>;
 
-  async StartConnection() {
-    if (this.isConnected || this.isConnecting) {
-      console.log("SignalR: Already connected or connecting");
-      return;
-    }
+  // Set up connection lifecycle event handlers
+  protected handleConnectionCycleCallbacks() {
+    if (!this.hubConnection) return;
 
-    try {
-      console.log("SignalR: Starting connection");
-      this.isConnecting = true;
-      const accessToken = Cookies.get('access_token');
-      console.log("SignalR: Access token", accessToken);
-      this.hubConnection = new signalR.HubConnectionBuilder()
-          .withUrl(HUB_URL, {
-            accessTokenFactory: () => Promise.resolve(accessToken ?? ''),
-            skipNegotiation: true,
-            transport: signalR.HttpTransportType.WebSockets,
-          })
-          .withAutomaticReconnect({
-            nextRetryDelayInMilliseconds: (retryContext) => {
-              if (retryContext.previousRetryCount === 0) {
-                return 0;
-              }
-              return Math.min(
-                1000 * Math.pow(2, retryContext.previousRetryCount),
-                30000
-              );
-            },
-          })
-          .configureLogging(signalR.LogLevel.Information)
-          .build();
-
-      // set up connection lifecycle event handlers
-      handleConnectionCycleCallbacks(this);
-
-      handleNotificationCallbacks();
-
-      await this.hubConnection.start();
-
-      await new Promise((resolve) => setTimeout(resolve, 2000)); // wait for connection to finish establishing
-
-      this.isConnected = true;
-      this.isConnecting = false;
-      this.reconnectAttempts = 0;
-
-      console.log("SignalR: Connected successfully");
-      this.triggerCallback("onConnected");
-    } catch (error) {
-      console.error("SignalR: Connection failed", error);
-      this.triggerCallback("onConnectionFailed", error);
+    this.hubConnection.onclose(async (error: Error | undefined) => {
       this.isConnected = false;
+      console.log("SignalR: Connection closed", error);
+      this.triggerCallback("onDisconnected", error);
 
-      this.handleRetryConnection();
-    }
+      // Attempt reconnection if not manually closed (e.g. user closed the browser/app)
+      if (error) {
+        await this.handleRetryConnection();
+      }
+    });
+
+    this.hubConnection.onreconnecting((error: Error | undefined) => {
+      console.log("SignalR: Reconnecting...", error);
+      this.triggerCallback("onReconnecting", error);
+    });
+
+    this.hubConnection.onreconnected((connectionId: string | undefined) => {
+      this.isConnected = true;
+      this.reconnectAttempts = 0;
+      console.log("SignalR: Reconnected", connectionId);
+      this.triggerCallback("onReconnected", connectionId);
+    });
   }
 
   async handleRetryConnection() {
@@ -108,6 +76,7 @@ export class SignalRService {
   }
 
   async StopConnection() {
+    console.log("StopConnection", this.hubConnection);
     if (this.hubConnection) {
       try {
         await this.hubConnection.stop();
@@ -118,8 +87,6 @@ export class SignalRService {
       }
     }
   }
-
-  // -------------------------- HELPER FUNCTIONS -------------------------------------------
 
   async AddToGroup(groupName: string) {
     if (!this.isConnected) {
@@ -171,6 +138,7 @@ export class SignalRService {
     if (!this.connectionCallbacks.has(eventName)) {
       this.connectionCallbacks.set(eventName, []);
     }
+    
     this.connectionCallbacks.get(eventName)!.push(callback);
   }
 
@@ -192,6 +160,32 @@ export class SignalRService {
     };
   }
 
+  InvokeHubMethod(methodName: string, ...args: unknown[]): Promise<unknown> {
+    console.log("InvokeHubMethod", methodName, args)
+    if (!this.hubConnection) {
+      return Promise.reject(new Error("Hub connection is not initialized."));
+    }
+
+    if (this.hubConnection.state !== signalR.HubConnectionState.Connected) {
+      return Promise.reject(new Error(`Hub connection is not connected. Current state: ${this.hubConnection.state}`));
+    }
+
+    return this.hubConnection.invoke(methodName, ...args);
+  }
+
+  SendHubMethod(methodName: string, ...args: unknown[]): Promise<void> {
+    console.log("SendHubMethod", methodName, args)
+    if (!this.hubConnection) {
+      return Promise.reject(new Error("Hub connection is not initialized."));
+    }
+
+    if (this.hubConnection.state !== signalR.HubConnectionState.Connected) {
+    return Promise.reject(new Error(`Hub connection is not connected. Current state: ${this.hubConnection.state}`));
+    }
+
+    return this.hubConnection.send(methodName, ...args);
+  }
+
   // -------------------------- GETTERS -------------------------------------------
 
   get HubConnection(): HubConnection | null {
@@ -210,6 +204,8 @@ export class SignalRService {
     return this.reconnectAttempts;
   }
 
+
+
   // -------------------------- SETTERS -------------------------------------------
 
   set IsConnected(value: boolean) {
@@ -222,9 +218,5 @@ export class SignalRService {
 
   set ReconnectAttempts(value: number) {
     this.reconnectAttempts = value;
-  } 
+  }
 }
-
-const signalRService = new SignalRService();
-export default signalRService;
-

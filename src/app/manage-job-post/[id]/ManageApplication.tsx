@@ -3,7 +3,7 @@
 import { useLoading } from "@/contexts/LoadingContext";
 import { applicationApi } from "@/service/applicationService/applicationService";
 import { Application } from "@/types/applicationService";
-import { Job } from "@/types/jobPost.types";
+import { JobPost } from "@/types/jobPostService";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState, useMemo } from "react";
 import { 
@@ -23,7 +23,8 @@ import {
   Check,
   X,
   RotateCcw,
-  Download
+  Download,
+  MessageSquare
 } from "lucide-react";
 import { Badge } from "../../../../ui/badge";
 import { Button } from "../../../../ui/button";
@@ -43,10 +44,11 @@ import {
   DropdownMenuSeparator,
 } from "../../../../ui/dropdown-menu";
 import { Checkbox } from "../../../../ui/checkbox";
+import FeedbackDialog from "@/components/FeedbackDialog/FeedbackDialog";
 import toast from "react-hot-toast";
 
 interface ManageApplicationProps {
-  selectedJob: Job | null;
+  selectedJob: JobPost | null;
 }
 
 type ApplicationStatus = 'all' | 'approved' | 'pending' | 'rejected' | 'removed';
@@ -62,6 +64,34 @@ const ManageApplication = ({ selectedJob }: ManageApplicationProps) => {
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const { setIsLoading } = useLoading();
   const router = useRouter();
+
+  // Helper function to refetch applications
+  const refetchApplications = async () => {
+    if (selectedJob?.id) {
+      try {
+        const response = await applicationApi.getApplicationsByJobPostId(
+          selectedJob.id.toString()
+        );
+        
+        let applicationsData: Application[] = [];
+        if (Array.isArray(response)) {
+          applicationsData = response;
+        } else if (response.data && Array.isArray(response.data)) {
+          applicationsData = response.data;
+        }
+
+        setApplications(applicationsData);
+      } catch (err) {
+        console.error("Error refreshing applications:", err);
+      }
+    }
+  };
+
+  // Handle feedback submission callback
+  const handleFeedbackSubmitted = async () => {
+    // Refresh applications list to update isFeedback status
+    await refetchApplications();
+  };
 
   // Status configuration
   const statusConfig = useMemo(() => ({
@@ -194,13 +224,8 @@ const ManageApplication = ({ selectedJob }: ManageApplicationProps) => {
       setIsUpdatingStatus(true);
       await applicationApi.updateStatusForApplications(applicationId, newStatus);
 
-      setApplications(prev =>
-        prev.map(app =>
-          app.id === applicationId // Changed from app.accountId to app.id
-            ? { ...app, applicationStatus: newStatus }
-            : app
-        )
-      );
+      // Refetch applications to get updated data including job history
+      await refetchApplications();
 
       toast.success(`Cập nhật trạng thái thành công`);
     } catch (error) {
@@ -229,14 +254,8 @@ const ManageApplication = ({ selectedJob }: ManageApplicationProps) => {
       // Wait for all updates to complete
       await Promise.all(updatePromises);
 
-      // Update local state after all API calls succeed
-      setApplications(prev =>
-        prev.map(app =>
-          selectedApplications.includes(app.id)
-            ? { ...app, applicationStatus: newStatus }
-            : app
-        )
-      );
+      // Refetch applications to get updated data including job history
+      await refetchApplications();
 
       setSelectedApplications([]);
       toast.success(`Cập nhật trạng thái cho ${selectedApplications.length} ứng viên thành công`);
@@ -251,7 +270,11 @@ const ManageApplication = ({ selectedJob }: ManageApplicationProps) => {
   // Handle select all
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedApplications(processedApplications.map(app => app.id)); // Changed from app.accountId to app.id
+      // Only select applications that are not rejected
+      const selectableApps = processedApplications
+        .filter(app => app.applicationStatus?.toLowerCase() !== 'rejected')
+        .map(app => app.id);
+      setSelectedApplications(selectableApps);
     } else {
       setSelectedApplications([]);
     }
@@ -447,11 +470,14 @@ const ManageApplication = ({ selectedJob }: ManageApplicationProps) => {
             {/* Select All Header */}
             <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
               <Checkbox
-                checked={selectedApplications.length === processedApplications.length && processedApplications.length > 0}
+                checked={(() => {
+                  const selectableApps = processedApplications.filter(app => app.applicationStatus?.toLowerCase() !== 'rejected');
+                  return selectedApplications.length === selectableApps.length && selectableApps.length > 0;
+                })()}
                 onCheckedChange={handleSelectAll}
               />
               <span className="text-sm font-medium text-gray-700">
-                Chọn tất cả ({processedApplications.length})
+                Chọn tất cả ({processedApplications.filter(app => app.applicationStatus?.toLowerCase() !== 'rejected').length} có thể chọn)
               </span>
             </div>
 
@@ -469,6 +495,7 @@ const ManageApplication = ({ selectedJob }: ManageApplicationProps) => {
                       onCheckedChange={(checked) => 
                         handleSelectApplication(applicant.id, checked as boolean) // Changed from applicant.accountId to applicant.id
                       }
+                      disabled={applicant.applicationStatus?.toLowerCase() === 'rejected'}
                       className="mt-1"
                     />
                     
@@ -516,8 +543,26 @@ const ManageApplication = ({ selectedJob }: ManageApplicationProps) => {
                             
                             {/* Conditional status update options */}
                             {applicant.applicationStatus?.toLowerCase() === 'approved' ? (
-                              // Only show Remove option when approved
+                              // Approved applications
                               <>
+                                {/* Show feedback button if job is finished and no feedback given */}
+                                {selectedJob?.status === 'Finished' && !applicant.isFeedback && (
+                                  <>
+                                    <DropdownMenuSeparator />
+                                    <FeedbackDialog
+                                      application={applicant}
+                                      onFeedbackSubmitted={handleFeedbackSubmitted}
+                                    >
+                                      <DropdownMenuItem
+                                        onSelect={(e) => e.preventDefault()}
+                                        className="text-blue-600 focus:text-blue-600"
+                                      >
+                                        <MessageSquare className="w-4 h-4 mr-2" />
+                                        Đánh giá
+                                      </DropdownMenuItem>
+                                    </FeedbackDialog>
+                                  </>
+                                )}
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem
                                   onClick={() => handleStatusUpdate(applicant.id, 'Removed')}
@@ -528,12 +573,33 @@ const ManageApplication = ({ selectedJob }: ManageApplicationProps) => {
                                   Xóa
                                 </DropdownMenuItem>
                               </>
+                            ) : applicant.applicationStatus?.toLowerCase() === 'removed' ? (
+                              // Removed applications - always show feedback option
+                              <>
+                                {!applicant.isFeedback && (
+                                  <>
+                                    <DropdownMenuSeparator />
+                                    <FeedbackDialog
+                                      application={applicant}
+                                      onFeedbackSubmitted={handleFeedbackSubmitted}
+                                    >
+                                      <DropdownMenuItem
+                                        onSelect={(e) => e.preventDefault()}
+                                        className="text-blue-600 focus:text-blue-600"
+                                      >
+                                        <MessageSquare className="w-4 h-4 mr-2" />
+                                        Đánh giá
+                                      </DropdownMenuItem>
+                                    </FeedbackDialog>
+                                  </>
+                                )}
+                              </>
+                            ) : applicant.applicationStatus?.toLowerCase() === 'rejected' ? (
+                              // Rejected applications - no actions allowed
+                              <>
+                              </>
                             ) : (
-                              applicant.applicationStatus?.toLowerCase() === 'removed' ? (
-                                <>
-                                </>
-                              ) : (
-                              // Show all status options when not approved
+                              // Pending applications - show all status options
                               <>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem
@@ -567,7 +633,7 @@ const ManageApplication = ({ selectedJob }: ManageApplicationProps) => {
                                   Xóa
                                 </DropdownMenuItem>
                               </>
-                            ))}
+                            )}
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </div>
@@ -630,8 +696,46 @@ const ManageApplication = ({ selectedJob }: ManageApplicationProps) => {
                       {applicant.cvUrl ? "Xem CV đính kèm" : "Không có CV đính kèm"}
                     </Button>
 
-                    {/* Quick Actions - Only show if status is not approved */}
-                    {applicant.applicationStatus?.toLowerCase() !== 'approved'&& applicant.applicationStatus?.toLowerCase() !== 'removed' && (
+                    {/* Quick Actions - Show different actions based on status */}
+                    {applicant.applicationStatus?.toLowerCase() === 'approved' ? (
+                      // Show feedback button for approved applications when job is finished
+                      selectedJob?.status === 'Finished' && !applicant.isFeedback && (
+                        <FeedbackDialog
+                          application={applicant}
+                          onFeedbackSubmitted={handleFeedbackSubmitted}
+                        >
+                          <Button
+                            size="sm"
+                            className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                          >
+                            <MessageSquare className="w-4 h-4 mr-2" />
+                            Đánh giá ứng viên
+                          </Button>
+                        </FeedbackDialog>
+                      )
+                    ) : applicant.applicationStatus?.toLowerCase() === 'removed' ? (
+                      // Show feedback button for removed applications (always)
+                      !applicant.isFeedback && (
+                        <FeedbackDialog
+                          application={applicant}
+                          onFeedbackSubmitted={handleFeedbackSubmitted}
+                        >
+                          <Button
+                            size="sm"
+                            className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                          >
+                            <MessageSquare className="w-4 h-4 mr-2" />
+                            Đánh giá ứng viên
+                          </Button>
+                        </FeedbackDialog>
+                      )
+                    ) : applicant.applicationStatus?.toLowerCase() === 'rejected' ? (
+                      // No actions for rejected applications
+                      <div className="text-center text-sm text-gray-500 py-2">
+                        Ứng viên đã bị từ chối
+                      </div>
+                    ) : (
+                      // Show status update buttons for pending applications
                       <div className="flex gap-2">
                         <Button
                           size="sm"

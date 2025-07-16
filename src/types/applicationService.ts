@@ -9,6 +9,8 @@ export interface Application {
     skillTags: string[];
     jobPosition: string;
     applicationStatus: string;
+    isFeedback?: boolean;
+    jobHistoryId?: number;
 }
 
 export interface ApplicationsResponse {

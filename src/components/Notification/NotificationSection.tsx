@@ -53,6 +53,21 @@ const NotificationSection = ({ notifications }: { notifications: Notification[] 
         }
     };
 
+    // const getNotificationBadgeVariant = (type: string) => {
+    //     switch (type) {
+    //         case "profile":
+    //             return "secondary" as const;
+    //         case "application":
+    //             return "default" as const;
+    //         case "feedback":
+    //             return "outline" as const;
+    //         case "job":
+    //             return "default" as const;
+    //         default:
+    //             return "secondary" as const;
+    //     }
+    // };
+
     const handleNotificationClick = (notification: Notification) => {
         switch (notification.type) {
             case "profile":

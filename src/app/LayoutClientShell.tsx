@@ -14,6 +14,7 @@ export default function LayoutClientShell({
 }>) {
   const pathname = usePathname();
   const isLoginPage = pathname === "/login";
+  const isMessagesPage = pathname === "/messages";
   const { isLoading } = useLoading();
 
   return (
@@ -44,8 +45,10 @@ export default function LayoutClientShell({
       <main
         className={
           isLoginPage
-            ? "w-screen h-screen bg-black overflow-x-scroll" // Full width for login page
-            : "lg:w-[75%] md:w-[55%] sm:w-[55%] w-[55%] overflow-x-scroll" // Adjusted md:w[60%]
+            ? "w-screen h-screen bg-black overflow-hidden" // Remove x-scroll and add overflow-hidden
+            : isMessagesPage
+            ? "lg:w-[75%] md:w-[55%] sm:w-[55%] w-[55%] overflow-hidden" // Special case for messages page
+            : "lg:w-[75%] md:w-[55%] sm:w-[55%] w-[55%] overflow-y-auto" // Keep y-scroll for other pages
         }
       >
         {children}

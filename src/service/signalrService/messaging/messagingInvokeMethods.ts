@@ -1,0 +1,11 @@
+export const ADD_TO_CONVERSATION = "AddToConversation";
+export const REMOVE_FROM_CONVERSATION = "RemoveFromConversation";
+export const CREATE_AND_JOIN_CONVERSATION = "CreateAndJoinConversation";
+export const SEND_MESSAGE = "SendMessage";
+export const SEND_MESSAGE_READ = "SendMessageRead";
+export const SEND_TYPING_INDICATOR = "SendTypingIndicator";
+export const ON_CONVERSATION_CHECKIN = "OnConversationCheckin";
+export const ON_CONVERSATION_CHECKOUT = "OnConversationCheckout";
+export const GET_ONLINE_USERS = "GetOnlineUsers";
+export const EDIT_MESSAGE = "EditMessage";
+export const DELETE_MESSAGE = "DeleteMessage";

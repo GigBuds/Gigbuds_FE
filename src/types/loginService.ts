@@ -23,4 +23,5 @@ export interface JWTPayload {
   role?: string[];
   exp: number;
   memberships?: Membership;
+  senderAvatar?: string;
 }

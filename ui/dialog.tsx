@@ -134,11 +134,25 @@ function DialogDescription({
   )
 }
 
+function DialogDescriptionContent({ 
+  className, 
+  ...props 
+}: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="dialog-description-content"
+      className={cn("text-muted-foreground text-sm", className)}
+      {...props}
+    />
+  )
+}
+
 export {
   Dialog,
   DialogClose,
   DialogContent,
   DialogDescription,
+  DialogDescriptionContent,
   DialogFooter,
   DialogHeader,
   DialogOverlay,

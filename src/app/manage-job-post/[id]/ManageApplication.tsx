@@ -94,13 +94,13 @@ const ManageApplication = ({ selectedJob }: ManageApplicationProps) => {
   };
 
   // Status configuration
-  const statusConfig = {
+  const statusConfig = useMemo(() => ({
     all: { label: 'Tất cả', icon: Users, color: 'bg-gray-100 text-gray-800', count: 0 },
     approved: { label: 'Đã duyệt', icon: CheckCircle, color: 'bg-green-100 text-green-800', count: 0 },
     pending: { label: 'Chờ duyệt', icon: Clock, color: 'bg-yellow-100 text-yellow-800', count: 0 },
     rejected: { label: 'Từ chối', icon: XCircle, color: 'bg-red-100 text-red-800', count: 0 },
     removed: { label: 'Đã Loại', icon: Trash2, color: 'bg-red-500 text-white', count: 0 }
-  };
+  }), []);
 
   // Helper function to safely render skill tags
   const renderSkillTag = (tag: unknown): string => {
@@ -215,7 +215,7 @@ const ManageApplication = ({ selectedJob }: ManageApplicationProps) => {
     });
 
     return counts;
-  }, [applications]);
+  }, [applications, statusConfig]);
 
   // Handle individual status update
   const handleStatusUpdate = async (applicationId: string, newStatus: string) => {

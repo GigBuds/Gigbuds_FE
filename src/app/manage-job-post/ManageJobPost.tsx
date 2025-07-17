@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useMemo } from "react";
 import { jobPostApi } from "@/service/jobPostService/jobPostService";
 import { JobPost } from "@/types/jobPostService";
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -65,13 +65,13 @@ const ManageJobPost: React.FC<ManageJobPostProps> = ({ API_KEY, MAP_ID }) => {
   }
 
   // Status configuration similar to ManageApplication
-  const statusConfig = {
+  const statusConfig = useMemo(() => ({
     all: { label: 'Tất cả', icon: Briefcase, color: 'bg-gray-100 text-gray-800', count: 0 },
     Open: { label: 'Đang tuyển', icon: CheckCircle, color: 'bg-green-100 text-green-800', count: 0 },
     Closed: { label: 'Đã đóng', icon: XCircle, color: 'bg-red-100 text-red-800', count: 0 },
     Expired: { label: 'Đã hết hạn', icon: Clock, color: 'bg-amber-100 text-amber-800', count: 0 },
     Finished: { label: 'Đã kết thúc', icon: CheckCircle, color: 'bg-blue-100 text-blue-800', count: 0 }
-  };
+  }), []);
 
   const fetchJobPosts = useCallback(async (page: number = 1): Promise<void> => {
     try {

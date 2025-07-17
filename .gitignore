@@ -43,3 +43,5 @@ next-env.d.ts
 
 certificates
 package-lock.json
+ACTION_PLAN.md
+REACT_NATIVE_MESSAGING_IMPLEMENTATION.md

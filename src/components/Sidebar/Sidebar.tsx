@@ -83,7 +83,6 @@ const Sidebar = () => {
   const user = useAppSelector(selectUser)
   console.log('Current user:', user)
   const { logout } = useAuth()
-  const notifications = useAppSelector(selectNotifications)
   const messagingMetadata = useAppSelector(selectMessagingMetadata)
   
   const [isOpen, setIsOpen] = useState(false)

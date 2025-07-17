@@ -35,6 +35,15 @@ const ChatContainer = ({ metadata, handleConversationChange, messagesLoading, se
     conversationId: 0,
   });
 
+  const sortMessages = (newMessages: ChatHistory[]) => {
+    return newMessages.sort((a, b) => Number(a.messageId) - Number(b.messageId));
+  }
+
+  useEffect(() => {
+    setMessages(sortMessages(messages));
+    // console.log("messages", messages);
+  }, [messages]);
+
   // Delete modal state
   const [deleteModal, setDeleteModal] = useState<{
     isOpen: boolean;
@@ -64,7 +73,7 @@ const ChatContainer = ({ metadata, handleConversationChange, messagesLoading, se
         console.log("getting messages for conversation", conversationId);
         let fetchedMessages = await chatHistoryService.getChatHistoryOfAConversation(conversationId);
         if (fetchedMessages.length === 0) {
-          const result = await fetchApi.get(`messages/conversation-messages?conversationId=${conversationId}&pageSize=20`);
+          const result = await fetchApi.get(`messages/conversation-messages?conversationId=${conversationId}&pageSize=15&pageIndex=1`);
           await chatHistoryService.refreshChatHistory(result.data);
           fetchedMessages = await chatHistoryService.getChatHistoryOfAConversation(conversationId);
         }
@@ -97,12 +106,17 @@ const ChatContainer = ({ metadata, handleConversationChange, messagesLoading, se
       // API call to get older messages with pagination
       console.log('result load more result', nextPage, metadata.id);
       const result = await fetchApi.get(
-        `messages/conversation-messages?conversationId=${metadata.id}&pageIndex=${nextPage}`
+        `messages/conversation-messages?conversationId=${metadata.id}&pageIndex=${nextPage}&pageSize=15`
       );
       
+      console.log("result.data", result.data);
       if (result.data && result.data.length > 0) {
         // Add older messages to the beginning of the list
-        setMessages(prevMessages => [...result.data, ...prevMessages]);
+        setMessages(prevMessages => {
+          const newMessages = [...result.data, ...prevMessages];
+          return sortMessages(newMessages);
+        });
+
         setCurrentPage(nextPage);
         
         // Update IndexedDB cache

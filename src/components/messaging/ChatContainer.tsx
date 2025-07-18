@@ -106,7 +106,7 @@ const ChatContainer = ({ metadata, handleConversationChange, messagesLoading, se
       // API call to get older messages with pagination
       console.log('result load more result', nextPage, metadata.id);
       const result = await fetchApi.get(
-        `messages/conversation-messages?conversationId=${metadata.id}&pageIndex=${nextPage}&pageSize=15`
+        `messages/conversation-messages?conversationId=${metadata.id}&pageIndex=${nextPage}&pageSize=10`
       );
       
       console.log("result.data", result.data);

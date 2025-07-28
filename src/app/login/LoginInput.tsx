@@ -47,7 +47,7 @@ const LoginInput = () => {
     if(user.roles?.includes("Admin")) {
       router.push("/admin/dashboard");
     } else if (user.roles?.includes("Employer") || user.roles?.includes("JobSeeker")) {
-      router.push("/");
+      router.push("/manage-job-post");
     }
   }, [user, router]);
 

@@ -32,9 +32,9 @@ import notificationSignalRService from '@/service/signalrService/notifications/n
 
 // Menu items configuration
 const menuItems: MenuItem[] = [
-  { id: 'homepage', label: Texts.HOME, icon: <IoHomeOutline/>, link: '/' },
+  // { id: 'homepage', label: Texts.HOME, icon: <IoHomeOutline/>, link: '/' },
+   { id: 'manage-job-post', label: Texts.JOB_POSTINGS, icon: <LuUserSearch/>, link: '/manage-job-post' },
   { id: 'notifications', label: Texts.NOTIFICATIONS, icon: <IoNotificationsOutline/>, link: '/notifications' },
-  { id: 'manage-job-post', label: Texts.JOB_POSTINGS, icon: <LuUserSearch/>, link: '/manage-job-post' },
   { id: 'candidate-profiles', label: Texts.CANDIDATE_PROFILES, icon: <MdOutlineSupervisorAccount/>, link: '/candidate-profiles' },
   { id: 'messages', label: Texts.MESSAGES, icon: <TiMessages/>, link: '/messages' },
   { id: 'memberships', label: "Đăng ký thành viên", icon: <BsShieldLock />, link: '/memberships' },
@@ -83,11 +83,10 @@ const Sidebar = () => {
   const user = useAppSelector(selectUser)
   console.log('Current user:', user)
   const { logout } = useAuth()
-  const notifications = useAppSelector(selectNotifications)
   const messagingMetadata = useAppSelector(selectMessagingMetadata)
   
   const [isOpen, setIsOpen] = useState(false)
-  const [selectedItem, setSelectedItem] = useState('homepage')
+  const [selectedItem, setSelectedItem] = useState('manage-job-post')
   // Calculate total unread messages
   const unreadMessagesCount = messagingMetadata.unreadMessages.length
   const notifications = useAppSelector(selectNotifications)  // Check if user has admin role
@@ -113,9 +112,9 @@ const Sidebar = () => {
     }
 
     // Handle root path
-    if (currentPath === '/') return isAdmin ? 'admin-dashboard' : 'homepage'
+    if (currentPath === '/') return isAdmin ? 'admin-dashboard' : 'manage-job-post'
     
-    return isAdmin ? 'admin-dashboard' : 'homepage' // Default fallback
+    return isAdmin ? 'admin-dashboard' : 'manage-job-post' // Default fallback
   }, [currentMenuItems, isAdmin])
 
   // Handle logout functionality
@@ -127,7 +126,7 @@ const Sidebar = () => {
         messagingSignalRService.StopConnection()
       ]);
       await logout()
-      setSelectedItem('homepage')
+      setSelectedItem('manage-job-post')
       dispatch(clearUserState())
       router.push('/login')
     } catch (error) {

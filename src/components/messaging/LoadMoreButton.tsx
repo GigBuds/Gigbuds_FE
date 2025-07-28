@@ -29,10 +29,10 @@ const LoadMoreButton = ({
         {isLoading ? (
           <div className="flex items-center gap-2">
             <LoadingComponent size={16} animationType="outline" />
-            <span>Loading...</span>
+            <span>Đang tải...</span>
           </div>
         ) : (
-          "Load older messages"
+          "Tải tin nhắn cũ"
         )}
       </button>
     </div>

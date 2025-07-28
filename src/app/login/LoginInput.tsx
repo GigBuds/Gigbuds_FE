@@ -13,7 +13,7 @@ import { selectUser } from "@/lib/redux/features/userSlice";
 
 const LoginInput = () => {
   const router = useRouter();
-  const googleClientId = process.env.GOOGLE_CLIENT_ID ?? "";
+  const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? "";
   const {setIsLoading, isLoading} = useLoading();
   const {login} = useAuth();
   const user = useAppSelector(selectUser);

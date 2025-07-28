@@ -463,7 +463,7 @@ const ChatContainer = ({ metadata, handleConversationChange, messagesLoading, se
             <LoadingComponent 
               size={40}
               showText={true}
-              loadingText="Loading messages..."
+              loadingText="Đang tải tin nhắn..."
               animationType="outline"
             />
           </div>

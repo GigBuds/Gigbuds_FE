@@ -132,7 +132,7 @@ const MessageInput = ({ handleSend, selectedConversation } : MessageInputProps) 
                 value={message}
                 onChange={handleOnChange}
                 onKeyDown={handleKeyPress}
-                placeholder="Type a message..."
+                placeholder="Nhập tin nhắn..."
                 className="w-full px-4 py-3 bg-transparent text-gray-900 placeholder-gray-500 resize-none focus:outline-none max-h-32 min-h-[48px]"
                 rows={1}
                 style={{
@@ -195,7 +195,7 @@ const MessageInput = ({ handleSend, selectedConversation } : MessageInputProps) 
       {isRecording && (
         <div className="flex items-center gap-2 mt-3 px-4">
           <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-          <span className="text-sm text-red-500">Recording... Tap to stop</span>
+          <span className="text-sm text-red-500">Đang ghi âm... Nhấn để dừng</span>
         </div>
       )}
     </div>

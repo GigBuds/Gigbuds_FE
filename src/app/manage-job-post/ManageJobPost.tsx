@@ -164,7 +164,7 @@ const ManageJobPost: React.FC<ManageJobPostProps> = ({ API_KEY, MAP_ID }) => {
     setPageIndex(1);
   };
 
-  // Calculate status counts
+  // Calculate status counts - memoized to prevent recalculation
   const statusCounts = React.useMemo(() => {
     const counts = { ...statusConfig };
     counts.all.count = allJobPostings.length;
@@ -193,21 +193,23 @@ const ManageJobPost: React.FC<ManageJobPostProps> = ({ API_KEY, MAP_ID }) => {
     };
   }, [searchTerm]);
 
+  // Initial data fetch - only fetch all posts once
   useEffect(() => {
     if (!user.id) {
       router.push("/login");
       return;
     }
     fetchJobPosts(pageIndex);
+    // Only fetch all posts for counting once when component mounts
     fetchAllJobPostsForCounting();
-  }, [fetchJobPosts, fetchAllJobPostsForCounting, router, pageIndex, user.id]);
+  }, [user.id]); // Removed unnecessary dependencies that cause re-fetching
 
   // Trigger search when debounced search term or filters change
   useEffect(() => {
     if (user.id) {
       fetchJobPosts(pageIndex);
     }
-  }, [debouncedSearchTerm, activeTab, sortBy, sortOrder, pageIndex, fetchJobPosts, user.id]);
+  }, [debouncedSearchTerm, activeTab, sortBy, sortOrder, pageIndex, user.id]); // Removed fetchJobPosts from dependencies
 
   // Handle opening specific job dialog from URL params
   useEffect(() => {

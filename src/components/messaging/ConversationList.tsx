@@ -112,7 +112,7 @@ const ConversationList = ({
       {/* Header */}
       <div className="p-4 border-b border-gray-200 bg-white">
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-xl font-semibold text-gray-900">Messages</h1>
+          <h1 className="text-xl font-semibold text-gray-900">Tin nhắn</h1>
           <button 
             onClick={() => setIsCreateModalOpen(true)}
             disabled={isCreatingConversation}
@@ -128,7 +128,7 @@ const ConversationList = ({
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
             type="text"
-            placeholder="Search conversations..."
+            placeholder="Tìm kiếm cuộc trò chuyện..."
             className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
           />
         </div>
@@ -141,7 +141,7 @@ const ConversationList = ({
             <LoadingComponent 
               size={40}
               showText={true}
-              loadingText="Loading conversations..."
+              loadingText="Đang tải cuộc trò chuyện..."
               animationType="outline"
             />
           </div>
@@ -160,9 +160,9 @@ const ConversationList = ({
               <div className="flex items-center justify-center h-full text-center text-gray-500 p-4">
                 <div>
                   <div className="text-4xl mb-2">💬</div>
-                  <p className="text-sm">No conversations yet</p>
+                  <p className="text-sm">Chưa có cuộc trò chuyện nào</p>
                   <p className="text-xs text-gray-400 mt-1">
-                    Click the + button to start a new conversation
+                    Nhấn nút + để bắt đầu cuộc trò chuyện mới
                   </p>
                 </div>
               </div>

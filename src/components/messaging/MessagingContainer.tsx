@@ -127,8 +127,8 @@ const MessagingContainer = () => {
           <div className="flex items-center justify-center h-full bg-white">
             <div className="text-center text-gray-500">
               <div className="text-6xl mb-4">💬</div>
-              <h3 className="text-xl font-medium mb-2 text-gray-700">Select a conversation</h3>
-              <p className="text-sm text-gray-500">Choose from your existing conversations or start a new one</p>
+              <h3 className="text-xl font-medium mb-2 text-gray-700">Chọn cuộc trò chuyện</h3>
+              <p className="text-sm text-gray-500">Chọn từ các cuộc trò chuyện hiện có hoặc bắt đầu cuộc trò chuyện mới</p>
             </div>
           </div>
         )}

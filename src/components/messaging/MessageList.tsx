@@ -122,7 +122,7 @@ const MessageList = ({
           }`}></div>
           {triggerInMiddleZone && (
             <span className="ml-2 text-xs text-orange-500 font-medium animate-pulse">
-              Release to load more
+              Thả để tải thêm
             </span>
           )}
         </div>
@@ -134,7 +134,7 @@ const MessageList = ({
           <LoadingComponent 
             size={24}
             showText={true}
-            loadingText="Loading older messages..."
+            loadingText="Đang tải tin nhắn cũ..."
             animationType="outline"
           />
         </div>
@@ -144,14 +144,14 @@ const MessageList = ({
       {!hasMoreMessages && messages.length > 0 && (
         <div className="flex items-center justify-center py-2">
           <div className="bg-white text-gray-500 text-xs px-3 py-1 rounded-full border border-gray-200 shadow-sm">
-            Beginning of conversation
+            Bắt đầu cuộc trò chuyện
           </div>
         </div>
       )}
       {/* Date separator */}
       <div className="flex items-center justify-center">
         <div className="bg-white text-gray-500 text-xs px-3 py-1 rounded-full border border-gray-200 shadow-sm">
-          Today
+          Hôm nay
         </div>
       </div>
 
